@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "target": "ES2020",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
+        "baseUrl": "./",
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ],
+
+        "paths": {
+            "@/*": ["src/*"]
+        },
+        "useUnknownInCatchVariables": false
+    },
+    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/components/Logo.jsx", "src/components/Logo.jsx"],
+    "exclude": ["node_modules"]
+}

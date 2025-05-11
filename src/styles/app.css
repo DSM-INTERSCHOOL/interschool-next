@@ -1,0 +1,18 @@
+/* Root Styling */
+@import "./typography.css";
+@import "./tailwind.css";
+@import "./daisyui.css";
+
+/* Custom Styling */
+@import "./custom/animation.css";
+@import "./custom/components.css";
+@import "./custom/layout.css";
+
+/* Plugin Overriding */
+@import "./custom/plugins.css";
+
+/* Pages */
+@import "./custom/landing.css";
+
+/* Plugin: for iconify */
+@plugin "./custom/iconify.js";
