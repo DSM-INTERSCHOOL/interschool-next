@@ -8,7 +8,10 @@ import SimpleBar from "simplebar-react";
 import "simplebar-react/dist/simplebar.min.css";
 
 import { Logo } from "@/components/Logo";
+import { LogoLight } from "@/components/LogoLight";
 import { useConfig } from "@/contexts/config";
+import { buildSidebarMenuFromPermisos } from "@/lib/buildMenuFromPermissions";
+import { useAuthStore } from "@/store/useAuthStore";
 
 import { getActivatedItemParentKeys } from "../helpers";
 import { ISidebarMenuItem, SidebarMenuItem } from "./SidebarMenuItem";
@@ -18,6 +21,9 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
     const { config } = useConfig();
     const scrollRef = useRef<SimpleBarCore | null>(null);
     const hasMounted = useRef(false);
+    const permisos = useAuthStore((state) => state.permisos) as any;
+
+    const menuItems2 = buildSidebarMenuFromPermisos(permisos);
 
     const activatedParents = useMemo(
         () => new Set(getActivatedItemParentKeys(menuItems, pathname)),
@@ -66,11 +72,14 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                     config.sidebarTheme == "dark" && ["light", "contrast"].includes(config.theme) ? "dark" : undefined
                 }>
                 <Link href="/dashboards/ecommerce" className="flex min-h-16 items-center justify-center">
-                    <Logo />
+                    {config.theme === "dark" ? <LogoLight /> : <Logo />}
                 </Link>
                 <div className="relative min-h-0 grow">
                     <SimpleBar ref={scrollRef} className="size-full">
                         <div id="sidebar-menu">
+                            {menuItems2.map((item, index) => (
+                                <SidebarMenuItem {...item} key={index} activated={activatedParents} />
+                            ))}
                             {menuItems.map((item, index) => (
                                 <SidebarMenuItem {...item} key={index} activated={activatedParents} />
                             ))}

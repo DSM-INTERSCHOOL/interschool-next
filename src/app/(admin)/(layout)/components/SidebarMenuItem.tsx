@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AnchorHTMLAttributes } from "react";
 
 import { ISidebarMenuItemBadges, SidebarMenuItemBadges } from "./SidebarMenuItemBadges";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export type ISidebarMenuItem = {
     id: string;
@@ -9,6 +10,7 @@ export type ISidebarMenuItem = {
     label: string;
     isTitle?: boolean;
     url?: string;
+    legacyUrl?: string;
     linkProp?: AnchorHTMLAttributes<HTMLAnchorElement>;
     children?: ISidebarMenuItem[];
 } & ISidebarMenuItemBadges;
@@ -23,8 +25,11 @@ export const SidebarMenuItem = ({
     linkProp,
     label,
     activated,
+    legacyUrl
 }: ISidebarMenuItem & { activated: Set<string> }) => {
     const selected = activated.has(id);
+        const setLegacyUrl = useAuthStore((state) => state.setLegacyUrl) as any;
+    
 
     if (isTitle) {
         return <p className="sidebar-menu-title">{label}</p>;
@@ -32,7 +37,10 @@ export const SidebarMenuItem = ({
 
     if (!children) {
         return (
-            <Link href={url ?? ""} className={`sidebar-menu-item ${selected && "active"}`} {...linkProp}>
+            <Link href={url ?? ""} onClick={()=> {
+                console.log('legacyUrl', legacyUrl)
+                setLegacyUrl(legacyUrl!)
+            }} className={`sidebar-menu-item ${selected && "active"}`} {...linkProp}>
                 {icon && <span className={`iconify ${icon} size-4`} />}
                 <span className="grow">{label}</span>
                 <SidebarMenuItemBadges badges={badges} />

@@ -12,7 +12,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
                 <Sidebar menuItems={adminMenuItems} />
                 <div className="flex h-screen min-w-0 grow flex-col overflow-auto">
                     <Topbar />
-                    <div id="layout-content">{children}</div>
+                    <div id="layout-contentx">{children}</div>
                 </div>
             </div>
             <Rightbar />

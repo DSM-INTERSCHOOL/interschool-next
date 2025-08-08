@@ -1,10 +1,54 @@
 "use client";
 
+import axios from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useAuthStore } from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
+
+
 
 export const LoginAuth = () => {
     const [showPassword, setShowPassword] = useState(false);
+    const setPermisos = useAuthStore((state) => state.setPermisos);
+    const router = useRouter();
+
+
+    
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+    });
+
+    const handleChange = (e: any) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
+
+    const handleSubmit = async () => {
+        try {
+            const res = await axios.post(
+                "http://core-api.idsm.xyz:8090/web-login",
+                {
+                    person_id: formData.email,
+                    password: formData.password,
+                },
+                {
+                    headers: {
+                        "x-device-id": "mobile-web-client",
+                        "x-url-origin": "https://admin.celta.interschool.mx",
+                    },
+                },
+            );
+            setPermisos(res.data.meta_data.permisos)
+            router.push('/dashboards/ecommerce')
+        } catch (error) {
+            console.log("error", error);
+            alert("Error al iniciar sesion");
+        }
+    };
 
     return (
         <>
@@ -12,7 +56,14 @@ export const LoginAuth = () => {
                 <legend className="fieldset-legend">Email Address</legend>
                 <label className="input w-full focus:outline-0">
                     <span className="iconify lucide--mail text-base-content/80 size-5"></span>
-                    <input className="grow focus:outline-0" placeholder="Email Address" type="email" />
+                    <input
+                        value={formData.email}
+                        name="email"
+                        onChange={handleChange}
+                        className="grow focus:outline-0"
+                        placeholder="Email Address"
+                        type="email"
+                    />
                 </label>
             </fieldset>
 
@@ -21,8 +72,11 @@ export const LoginAuth = () => {
                 <label className="input w-full focus:outline-0">
                     <span className="iconify lucide--key-round text-base-content/80 size-5"></span>
                     <input
+                    name="password"
+                        onChange={handleChange}
                         className="grow focus:outline-0"
                         placeholder="Password"
+                        value={formData.password}
                         type={showPassword ? "text" : "password"}
                     />
                     <button
@@ -38,41 +92,10 @@ export const LoginAuth = () => {
                 </label>
             </fieldset>
 
-            <div className="text-end">
-                <Link className="label-text text-base-content/80 text-xs" href="/auth/forgot-password">
-                    Forgot Password?
-                </Link>
-            </div>
-
-            <div className="mt-4 flex items-center gap-3 md:mt-6">
-                <input
-                    className="checkbox checkbox-sm checkbox-primary"
-                    aria-label="Checkbox example"
-                    type="checkbox"
-                    id="agreement"
-                />
-                <label htmlFor="agreement" className="text-sm">
-                    I agree with
-                    <span className="text-primary ms-1 cursor-pointer hover:underline">terms and conditions</span>
-                </label>
-            </div>
-
-            <Link href="/dashboards/ecommerce" className="btn btn-primary btn-wide mt-4 max-w-full gap-3 md:mt-6">
+            <button onClick={handleSubmit} className="btn btn-primary btn-wide mt-4 max-w-full gap-3 md:mt-6">
                 <span className="iconify lucide--log-in size-4" />
                 Login
-            </Link>
-
-            <button className="btn btn-ghost btn-wide border-base-300 mt-4 max-w-full gap-3">
-                <img src="/images/brand-logo/google-mini.svg" className="size-6" alt="" />
-                Login with Google
             </button>
-
-            <p className="text-base-content/80 mt-4 text-center text-sm md:mt-6">
-                Haven&apos;t account
-                <Link className="text-primary ms-1 hover:underline" href="/auth/register">
-                    Create One
-                </Link>
-            </p>
         </>
     );
 };
