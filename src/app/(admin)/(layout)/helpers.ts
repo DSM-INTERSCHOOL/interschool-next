@@ -80,6 +80,12 @@ export const adminMenuItems: ISidebarMenuItem[] = [
         label: "Feed Social",
         url: "/apps/social-feed",
     },
+    {
+        id: "apps-daypass",
+        icon: "lucide--clipboard-check",
+        label: "Pase de Salida",
+        url: "/apps/daypass",
+    },
 
     {
         id: "label-pages",

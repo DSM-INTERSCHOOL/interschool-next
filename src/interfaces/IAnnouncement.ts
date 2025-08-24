@@ -112,3 +112,4 @@ export interface IPersonRead {
   // Agregar otros campos según sea necesario
 }
 
+

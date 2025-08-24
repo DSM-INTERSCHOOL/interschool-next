@@ -98,3 +98,4 @@ export const unlike = async ({ schoolId, commentId }: UnlikeArgs): Promise<void>
     await communicationApi.delete(`/schools/${schoolId}/comments/${commentId}/like`);
 };
 
+

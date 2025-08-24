@@ -4,3 +4,4 @@ export default function FeedPage() {
     redirect("/apps/publications?tab=0");
 }
 
+
