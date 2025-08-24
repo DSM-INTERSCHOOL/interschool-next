@@ -1,5 +1,5 @@
 {
-    "name": "nexus-nextjs",
+    "name": "interschool-next",
     "version": "2.0.0",
     "private": true,
     "type": "module",
@@ -15,6 +15,8 @@
         "node": ">=18.18.0"
     },
     "dependencies": {
+        "@headlessui/react": "^2.2.7",
+        "@heroicons/react": "^2.2.0",
         "apexcharts": "^4.4.0",
         "axios": "^1.11.0",
         "filepond": "^4.32.7",

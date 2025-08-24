@@ -68,6 +68,18 @@ export const adminMenuItems: ISidebarMenuItem[] = [
         label: "Chat",
         url: "/apps/chat",
     },
+    {
+        id: "medical-services",
+        icon: "lucide--stethoscope",
+        label: "Servicios Médicos",
+        url: "/pages/starter?school_id=1000",
+    },
+    {
+        id: "apps-social-feed",
+        icon: "lucide--users",
+        label: "Feed Social",
+        url: "/apps/social-feed",
+    },
 
     {
         id: "label-pages",

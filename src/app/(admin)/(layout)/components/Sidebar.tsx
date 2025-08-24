@@ -71,12 +71,14 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                 data-theme={
                     config.sidebarTheme == "dark" && ["light", "contrast"].includes(config.theme) ? "dark" : undefined
                 }>
-                <Link href="/dashboards/ecommerce" className="flex min-h-16 items-center justify-center">
-                    {config.theme === "dark" ? <LogoLight /> : <Logo />}
-                </Link>
+                <div className="sidebar-logo-area">
+                    <Link href="/dashboards/ecommerce" className="flex items-center justify-center">
+                        {config.theme === "dark" ? <LogoLight /> : <Logo />}
+                    </Link>
+                </div>
                 <div className="relative min-h-0 grow">
                     <SimpleBar ref={scrollRef} className="size-full">
-                        <div id="sidebar-menu">
+                        <div id="sidebar-menu" className="pt-2">
                             {menuItems2.map((item, index) => (
                                 <SidebarMenuItem {...item} key={index} activated={activatedParents} />
                             ))}

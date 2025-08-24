@@ -22,10 +22,15 @@
         margin-inline-start: calc(var(--layout-sidebar-width) * -1);
     }
 
+    /* == Sidebar: Logo Area == */
+    .sidebar-logo-area {
+        @apply py-3 px-2;
+    }
+
     /* == Sidebar: Menu Items == */
 
     #sidebar-menu {
-        @apply mb-4 size-full space-y-0.5 px-2;
+        @apply mb-4 mt-2 size-full space-y-0.5 px-2;
 
         a {
             @apply hover:bg-base-200;
