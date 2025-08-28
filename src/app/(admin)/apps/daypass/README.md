@@ -1,4 +1,4 @@
-# Pase de Salida - Aplicación de Autorización
+# Mis Autorizaciones - Aplicación de Autorización
 
 ## Descripción
 Aplicación para gestionar la autorización de pases de salida de estudiantes. Los usuarios con rol de autorizador pueden visualizar y autorizar pases de salida pendientes.

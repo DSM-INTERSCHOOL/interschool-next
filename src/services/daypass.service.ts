@@ -47,7 +47,7 @@ export const getDaypassAuthorizers = async (params: GetDaypassAuthorizersParams)
     console.error('Error fetching daypass authorizers:', error);
     
     // Extraer detalles del error del API
-    let errorMessage = 'Error al cargar los pases de salida';
+    let errorMessage = 'Error al cargar las autorizaciones';
     
     if (error.response?.data) {
       // Si el API devuelve un mensaje específico, usarlo
@@ -121,14 +121,14 @@ export const authorizeDaypass = async (
   } catch (error: any) {
     console.error('Error authorizing daypass:', error);
     
-    let errorMessage = 'Error al autorizar el pase de salida';
+    let errorMessage = 'Error al autorizar la solicitud';
     
     if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
     } else if (error.response?.status === 401) {
       errorMessage = 'No autorizado para realizar esta acción';
     } else if (error.response?.status === 404) {
-      errorMessage = 'Pase de salida no encontrado';
+      errorMessage = 'Solicitud no encontrada';
     } else if (error.response?.status >= 500) {
       errorMessage = 'Error del servidor al autorizar';
     } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {

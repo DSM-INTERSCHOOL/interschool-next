@@ -45,7 +45,7 @@ const DaypassApp = () => {
       setDaypassGroups(data);
     } catch (err: any) {
       console.error("Error loading daypasses:", err);
-      setError(err.message || "Error al cargar los pases de salida.");
+      setError(err.message || "Error al cargar las autorizaciones.");
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ const DaypassApp = () => {
       );
       
       if (!daypassGroup) {
-        throw new Error('Pase de salida no encontrado');
+        throw new Error('Solicitud no encontrada');
       }
 
       const daypassAuth = daypassGroup.find(auth => auth.daypass.id.toString() === daypassId);
@@ -84,7 +84,7 @@ const DaypassApp = () => {
         currentSchoolId
       );
 
-      addToast("Pase de salida autorizado exitosamente", "success");
+      addToast("Solicitud autorizada exitosamente", "success");
       await loadDaypasses();
       setSelectedAuthorizers(prev => {
         const newState = { ...prev };

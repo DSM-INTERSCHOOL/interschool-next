@@ -19,7 +19,7 @@ const AuthorizationConfirmationModal = ({
     onClose,
     onConfirm,
     title = "Confirmar Autorización",
-    message = "¿Estás seguro de que deseas autorizar este pase de salida?",
+    message = "¿Estás seguro de que deseas autorizar esta solicitud?",
     studentName,
     optionDescription,
     loading = false

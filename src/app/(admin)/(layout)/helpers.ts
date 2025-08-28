@@ -83,7 +83,7 @@ export const adminMenuItems: ISidebarMenuItem[] = [
     {
         id: "apps-daypass",
         icon: "lucide--clipboard-check",
-        label: "Pase de Salida",
+        label: "Mis Autorizaciones",
         url: "/apps/daypass",
     },
 
