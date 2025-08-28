@@ -52,6 +52,11 @@ const DaypassCard = ({
   // Obtener todas las secuencias disponibles
   const sequenceKeys = Object.keys(sequenceConfig).map(key => parseInt(key)).sort((a, b) => a - b);
 
+  // Filtrar solo la secuencia que corresponde al authorization_sequence del usuario actual
+  const mySequences = sequenceKeys.filter(sequenceNum => {
+    return sequenceNum === currentSequence;
+  });
+
   // Obtener el paso actual
   const currentStep = sequenceConfig[currentSequence.toString()];
 
@@ -144,67 +149,26 @@ const DaypassCard = ({
 
           <div className="divider"></div>
           
-          <div className="mb-4">
-            <h4 className="font-semibold text-base-content mb-3">Secuencia de Autorización</h4>
-            <div className="space-y-3">
-              {sequenceKeys.map((sequenceNum) => {
+          {mySequences.length > 0 && (
+            <div className="mb-4">
+              {mySequences.map((sequenceNum) => {
                 const step = sequenceConfig[sequenceNum.toString()];
                 const isCurrentStep = sequenceNum === currentSequence;
-                const isCompleted = sequenceNum < currentSequence;
-                const isPending = sequenceNum > currentSequence;
                 
-                return (
-                  <div
-                    key={sequenceNum}
-                    className={`p-3 rounded-lg border ${
-                      isCurrentStep
-                        ? 'border-primary bg-primary/5'
-                        : isCompleted
-                          ? 'border-success bg-success/5'
-                          : 'border-base-300 bg-base-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`badge ${
-                          isCurrentStep ? 'badge-primary' :
-                          isCompleted ? 'badge-success' : 'badge-outline'
-                        }`}>
-                          Paso {sequenceNum + 1}
-                        </span>
-                        <span className="font-medium">{step.description}</span>
-                      </div>
-                      {isCompleted && <CheckCircleIcon className="w-5 h-5 text-success" />}
-                    </div>
-                    
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm text-base-content/70">
-                        Autorizador ID: {step.person_authorizer_id}
-                      </span>
-                    </div>
-                    
-                    {isCurrentStep && (
-                      <div className="space-y-2">
-                        <AuthorizationOptions
-                          options={step.options}
-                          onSelectOption={handleOptionSelect}
-                          disabled={authorizing}
-                          selectedOption={selectedOption}
-                          groupName={`daypass-${daypass.id}-sequence-${sequenceNum}`}
-                        />
-                      </div>
-                    )}
-                    
-                    {isPending && (
-                      <p className="text-sm text-base-content/50">
-                        {/* Removed "Pendiente de autorización" label */}
-                      </p>
-                    )}
+                return isCurrentStep ? (
+                  <div key={sequenceNum} className="space-y-2">
+                    <AuthorizationOptions
+                      options={step.options}
+                      onSelectOption={handleOptionSelect}
+                      disabled={authorizing}
+                      selectedOption={selectedOption}
+                      groupName={`daypass-${daypass.id}-sequence-${sequenceNum}`}
+                    />
                   </div>
-                );
+                ) : null;
               })}
             </div>
-          </div>
+          )}
         </div>
       </div>
 

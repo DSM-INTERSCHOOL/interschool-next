@@ -60,8 +60,8 @@ const LoginAuthContent = () => {
             const result = await login(formData.person_id, formData.password);
             
             if (result.success) {
-                // Redirigir a la página original o al dashboard
-                const redirectTo = searchParams.get('redirectTo') || '/dashboards/ecommerce';
+                // Redirigir a la página original o al home
+                const redirectTo = searchParams.get('redirectTo') || '/home';
                 router.push(redirectTo);
             } else {
                 setLoginError(result.message || 'Error al iniciar sesión');

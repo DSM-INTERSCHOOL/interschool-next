@@ -73,7 +73,7 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                     config.sidebarTheme == "dark" && ["light", "contrast"].includes(config.theme) ? "dark" : undefined
                 }>
                 <div className="sidebar-logo-area">
-                    <Link href="/dashboards/ecommerce" className="flex items-center justify-center">
+                    <Link href="/home" className="flex items-center justify-center">
                         {config.theme === "dark" ? <LogoLight /> : <Logo />}
                     </Link>
                 </div>
