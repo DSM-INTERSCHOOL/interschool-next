@@ -1,11 +1,16 @@
+"use client";
+
 import Link from "next/link";
 
 import { ThemeToggleDropdown } from "@/components/ThemeToggleDropdown";
+import { useAuth } from "@/hooks/useAuth";
 
 import { TopbarNotificationButton } from "./TopbarNotificationButton";
 import { TopbarSearchButton } from "./TopbarSearchButton";
 
 export const Topbar = () => {
+    const { name, email, personInternalId, status, personType, logout } = useAuth();
+
     return (
         <div
             role="navigation"
@@ -42,8 +47,15 @@ export const Topbar = () => {
                                 </div>
                             </div>
                             <div className="-space-y-0.5 text-start">
-                                <p className="text-sm">Denish</p>
-                                <p className="text-base-content/60 text-xs">Profile</p>
+                                <p className="text-sm">{name || 'Usuario'}</p>
+                                <p className="text-base-content/60 text-xs">
+                                    {personInternalId || email || 'usuario@example.com'}
+                                </p>
+                                {status && (
+                                    <p className="text-base-content/40 text-xs">
+                                        {status} • {personType}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -52,35 +64,38 @@ export const Topbar = () => {
                             <li>
                                 <div>
                                     <span className="iconify lucide--user size-4" />
-                                    <span>My Profile</span>
+                                    <span>Mi Perfil</span>
                                 </div>
                             </li>
                             <li>
                                 <div>
                                     <span className="iconify lucide--settings size-4" />
-                                    <span>Settings</span>
+                                    <span>Configuración</span>
                                 </div>
                             </li>
                             <li>
                                 <div>
                                     <span className="iconify lucide--arrow-left-right size-4" />
-                                    <span>Switch Account</span>
+                                    <span>Cambiar Cuenta</span>
                                 </div>
                             </li>
                             <li>
                                 <div>
                                     <span className="iconify lucide--help-circle size-4" />
-                                    <span>Help</span>
+                                    <span>Ayuda</span>
                                 </div>
                             </li>
                         </ul>
                         <hr className="border-base-300" />
                         <ul className="menu w-full p-2">
                             <li>
-                                <Link className="text-error hover:bg-error/10" href="/auth/login">
+                                <button 
+                                    className="text-error hover:bg-error/10 w-full text-left"
+                                    onClick={logout}
+                                >
                                     <span className="iconify lucide--log-out size-4" />
-                                    <span>Logout</span>
-                                </Link>
+                                    <span>Cerrar Sesión</span>
+                                </button>
                             </li>
                         </ul>
                     </div>

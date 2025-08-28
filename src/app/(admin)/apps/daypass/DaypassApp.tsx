@@ -1,183 +1,201 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { 
-    ClockIcon, 
-    ExclamationTriangleIcon,
-    ArrowPathIcon
-} from "@heroicons/react/24/outline";
+import { useState, useCallback, useEffect } from "react";
 import { getDaypassAuthorizers, authorizeDaypass } from "@/services/daypass.service";
-import { IDaypass } from "@/interfaces/IDaypass";
+import { IDaypassAuthorizer } from "@/interfaces/IDaypass";
+import { useAuthStore } from "@/store/useAuthStore";
 import DaypassCard from "./components/DaypassCard";
+import Toast from "@/components/Toast";
+
+interface ToastMessage {
+  id: string;
+  message: string;
+  type: "success" | "error" | "warning" | "info";
+}
 
 const DaypassApp = () => {
-    const [daypasses, setDaypasses] = useState<IDaypass[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [authorizing, setAuthorizing] = useState<string | null>(null);
-    const [refreshing, setRefreshing] = useState(false);
-    const [selectedAuthorizers, setSelectedAuthorizers] = useState<Record<string, string>>({});
+  const [daypassGroups, setDaypassGroups] = useState<IDaypassAuthorizer[][]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [authorizing, setAuthorizing] = useState<string | null>(null);
+  const [selectedAuthorizers, setSelectedAuthorizers] = useState<Record<string, string>>({});
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-    // Configuración temporal - estos valores deberían venir del contexto de la aplicación
-    const schoolId = "1"; // ID de la escuela actual
-    const authorizerPersonId = "1"; // ID del usuario autorizador actual - esto debería venir del contexto
+  const schoolId = useAuthStore((state) => state.schoolId);
+  const personId = useAuthStore((state) => state.personId);
 
-    useEffect(() => {
-        loadDaypasses();
-    }, []);
+  const addToast = (message: string, type: "success" | "error" | "warning" | "info") => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message, type }]);
+  };
 
-    const loadDaypasses = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const data = await getDaypassAuthorizers({
-                schoolId,
-                authorizerPersonId,
-                status: "pendiente"
-            });
-            setDaypasses(data);
-        } catch (err) {
-            console.error("Error loading daypasses:", err);
-            setError("Error al cargar los pases de salida");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
 
-    const handleRefresh = async () => {
-        setRefreshing(true);
+  const loadDaypasses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getDaypassAuthorizers({
+        schoolId: schoolId?.toString() || "1000",
+        authorizerPersonId: personId?.toString() || "8121",
+        status: "pendiente"
+      });
+      setDaypassGroups(data);
+    } catch (err: any) {
+      console.error("Error loading daypasses:", err);
+      setError(err.message || "Error al cargar los pases de salida.");
+    } finally {
+      setLoading(false);
+    }
+  }, [schoolId, personId]);
+
+  useEffect(() => {
+    loadDaypasses();
+  }, [loadDaypasses]);
+
+  const handleAuthorize = async (daypassId: string, authorizerPersonId: string, action: string) => {
+    setAuthorizing(daypassId);
+    try {
+      const result = await authorizeDaypass({
+        daypassId,
+        authorizerPersonId,
+        dto: { action }
+      });
+
+      if (result.success) {
+        addToast("Pase de salida autorizado exitosamente", "success");
         await loadDaypasses();
-        setRefreshing(false);
-    };
-
-    const handleAuthorize = async (daypassId: string, authorizerPersonId: string) => {
-        try {
-            setAuthorizing(daypassId);
-            const dto = {
-                authorized: true,
-                authorized_at: new Date().toISOString()
-            };
-
-            await authorizeDaypass({
-                schoolId,
-                daypassId,
-                authorizerPersonId,
-                dto
-            });
-
-            // Recargar la lista después de autorizar
-            await loadDaypasses();
-            // Limpiar la selección después de autorizar
-            setSelectedAuthorizers(prev => {
-                const newState = { ...prev };
-                delete newState[daypassId];
-                return newState;
-            });
-        } catch (err) {
-            console.error("Error authorizing daypass:", err);
-            setError("Error al autorizar el pase de salida");
-        } finally {
-            setAuthorizing(null);
-        }
-    };
-
-    const handleAuthorizerSelect = (daypassId: string, authorizerId: string) => {
-        setSelectedAuthorizers(prev => ({
-            ...prev,
-            [daypassId]: authorizerId
-        }));
-    };
-
-
-
-    if (loading) {
-        return (
-            <div className="bg-base-100 rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-center">
-                    <div className="loading loading-spinner loading-lg"></div>
-                    <span className="ml-3">Cargando pases de salida...</span>
-                </div>
-            </div>
-        );
+        setSelectedAuthorizers(prev => {
+          const newState = { ...prev };
+          delete newState[daypassId];
+          return newState;
+        });
+      } else {
+        console.error("Error al autorizar:", result.message);
+        addToast(`Error al autorizar: ${result.message}`, "error");
+      }
+    } catch (error: any) {
+      console.error("Error al autorizar:", error);
+      addToast(`Error al autorizar: ${error.message || 'Error desconocido'}`, "error");
+    } finally {
+      setAuthorizing(null);
     }
+  };
 
-    if (error) {
-        return (
-            <div className="bg-base-100 rounded-lg shadow-sm p-6">
-                <div className="alert alert-error">
-                    <ExclamationTriangleIcon className="w-6 h-6" />
-                    <span>{error}</span>
-                    <button 
-                        onClick={loadDaypasses}
-                        className="btn btn-sm btn-outline"
-                    >
-                        Reintentar
-                    </button>
-                </div>
-            </div>
-        );
-    }
+  const handleAuthorizerSelect = (daypassId: string, authorizerId: string) => {
+    setSelectedAuthorizers(prev => ({
+      ...prev,
+      [daypassId]: authorizerId
+    }));
+  };
 
+  const handleRetry = () => {
+    loadDaypasses();
+  };
+
+  if (loading) {
     return (
-        <div className="bg-base-100 rounded-lg shadow-sm">
-            <div className="p-6 border-b border-base-300">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-base-content">
-                            Pases de Salida Pendientes
-                        </h2>
-                        <p className="text-base-content/70 mt-2">
-                            Revisa y autoriza las solicitudes de salida de alumnos
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleRefresh}
-                        disabled={refreshing}
-                        className="btn btn-outline btn-sm"
-                    >
-                        {refreshing ? (
-                            <>
-                                <div className="loading loading-spinner loading-xs"></div>
-                                Actualizando...
-                            </>
-                        ) : (
-                            <>
-                                <ArrowPathIcon className="w-4 h-4" />
-                                Actualizar
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            <div className="p-6">
-                {daypasses.length === 0 ? (
-                    <div className="text-center py-12">
-                        <ClockIcon className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-base-content mb-2">
-                            No hay pases de salida pendientes
-                        </h3>
-                        <p className="text-base-content/70">
-                            No tienes solicitudes de pases de salida que requieran tu autorización.
-                        </p>
-                    </div>
-                ) : (
-                                         <div className="space-y-6">
-                         {daypasses.map((daypass) => (
-                             <DaypassCard
-                                 key={daypass.id}
-                                 daypass={daypass}
-                                 onAuthorize={handleAuthorize}
-                                 authorizing={authorizing === daypass.id.toString()}
-                                 selectedAuthorizerId={selectedAuthorizers[daypass.id.toString()] || null}
-                                 onAuthorizerSelect={(authorizerId) => handleAuthorizerSelect(daypass.id.toString(), authorizerId)}
-                             />
-                         ))}
-                     </div>
-                )}
-            </div>
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="loading loading-spinner loading-lg"></div>
+        <span className="ml-3">Cargando pases de salida...</span>
+      </div>
     );
+  }
+
+  if (error) {
+    const isJsonError = error.includes('\n') || error.includes('{') || error.includes('[');
+    
+    return (
+      <div className="space-y-4">
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div className="flex-1">
+            <h3 className="font-bold">Error al cargar los pases de salida</h3>
+            <div className="text-sm">
+              {isJsonError ? (
+                <pre className="whitespace-pre-wrap text-xs bg-base-200 p-2 rounded mt-2 overflow-x-auto">
+                  {error}
+                </pre>
+              ) : (
+                error
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-center">
+          <button 
+            onClick={handleRetry}
+            className="btn btn-primary"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (daypassGroups.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-base-content/50 text-lg mb-2">
+          No hay pases de salida pendientes
+        </div>
+        <p className="text-base-content/40">
+          Todos los pases de salida han sido procesados o no hay solicitudes pendientes.
+        </p>
+        <button 
+          onClick={handleRetry}
+          className="btn btn-outline btn-sm mt-4"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Actualizar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {daypassGroups.map((authorizations, groupIndex) => {
+          const firstAuth = authorizations[0];
+          const daypass = firstAuth.daypass;
+          
+          return (
+            <DaypassCard
+              key={`${daypass.id}-${groupIndex}`}
+              daypass={daypass}
+              authorizations={authorizations}
+              onAuthorize={handleAuthorize}
+              authorizing={authorizing === daypass.id.toString()}
+              selectedAuthorizerId={selectedAuthorizers[daypass.id.toString()] || null}
+              onAuthorizerSelect={(authorizerId) => handleAuthorizerSelect(daypass.id.toString(), authorizerId)}
+            />
+          );
+        })}
+      </div>
+
+      {/* Toasts */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+    </>
+  );
 };
 
 export default DaypassApp;

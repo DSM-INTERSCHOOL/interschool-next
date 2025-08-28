@@ -1,26 +1,23 @@
 "use client";
 
-import axios from "axios";
-import Link from "next/link";
 import React, { useState } from "react";
-import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from 'next/navigation';
-
-
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 export const LoginAuth = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [loginError, setLoginError] = useState("");
-    const setPermisos = useAuthStore((state) => state.setPermisos);
+    const { login } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const [formData, setFormData] = useState({
-        email: "",
+        person_id: "",
         password: "",
     });
 
-    const handleChange = (e: any) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         
         // Limpiar errores de login cuando el usuario empiece a escribir
@@ -42,14 +39,14 @@ export const LoginAuth = () => {
     };
 
     const handleSubmit = async () => {
-        if (isLoading) return; // Prevenir múltiples envíos
+        if (isLoading) return;
         
         // Limpiar errores previos
         setLoginError('');
         
         // Validar que los campos no estén vacíos
-        if (!formData.email) {
-            setLoginError('El usuario es requerido');
+        if (!formData.person_id) {
+            setLoginError('El ID de usuario es requerido');
             return;
         }
 
@@ -60,33 +57,18 @@ export const LoginAuth = () => {
         
         setIsLoading(true);
         try {
-            const res = await axios.post(
-                "http://core-api.idsm.xyz:8090/web-login",
-                {
-                    person_id: formData.email,
-                    password: formData.password,
-                },
-                {
-                    headers: {
-                        "x-device-id": "mobile-web-client",
-                        "x-url-origin": "https://admin.celta.interschool.mx",
-                    },
-                },
-            );
-            setPermisos(res.data.meta_data.permisos);
-            router.push('/dashboards/ecommerce');
-        } catch (error: any) {
-            console.log("error", error);
-            // Manejar diferentes tipos de errores
-            if (error.response?.status === 401) {
-                setLoginError('Credenciales incorrectas. Verifica tu email y contraseña.');
-            } else if (error.response?.status >= 500) {
-                setLoginError('Error del servidor. Intenta nuevamente más tarde.');
-            } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-                setLoginError('Error de conexión. Verifica tu conexión a internet.');
+            const result = await login(formData.person_id, formData.password);
+            
+            if (result.success) {
+                // Redirigir a la página original o al dashboard
+                const redirectTo = searchParams.get('redirectTo') || '/dashboards/ecommerce';
+                router.push(redirectTo);
             } else {
-                setLoginError('Error al iniciar sesión. Intenta nuevamente.');
+                setLoginError(result.message || 'Error al iniciar sesión');
             }
+        } catch (error: any) {
+            console.error("Error en login:", error);
+            setLoginError('Hubo un problema. Intenta más tarde');
         } finally {
             setIsLoading(false);
         }
@@ -115,16 +97,16 @@ export const LoginAuth = () => {
             )}
 
             <fieldset className="fieldset">
-                <legend className="fieldset-legend">Usuario</legend>
+                <legend className="fieldset-legend">ID de Usuario</legend>
                 <label className="input w-full focus:outline-0">
                     <span className="iconify lucide--user text-base-content/80 size-5"></span>
                     <input
-                        value={formData.email}
-                        name="email"
+                        value={formData.person_id}
+                        name="person_id"
                         onChange={handleChange}
                         onKeyPress={handleKeyPress}
                         className="grow focus:outline-0"
-                        placeholder="Usuario"
+                        placeholder="ID de Usuario"
                         type="text"
                         disabled={isLoading}
                     />
@@ -132,7 +114,7 @@ export const LoginAuth = () => {
             </fieldset>
 
             <fieldset className="fieldset">
-                <legend className="fieldset-legend">Password</legend>
+                <legend className="fieldset-legend">Contraseña</legend>
                 <label className="input w-full focus:outline-0">
                     <span className="iconify lucide--key-round text-base-content/80 size-5"></span>
                     <input
@@ -140,7 +122,7 @@ export const LoginAuth = () => {
                         onChange={handleChange}
                         onKeyPress={handleKeyPress}
                         className="grow focus:outline-0"
-                        placeholder="Password"
+                        placeholder="Contraseña"
                         value={formData.password}
                         type={showPassword ? "text" : "password"}
                         disabled={isLoading}
@@ -148,7 +130,7 @@ export const LoginAuth = () => {
                     <button
                         className="btn btn-xs btn-ghost btn-circle"
                         onClick={() => setShowPassword(!showPassword)}
-                        aria-label="Password">
+                        aria-label="Mostrar/Ocultar contraseña">
                         {showPassword ? (
                             <span className="iconify lucide--eye-off size-4" />
                         ) : (
@@ -171,7 +153,7 @@ export const LoginAuth = () => {
                 ) : (
                     <>
                         <span className="iconify lucide--log-in size-4" />
-                        Login
+                        Iniciar Sesión
                     </>
                 )}
             </button>

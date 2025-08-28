@@ -11,7 +11,7 @@ import { Logo } from "@/components/Logo";
 import { LogoLight } from "@/components/LogoLight";
 import { useConfig } from "@/contexts/config";
 import { buildSidebarMenuFromPermisos } from "@/lib/buildMenuFromPermissions";
-import { useAuthStore } from "@/store/useAuthStore";
+import { usePermisos } from "@/hooks/usePermisos";
 
 import { getActivatedItemParentKeys } from "../helpers";
 import { ISidebarMenuItem, SidebarMenuItem } from "./SidebarMenuItem";
@@ -21,7 +21,8 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
     const { config } = useConfig();
     const scrollRef = useRef<SimpleBarCore | null>(null);
     const hasMounted = useRef(false);
-    const permisos = useAuthStore((state) => state.permisos) as any;
+    
+    const { permisos, isLoading: isLoadingPermisos, error: permisosError } = usePermisos();
 
     const menuItems2 = buildSidebarMenuFromPermisos(permisos);
 
@@ -79,7 +80,21 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                 <div className="relative min-h-0 grow">
                     <SimpleBar ref={scrollRef} className="size-full">
                         <div id="sidebar-menu" className="pt-2">
-                            {menuItems2.map((item, index) => (
+                            {isLoadingPermisos && (
+                                <div className="flex items-center justify-center p-4">
+                                    <div className="loading loading-spinner loading-sm"></div>
+                                    <span className="ml-2 text-sm">Cargando permisos...</span>
+                                </div>
+                            )}
+                            {permisosError && (
+                                <div className="alert alert-error mx-2 mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="text-xs">Error al cargar permisos</span>
+                                </div>
+                            )}
+                            {!isLoadingPermisos && !permisosError && menuItems2.map((item, index) => (
                                 <SidebarMenuItem {...item} key={index} activated={activatedParents} />
                             ))}
                             {menuItems.map((item, index) => (

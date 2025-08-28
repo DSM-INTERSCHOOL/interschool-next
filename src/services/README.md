@@ -1,202 +1,161 @@
-# Servicios de Anuncios
+# Servicios de la Aplicación
 
-Este directorio contiene los servicios relacionados con la gestión de anuncios escolares, basados en la especificación de la API de comunicación.
+## Autenticación
 
-## Archivos
+### auth.service.ts
+Servicio principal para manejar la autenticación de usuarios.
 
-### `announcement.service.ts`
-Servicio principal para la gestión de anuncios que incluye:
+**Endpoints:**
+- `POST /schools/{school_id}/app-login` - Iniciar sesión
 
-- **CRUD básico**: Crear, leer, actualizar y eliminar anuncios
-- **Gestión de personas**: Agregar/remover personas de anuncios
-- **Sistema de likes**: Dar/quitar likes y obtener lista de likes
-- **Sistema de vistas**: Registrar y obtener vistas de anuncios
-- **Sistema de comentarios**: CRUD completo de comentarios
-
-### `communicationApi.ts`
-Configuración de axios para la API de comunicación.
-
-### `announcement.service.example.ts`
-Ejemplos de uso del servicio de anuncios con casos prácticos.
-
-## Interfaces
-
-### `IAnnouncementCreate`
-Interfaz para crear un nuevo anuncio:
+**Estructura de Respuesta:**
 ```typescript
 {
-  title?: string | null;
-  content?: string | null;
-  start_date?: string | null;
-  end_date?: string | null;
-  accept_comments?: boolean;
-  authorized?: boolean;
-  academic_year?: string | null;
-  academic_stages?: string[] | null;
-  publisher_person_id: string;
-  persons: string[];
-  // ... más campos
-}
-```
-
-### `IAnnouncementRead`
-Interfaz para leer un anuncio (incluye campos generados por el servidor):
-```typescript
-{
-  id: string; // UUID
+  person_id: number;
+  person_internal_id: string;
+  token: string;
   school_id: number;
-  created_at: string | null;
-  modified_at: string | null;
-  // ... todos los campos de IAnnouncementCreate
+  given_name: string;
+  paternal_name: string;
+  maternal_name: string;
+  email: string;
+  display_name: string | null;
+  status: string;
+  person_type: string;
+  person_photo: string | null;
+  academic_year: string | null;
+  academic_stage_id: number | null;
+  last_login: string;
+  time_zone: string;
+  inoty_notifications_config: any | null;
 }
 ```
 
-## Uso Básico
+**Funciones:**
+- `login(credentials, schoolId)` - Autenticación de usuario
+- `logout()` - Cerrar sesión (futuro: invalidar token en backend)
 
+### api.ts
+Configuración base de axios con interceptores para:
+- Agregar automáticamente el token de autenticación a todas las peticiones
+- Manejar errores 401 (no autorizado) y redirigir al login
+
+## Pase de Salida
+
+### daypass.service.ts
+Servicio para manejar los pases de salida de estudiantes.
+
+**Endpoints:**
+- `GET /schools/{school_id}/daypass-authorizers` - Obtener pases pendientes
+- `PATCH /schools/{school_id}/daypasses/{daypass_id}/authorizers/{authorizer_person_id}` - Autorizar pase
+
+**Funciones:**
+- `getDaypassAuthorizers()` - Obtener pases pendientes de autorización
+- `authorizeDaypass()` - Autorizar un pase de salida
+
+## Uso
+
+### Autenticación
 ```typescript
-import { create, getAll, getById, update, remove } from './announcement.service';
+import { useAuth } from '@/hooks/useAuth';
 
-// Crear un anuncio
-const newAnnouncement = await create({
-  schoolId: 1,
-  dto: {
-    title: "Reunión de padres",
-    content: "Se convoca a todos los padres",
-    publisher_person_id: "user-123",
-    persons: ["person-1", "person-2"],
-  }
-});
+const { login, logout, isAuthenticated, token, personId, name, email, personInternalId } = useAuth();
 
-// Obtener todos los anuncios
-const announcements = await getAll({
-  schoolId: 1,
-  page: 1,
-  per_page: 20
-});
+// Login
+const result = await login('user_id', 'password');
+if (result.success) {
+  // Redirigir al dashboard
+}
 
-// Obtener un anuncio específico
-const announcement = await getById({
-  schoolId: 1,
-  announcementId: "announcement-uuid"
-});
+// Logout
+logout();
+
+// Verificar autenticación
+if (isAuthenticated) {
+  // Usuario autenticado
+}
+
+// Acceder a datos del usuario
+console.log(name); // Nombre completo
+console.log(personInternalId); // ID interno (ej: "DSM")
+console.log(email); // Email del usuario
 ```
 
-## Funcionalidades Avanzadas
-
-### Gestión de Likes
+### Pases de Salida
 ```typescript
-import { like, unlike, getLikes } from './announcement.service';
+import { getDaypassAuthorizers, authorizeDaypass } from '@/services/daypass.service';
 
-// Dar like
-await like({
-  schoolId: 1,
-  announcementId: "announcement-uuid",
-  personId: "person-123"
-});
+// Obtener pases pendientes
+const daypasses = await getDaypassAuthorizers();
 
-// Obtener likes
-const likes = await getLikes({
-  schoolId: 1,
-  announcementId: "announcement-uuid"
-});
-```
-
-### Gestión de Comentarios
-```typescript
-import { addComment, getComments, updateComment, removeComment } from './announcement.service';
-
-// Agregar comentario
-await addComment({
-  schoolId: 1,
-  announcementId: "announcement-uuid",
-  dto: {
-    person_id: "person-123",
-    comment: "Excelente información"
-  }
-});
-
-// Obtener comentarios
-const comments = await getComments({
-  schoolId: 1,
-  announcementId: "announcement-uuid"
-});
-```
-
-### Gestión de Personas
-```typescript
-import { addPersons, removePersons, getPersons } from './announcement.service';
-
-// Agregar personas
-await addPersons({
-  schoolId: 1,
-  announcementId: "announcement-uuid",
-  dto: {
-    persons: ["person-4", "person-5"]
-  }
-});
-
-// Obtener personas del anuncio
-const persons = await getPersons({
-  schoolId: 1,
-  announcementId: "announcement-uuid"
+// Autorizar pase
+await authorizeDaypass({
+  daypassId: '123',
+  dto: { authorized: true, authorized_at: new Date().toISOString() }
 });
 ```
 
 ## Configuración
 
-El servicio utiliza la variable de entorno `NEXT_PUBLIC_API_COMMUNICATION_URL` para la URL base de la API. Si no está definida, usa `http://localhost:8000/v1` por defecto.
-
+### Variables de Entorno
 ```env
-NEXT_PUBLIC_API_COMMUNICATION_URL=http://localhost:8000/v1
+NEXT_PUBLIC_API_BASE_URL=http://core-api.idsm.xyz:8090
+NEXT_PUBLIC_API_CONSULTATION_URL=http://core-api.idsm.xyz:8090
+NEXT_PUBLIC_DEFAULT_SCHOOL_ID=1000
 ```
+
+### Headers Requeridos
+- `x-device-id: mobile-web-client` - Para endpoints de autenticación
+- `Authorization: Bearer {token}` - Para endpoints protegidos (agregado automáticamente)
 
 ## Manejo de Errores
 
-Todos los métodos del servicio pueden lanzar errores de axios. Es recomendable usar try-catch para manejar los errores:
+### Errores de Autenticación
+- **401**: Credenciales inválidas
+- **500+**: Error del servidor
+- **Network Error**: Error de conexión
 
-```typescript
-try {
-  const announcement = await create({
-    schoolId: 1,
-    dto: announcementData
-  });
-} catch (error) {
-  console.error('Error al crear anuncio:', error);
-  // Manejar el error apropiadamente
+### Errores de API
+- **401**: Token inválido o expirado (redirige automáticamente al login)
+- **4xx/5xx**: Errores del servidor
+
+## Seguridad
+
+- Tokens se almacenan en localStorage con persistencia
+- Interceptores automáticos para manejo de tokens
+- Redirección automática en errores 401
+- Protección de rutas con middleware y componentes
+
+## Datos del Usuario
+
+El sistema almacena y proporciona acceso a:
+
+- **Datos básicos**: `token`, `personId`, `email`, `name`, `schoolId`
+- **Datos adicionales**: `personInternalId`, `status`, `personType`, `personPhoto`, `timeZone`, `lastLogin`
+- **Datos legacy**: `permisos` (array vacío por defecto)
+
+## Ejemplo de Respuesta de Login
+
+```json
+{
+  "person_id": 8121,
+  "person_internal_id": "DSM",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "school_id": 1000,
+  "given_name": "DATA",
+  "paternal_name": "SOLUTIONS",
+  "maternal_name": "MEXICO",
+  "email": "soluciones@interschool.mx",
+  "display_name": null,
+  "status": "ACTIVO",
+  "person_type": "USER",
+  "person_photo": null,
+  "academic_year": null,
+  "academic_stage_id": null,
+  "last_login": "2023-10-01T00:00:00Z",
+  "time_zone": "America/Mexico_City",
+  "inoty_notifications_config": null
 }
 ```
-
-## Paginación
-
-Los métodos que devuelven listas soportan paginación:
-
-```typescript
-const announcements = await getAll({
-  schoolId: 1,
-  page: 1,        // Página actual
-  per_page: 20,   // Elementos por página
-  filters: "status=active" // Filtros opcionales
-});
-```
-
-## Filtros
-
-Algunos endpoints soportan filtros como parámetro de consulta:
-
-```typescript
-const announcements = await getAll({
-  schoolId: 1,
-  filters: "status=active&authorized=true"
-});
-```
-
-## Tipos de Respuesta
-
-- **CRUD básico**: Devuelve `IAnnouncementRead`
-- **Listas**: Devuelven arrays de `IAnnouncementRead`
-- **Likes**: Devuelven `IAnnouncementLikeRead`
-- **Comentarios**: Devuelven arrays de comentarios
-- **Personas**: Devuelven arrays de personas
-- **Vistas**: Devuelven arrays de vistas
 
 

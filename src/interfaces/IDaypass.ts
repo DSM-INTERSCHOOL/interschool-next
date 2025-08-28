@@ -11,39 +11,54 @@ export interface IPerson {
   email: string;
 }
 
-export interface IDaypassAuthorizer {
-  authorizer_person_id: number;
-  authorized: boolean;
-  authorized_at: string | null;
-  authorization_sequence: number;
-  authorized_by: string | null;
-  note: string | null;
-  daypass_id: number;
-  created_at: string;
-  authorizer: IPerson;
-}
-
 export interface IDaypass {
+  id: number;
   school_id: number;
   guardian_person_id: number;
   student_person_id: number;
   reason: string;
-  status: 'PENDIENTE' | 'AUTORIZADO' | 'RECHAZADO' | 'COMPLETADO' | 'CANCELADO';
-  authorized_at: string | null;
-  academic_stage_id: number | null;
-  daypass_date: string;
-  daypass_time: string;
-  id: number;
+  status: "PENDIENTE" | "AUTORIZADO" | "CANCELADO";
   created: string;
   modified: string;
-  authorizers: IDaypassAuthorizer[];
+  authorized_at: string | null;
+  daypass_date: string;
+  daypass_time: string;
+  academic_stage_id: number;
   person: IPerson;
   relative: IPerson;
 }
 
+export interface IAuthorizationOption {
+  action: "AUTHORIZE_AND_FORWARD" | "AUTHORIZE_AND_CLOSE";
+  description: string;
+  next_sequence?: number;
+  next_authorizer_id?: number;
+}
+
+export interface IAuthorizationStep {
+  options: Record<string, IAuthorizationOption>;
+  description: string;
+  person_authorizer_id: number;
+}
+
+export interface IDaypassConfig {
+  id: number;
+  school_id: number;
+  academic_stage_id: number;
+  authorization_sequence: Record<string, IAuthorizationStep>;
+}
+
+// Interfaz actualizada para coincidir con la respuesta real del API
+export interface IDaypassAuthorizer {
+  daypass: IDaypass;
+  authorizer: IPerson;
+  daypass_config: IDaypassConfig;
+  authorization_sequence: number;
+}
+
 export interface IDaypassAuthorizeRequest {
-  authorized: boolean;
-  authorized_at: string;
+  action: string;
+  note?: string;
 }
 
 export interface IDaypassAuthorizeResponse {

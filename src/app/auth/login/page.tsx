@@ -1,33 +1,59 @@
+"use client";
+
 import type { Metadata } from "next";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Logo } from "@/components/Logo";
 import { ThemeToggleDropdown } from "@/components/ThemeToggleDropdown";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useAuth } from '@/hooks/useAuth';
+import { useHydration } from '@/hooks/useHydration';
 
 import { LoginAuth } from "./LoginAuth";
 
-export const metadata: Metadata = {
-    title: "Login",
-};
-
 const LoginPage = () => {
+    const { isAuthenticated } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const isHydrated = useHydration();
+
+    useEffect(() => {
+        // Solo redirigir después de la hidratación
+        if (isHydrated && isAuthenticated) {
+            const redirectTo = searchParams.get('redirectTo') || '/dashboards/ecommerce';
+            router.push(redirectTo);
+        }
+    }, [isHydrated, isAuthenticated, router, searchParams]);
+
+    // Durante la hidratación, mostrar un estado de carga
+    if (!isHydrated) {
+        return <LoadingSpinner fullScreen />;
+    }
+
+    // Si está autenticado, mostrar estado de carga mientras redirige
+    if (isAuthenticated) {
+        return <LoadingSpinner message="Redirigiendo..." fullScreen />;
+    }
+
     return (
-        <div className="flex flex-col items-stretch p-6 md:p-8 lg:p-16">
-            <div className="flex items-center justify-between">
-                <Link href="/dashboards/ecommerce">
+        <div className="flex min-h-screen flex-col justify-center px-6 py-12 lg:px-8">
+            <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+                <div className="flex items-center justify-center">
                     <Logo />
-                </Link>
-                <ThemeToggleDropdown
-                    triggerClass="btn btn-circle btn-outline border-base-300"
-                    dropdownClass="dropdown-end"
-                />
+                </div>
+                <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-base-content">
+                    Iniciar Sesión
+                </h2>
             </div>
-            <h3 className="mt-8 text-center text-xl font-semibold md:mt-12 lg:mt-24">Login</h3>
-            <h3 className="text-base-content/70 mt-2 text-center text-sm">
-            </h3>
-            <div className="mt-6 md:mt-10">
+
+            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <LoginAuth />
+            </div>
+
+            <div className="absolute top-4 right-4">
+                <ThemeToggleDropdown />
             </div>
         </div>
     );

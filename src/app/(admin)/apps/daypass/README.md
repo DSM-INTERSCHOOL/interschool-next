@@ -1,151 +1,157 @@
 # Pase de Salida - Aplicación de Autorización
 
 ## Descripción
+Aplicación para gestionar la autorización de pases de salida de estudiantes. Los usuarios con rol de autorizador pueden visualizar y autorizar pases de salida pendientes.
 
-La aplicación de Pase de Salida permite a los usuarios con rol de autorizador visualizar y gestionar las solicitudes de salida de alumnos que requieren su autorización.
+## Características Principales
 
-## Funcionalidades
+### 🔐 **Autenticación Real**
+- ✅ **Endpoint Real**: `https://core-api.idsm.xyz/schools/{school_id}/daypass-authorizers`
+- ✅ **Headers Requeridos**: 
+  - `x-device-id: mobile-web-client`
+  - `x-url-origin: https://admin.celta.interschool.mx`
+  - `Authorization: Bearer {token}`
+- ✅ **Parámetros**: `authorizer_person_id`, `status=pendiente`
 
-### 📋 Visualización de Pases Pendientes
-- Lista todos los pases de salida con estado "PENDIENTE"
-- Muestra información completa de cada solicitud:
-  - **Alumno**: Nombre completo y matrícula
-  - **Solicitante**: Nombre completo del pariente
-  - **Motivo**: Razón de la salida
-  - **Fecha y Hora**: Cuándo se solicita la salida
-  - **Estado**: Estado actual del pase
-  - **Autorizadores**: Lista de autorizadores con su estado
+### 📋 **Funcionalidades**
+- **Visualización de Pases Pendientes**: Muestra todos los pases de salida que requieren autorización
+- **Secuencia de Autorización**: Visualiza los pasos de autorización con opciones específicas
+- **Autorización Interactiva**: Permite seleccionar opciones y autorizar pases
+- **Confirmación Modal**: Modal de confirmación antes de autorizar
+- **Diseño Responsivo**: Grid adaptativo para diferentes tamaños de pantalla
+- **Compatibilidad Dark Mode**: Diseño que se adapta automáticamente al tema
 
-### ✅ Autorización de Pases
-- Botón "Autorizar" para cada pase pendiente
-- Confirmación visual durante el proceso de autorización
-- Actualización automática de la lista después de autorizar
+### 🎨 **Interfaz de Usuario**
+- **Cards Simplificados**: Diseño limpio usando `bg-base-100 card card-border`
+- **Radio Buttons**: Selección única por card con nombres únicos
+- **Estados Visuales**: Indicadores claros para pasos completados, actuales y pendientes
+- **Botón de Autorización**: Siempre visible, deshabilitado si no hay selección
 
-### 🔄 Gestión de Estados
-- Estados visuales claros con iconos y colores
-- Badges informativos para cada estado
-- Actualización en tiempo real
+## Estructura de Datos
 
-## Estructura de Archivos
-
+### **IDaypassAuthorizer** (Respuesta del API)
+```typescript
+interface IDaypassAuthorizer {
+  daypass: IDaypass;           // Información del pase de salida
+  authorizer: IPerson;         // Información del autorizador
+  daypass_config: IDaypassConfig; // Configuración de secuencia
+  authorization_sequence: number;  // Secuencia actual
+}
 ```
-daypass/
-├── page.tsx                 # Página principal
-├── DaypassApp.tsx          # Componente principal de la aplicación
-├── components/
-│   └── DaypassCard.tsx     # Componente de tarjeta individual
-└── README.md              # Esta documentación
-```
 
-## Endpoints Utilizados
-
-### GET /schools/{school_id}/daypass-authorizers
-- **Parámetros**:
-  - `authorizer_person_id`: ID del autorizador
-  - `status`: Estado de los pases (por defecto "pendiente")
-  - `page`: Número de página
-  - `per_page`: Elementos por página
-
-### PATCH /schools/{school_id}/daypasses/{daypass_id}/authorizers/{authorizer_person_id}
-- **Body**:
-  ```json
-  {
-    "authorized": true,
-    "authorized_at": "2024-01-01T12:00:00Z"
-  }
-  ```
-
-## Interfaces TypeScript
-
-### IDaypass
+### **IDaypass** (Información del Pase)
 ```typescript
 interface IDaypass {
+  id: number;
   school_id: number;
   guardian_person_id: number;
   student_person_id: number;
   reason: string;
-  status: 'PENDIENTE' | 'AUTORIZADO' | 'RECHAZADO' | 'COMPLETADO' | 'CANCELADO';
-  authorized_at: string | null;
-  academic_stage_id: number | null;
+  status: "PENDIENTE" | "AUTORIZADO" | "CANCELADO";
   daypass_date: string;
   daypass_time: string;
-  id: number;
-  created: string;
-  modified: string;
-  authorizers: IDaypassAuthorizer[];
-  person: IPerson;
-  relative: IPerson;
+  person: IPerson;      // Estudiante
+  relative: IPerson;    // Solicitante/Familiar
 }
 ```
 
-### IPerson
+### **IDaypassConfig** (Configuración de Secuencia)
 ```typescript
-interface IPerson {
-  school_id: number;
-  id: number;
-  type: string;
-  person_internal_id: string;
-  given_name: string;
-  paternal_name: string;
-  maternal_name: string;
-  display_name: string | null;
-  legal_name: string | null;
-  email: string;
+interface IDaypassConfig {
+  authorization_sequence: {
+    "0": {
+      options: {
+        "CC": { action: "AUTHORIZE_AND_FORWARD", description: "..." },
+        "KI": { action: "AUTHORIZE_AND_CLOSE", description: "..." }
+      },
+      description: "Recepción Asistente de Dirección",
+      person_authorizer_id: 4487
+    }
+  }
 }
 ```
 
-### IDaypassAuthorizer
-```typescript
-interface IDaypassAuthorizer {
-  authorizer_person_id: number;
-  authorized: boolean;
-  authorized_at: string | null;
-  authorization_sequence: number;
-  authorized_by: string | null;
-  note: string | null;
-  daypass_id: number;
-  created_at: string;
-  authorizer: IPerson;
-}
-```
+## Endpoints Utilizados
 
-## Servicios
+### **GET** `/schools/{school_id}/daypass-authorizers`
+- **Propósito**: Obtener pases de salida pendientes de autorización
+- **Parámetros**:
+  - `authorizer_person_id`: ID del autorizador
+  - `status`: "pendiente"
+- **Headers**:
+  - `x-device-id: mobile-web-client`
+  - `x-url-origin: https://admin.celta.interschool.mx`
+  - `Authorization: Bearer {token}`
 
-### daypass.service.ts
-- `getDaypassAuthorizers()`: Obtiene pases pendientes de autorización
-- `authorizeDaypass()`: Autoriza un pase de salida
-- `getDaypassById()`: Obtiene un pase específico
+### **PUT** `/schools/{school_id}/daypass-authorizers/{daypass_id}`
+- **Propósito**: Autorizar un pase de salida
+- **Body**:
+  ```json
+  {
+    "authorizer_person_id": "8121",
+    "action": "CC"
+  }
+  ```
+- **Headers**: Mismos que GET
 
-## Estados de la Aplicación
+## Componentes Principales
 
-- **Loading**: Muestra spinner mientras carga datos
-- **Error**: Muestra mensaje de error con opción de reintentar
-- **Empty**: Muestra mensaje cuando no hay pases pendientes
-- **Authorizing**: Estado durante la autorización de un pase
+### **DaypassApp.tsx**
+- Componente principal que maneja el estado global
+- Gestiona la carga de datos y autorizaciones
+- Renderiza el grid de cards
+
+### **DaypassCard.tsx**
+- Renderiza un card individual de pase de salida
+- Muestra información del estudiante, solicitante y secuencia
+- Maneja la selección de opciones y autorización
+
+### **AuthorizationOptions.tsx**
+- Componente para las opciones de radio button
+- Maneja la selección única por grupo
+- Estilos adaptables al tema
+
+### **AuthorizationConfirmationModal.tsx**
+- Modal de confirmación antes de autorizar
+- Muestra información del estudiante y opción seleccionada
+
+## Manejo de Errores
+
+### **Errores de Red**
+- **401**: "No tienes permisos para acceder a esta información"
+- **404**: "No se encontraron pases de salida"
+- **NETWORK_ERROR**: "Error de conexión. Verifica tu conexión a internet"
+
+### **Errores de Autorización**
+- **401**: "No tienes permisos para autorizar este pase de salida"
+- **404**: "El pase de salida no fue encontrado"
+- **400**: "Datos de autorización inválidos"
 
 ## Configuración
 
-### Variables de Entorno
-- `NEXT_PUBLIC_API_CONSULTATION_URL`: URL base de la API
+### **Variables de Entorno**
+```env
+NEXT_PUBLIC_API_CONSULTATION_URL=https://core-api.idsm.xyz
+```
 
-### Configuración Temporal
-- `schoolId`: ID de la escuela (actualmente hardcodeado como "1")
-- `authorizerPersonId`: ID del autorizador (actualmente hardcodeado como "1")
-
-**Nota**: Estas configuraciones deberían venir del contexto de la aplicación en una implementación completa.
+### **Autenticación**
+- El token se obtiene del store de autenticación
+- Se incluye automáticamente en todas las peticiones
+- Manejo automático de errores 401 con logout
 
 ## Uso
 
-1. Navegar a la sección "Apps" > "Pase de Salida"
-2. La aplicación cargará automáticamente los pases pendientes
-3. Revisar la información de cada pase
-4. Hacer clic en "Autorizar" para aprobar la solicitud
-5. La lista se actualizará automáticamente
+1. **Acceso**: Navegar a `/apps/daypass`
+2. **Autenticación**: Debe estar logueado con token válido
+3. **Visualización**: Los pases pendientes se cargan automáticamente
+4. **Selección**: Elegir una opción de autorización (radio button)
+5. **Autorización**: Hacer clic en "Autorizar" y confirmar en el modal
+6. **Actualización**: Los datos se recargan automáticamente después de autorizar
 
-## Características de UX
+## Notas Técnicas
 
-- **Responsive**: Diseño adaptable a diferentes tamaños de pantalla
-- **Accesible**: Uso de iconos y colores para mejorar la comprensión
-- **Feedback Visual**: Estados de carga y confirmación claros
-- **Actualización Automática**: La lista se actualiza después de cada acción
-- **Manejo de Errores**: Mensajes claros y opciones de reintento
+- **Agrupación**: Los datos se agrupan por `daypass_id` para mostrar un card por pase
+- **Nombres Únicos**: Cada grupo de radio buttons tiene un nombre único para evitar conflictos
+- **Estado Local**: La selección se mantiene en el estado local del componente
+- **Responsive**: Grid de 1 columna en móvil, 2 en tablet, 3 en desktop
+- **Tema**: Compatible con modo claro y oscuro usando clases DaisyUI
