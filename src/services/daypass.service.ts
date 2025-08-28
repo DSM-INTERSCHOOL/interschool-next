@@ -1,5 +1,7 @@
-import { IDaypassAuthorizer } from "@/interfaces/IDaypass";
 import api from "./api";
+import { IDaypass, IDaypassAuthorizer } from "@/interfaces/IDaypass";
+import axios from "axios";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface GetDaypassAuthorizersParams {
   schoolId: string;
@@ -91,80 +93,51 @@ export const getDaypassAuthorizers = async (params: GetDaypassAuthorizersParams)
   }
 };
 
-export const authorizeDaypass = async (params: AuthorizeDaypassParams): Promise<AuthorizeDaypassResponse> => {
+export const authorizeDaypass = async (
+  daypassId: number,
+  personId: number,
+  sequence: number,
+  selectedOption: string,
+  schoolId: number = 1000
+): Promise<any> => {
   try {
-    const { daypassId, authorizerPersonId, dto } = params;
-    
-    const response = await api.put(`https://core-api.idsm.xyz/schools/1000/daypass-authorizers/${daypassId}`, {
-      authorizer_person_id: authorizerPersonId,
-      action: dto.action
-    }, {
-      headers: {
-        'x-device-id': 'mobile-web-client',
-        'x-url-origin': 'https://admin.celta.interschool.mx'
+    const response = await axios.patch(
+      `https://core-api.idsm.xyz/schools/${schoolId}/daypasses/${daypassId}/authorizers/${personId}/sequences/${sequence}`,
+      {
+        authorized: true,
+        selected_option: selectedOption
+      },
+      {
+        headers: {
+          'x-device-id': 'mobile-web-client',
+          'x-url-origin': 'https://admin.celta.interschool.mx',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().token}`,
+        },
       }
-    });
+    );
 
-    return {
-      success: true,
-      message: 'Pase de salida autorizado exitosamente'
-    };
-  } catch (error) {
+    return response.data;
+  } catch (error: any) {
     console.error('Error authorizing daypass:', error);
     
-    // Extraer detalles del error del API
     let errorMessage = 'Error al autorizar el pase de salida';
     
-    if (error.response?.data) {
-      // Si el API devuelve un mensaje específico, usarlo
-      if (error.response.data.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response.data.error) {
-        errorMessage = error.response.data.error;
-      } else if (typeof error.response.data === 'string') {
-        errorMessage = error.response.data;
-      } else if (error.response.data.detail) {
-        errorMessage = error.response.data.detail;
-      }
-    } else if (error.response?.status) {
-      // Si no hay mensaje específico, usar códigos de estado
-      switch (error.response.status) {
-        case 400:
-          errorMessage = 'Datos de autorización inválidos';
-          break;
-        case 401:
-          errorMessage = 'No tienes permisos para autorizar este pase de salida';
-          break;
-        case 403:
-          errorMessage = 'Acceso denegado para autorizar';
-          break;
-        case 404:
-          errorMessage = 'El pase de salida no fue encontrado';
-          break;
-        case 409:
-          errorMessage = 'El pase de salida ya fue autorizado';
-          break;
-        case 422:
-          errorMessage = 'Datos de autorización inválidos';
-          break;
-        case 500:
-          errorMessage = 'Error interno del servidor';
-          break;
-        default:
-          errorMessage = `Error del servidor (${error.response.status})`;
-      }
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.status === 401) {
+      errorMessage = 'No autorizado para realizar esta acción';
+    } else if (error.response?.status === 404) {
+      errorMessage = 'Pase de salida no encontrado';
+    } else if (error.response?.status >= 500) {
+      errorMessage = 'Error del servidor al autorizar';
     } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
       errorMessage = 'Error de conexión. Verifica tu conexión a internet';
     } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
       errorMessage = 'La solicitud tardó demasiado. Intenta de nuevo';
-    } else if (error.message) {
-      errorMessage = error.message;
     }
     
-    return {
-      success: false,
-      message: errorMessage
-    };
+    throw new Error(errorMessage);
   }
 };
 

@@ -38,8 +38,8 @@ const DaypassApp = () => {
     setError(null);
     try {
       const data = await getDaypassAuthorizers({
-        schoolId: schoolId?.toString() || "1000",
-        authorizerPersonId: personId?.toString() || "8121",
+        schoolId: schoolId?.toString()!,
+        authorizerPersonId: personId?.toString()!,
         status: "pendiente"
       });
       setDaypassGroups(data);
@@ -55,27 +55,42 @@ const DaypassApp = () => {
     loadDaypasses();
   }, [loadDaypasses]);
 
-  const handleAuthorize = async (daypassId: string, authorizerPersonId: string, action: string) => {
+  const handleAuthorize = async (daypassId: string, authorizerPersonId: string, selectedOption: string) => {
     setAuthorizing(daypassId);
     try {
-      const result = await authorizeDaypass({
-        daypassId,
-        authorizerPersonId,
-        dto: { action }
-      });
-
-      if (result.success) {
-        addToast("Pase de salida autorizado exitosamente", "success");
-        await loadDaypasses();
-        setSelectedAuthorizers(prev => {
-          const newState = { ...prev };
-          delete newState[daypassId];
-          return newState;
-        });
-      } else {
-        console.error("Error al autorizar:", result.message);
-        addToast(`Error al autorizar: ${result.message}`, "error");
+      // Obtener el daypass y la secuencia actual
+      const daypassGroup = daypassGroups.find(group => 
+        group.some(auth => auth.daypass.id.toString() === daypassId)
+      );
+      
+      if (!daypassGroup) {
+        throw new Error('Pase de salida no encontrado');
       }
+
+      const daypassAuth = daypassGroup.find(auth => auth.daypass.id.toString() === daypassId);
+      if (!daypassAuth) {
+        throw new Error('Autorización no encontrada');
+      }
+
+      const currentSequence = daypassAuth.authorization_sequence;
+      const currentSchoolId = schoolId || 1000;
+      const currentPersonId = personId || 8121;
+
+      await authorizeDaypass(
+        parseInt(daypassId),
+        currentPersonId,
+        currentSequence,
+        selectedOption,
+        currentSchoolId
+      );
+
+      addToast("Pase de salida autorizado exitosamente", "success");
+      await loadDaypasses();
+      setSelectedAuthorizers(prev => {
+        const newState = { ...prev };
+        delete newState[daypassId];
+        return newState;
+      });
     } catch (error: any) {
       console.error("Error al autorizar:", error);
       addToast(`Error al autorizar: ${error.message || 'Error desconocido'}`, "error");

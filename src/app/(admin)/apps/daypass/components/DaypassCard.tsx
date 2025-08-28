@@ -5,12 +5,12 @@ import { CheckCircleIcon, XCircleIcon, CalendarIcon, UserIcon, ClockIcon } from 
 import { IDaypass, IDaypassAuthorizer } from "@/interfaces/IDaypass";
 import AuthorizationOptions from "./AuthorizationOptions";
 import AuthorizationConfirmationModal from "@/components/AuthorizationConfirmationModal";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface DaypassCardProps {
   daypass: IDaypass;
   authorizations: IDaypassAuthorizer[];
-  onAuthorize: (daypassId: string, authorizerPersonId: string, action: string) => void;
+  onAuthorize: (daypassId: string, authorizerPersonId: string, selectedOption: string) => void;
   authorizing: boolean;
   selectedAuthorizerId: string | null;
   onAuthorizerSelect: (authorizerId: string) => void;
@@ -26,7 +26,7 @@ const DaypassCard = ({
 }: DaypassCardProps) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const { personId } = useAuth();
+  const personId = useAuthStore((state) => state.personId);
 
   const formatFullName = (person: any) => {
     return `${person.given_name} ${person.paternal_name}${person.maternal_name ? ` ${person.maternal_name}` : ''}`.trim();

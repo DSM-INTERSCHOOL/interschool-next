@@ -73,15 +73,18 @@ interface AuthError {
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(
-      'https://core-api.idsm.xyz/schools/1000/app-login',
+      'https://core-api.idsm.xyz/web-login',
       credentials,
       {
         headers: {
           'x-device-id': 'mobile-web-client',
           'Content-Type': 'application/json',
+          'x-url-origin': 'https://admin.celta.interschool.mx'
         },
       }
     );
+
+    console.log('response headres',response.headers)
 
     return response.data;
   } catch (error: any) {
