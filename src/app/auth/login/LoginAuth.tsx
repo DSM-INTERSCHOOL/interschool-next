@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
-export const LoginAuth = () => {
+const LoginAuthContent = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [loginError, setLoginError] = useState("");
@@ -158,5 +158,13 @@ export const LoginAuth = () => {
                 )}
             </button>
         </>
+    );
+};
+
+export const LoginAuth = () => {
+    return (
+        <Suspense fallback={<div className="loading loading-spinner loading-lg"></div>}>
+            <LoginAuthContent />
+        </Suspense>
     );
 };

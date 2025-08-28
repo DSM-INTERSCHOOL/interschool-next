@@ -2,7 +2,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Logo } from "@/components/Logo";
@@ -13,7 +13,7 @@ import { useHydration } from '@/hooks/useHydration';
 
 import { LoginAuth } from "./LoginAuth";
 
-const LoginPage = () => {
+const LoginRedirectHandler = () => {
     const { isAuthenticated } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -26,6 +26,13 @@ const LoginPage = () => {
             router.push(redirectTo);
         }
     }, [isHydrated, isAuthenticated, router, searchParams]);
+
+    return null; // Este componente no renderiza nada
+};
+
+const LoginPageContent = () => {
+    const { isAuthenticated } = useAuth();
+    const isHydrated = useHydration();
 
     // Durante la hidratación, mostrar un estado de carga
     if (!isHydrated) {
@@ -56,6 +63,17 @@ const LoginPage = () => {
                 <ThemeToggleDropdown />
             </div>
         </div>
+    );
+};
+
+const LoginPage = () => {
+    return (
+        <>
+            <Suspense fallback={<LoadingSpinner fullScreen />}>
+                <LoginRedirectHandler />
+            </Suspense>
+            <LoginPageContent />
+        </>
     );
 };
 
