@@ -38,6 +38,15 @@ api.interceptors.response.use(
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login';
       }
+    } else if (error.response?.status === 440) {
+      // Código HTTP 440 - Session Timeout
+      // Limpiar el estado de autenticación
+      useAuthStore.getState().logout();
+      
+      // Mostrar mensaje de sesión expirada y redirigir al login si estamos en el cliente
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/login';
+      }
     }
     return Promise.reject(error);
   }

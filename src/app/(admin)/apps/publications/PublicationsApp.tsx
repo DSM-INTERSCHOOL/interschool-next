@@ -4,14 +4,26 @@ import { useState, useEffect } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { IAcademicYear } from "@/interfaces/IAcademicYear";
 import { IAcademicStage } from "@/interfaces/IAcademicStage";
+import { IAcademicProgram } from "@/interfaces/IAcademicProgram";
+import { IProgramYear } from "@/interfaces/IProgramYear";
+import { IAcademicGroup } from "@/interfaces/IAcademicGroup";
 import { getActiveAcademicYears } from "@/services/academic-year.service";
 import { getAcademicStagesByPrecedence } from "@/services/academic-stage.service";
+import { getAcademicProgramsByStages } from "@/services/academic-program.service";
+import { getProgramYearsByStagesAndPrograms } from "@/services/program-year.service";
+import { getAcademicGroupsByProgramYears } from "@/services/academic-group.service";
 
 const PublicationsApp = () => {
     const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);
     const [selectedAcademicYears, setSelectedAcademicYears] = useState<Set<number>>(new Set());
     const [academicStages, setAcademicStages] = useState<IAcademicStage[]>([]);
     const [selectedAcademicStages, setSelectedAcademicStages] = useState<Set<number>>(new Set());
+    const [academicPrograms, setAcademicPrograms] = useState<IAcademicProgram[]>([]);
+    const [selectedAcademicPrograms, setSelectedAcademicPrograms] = useState<Set<number>>(new Set());
+    const [programYears, setProgramYears] = useState<IProgramYear[]>([]);
+    const [selectedProgramYears, setSelectedProgramYears] = useState<Set<number>>(new Set());
+    const [academicGroups, setAcademicGroups] = useState<IAcademicGroup[]>([]);
+    const [selectedAcademicGroups, setSelectedAcademicGroups] = useState<Set<number>>(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +52,70 @@ const PublicationsApp = () => {
 
         loadData();
     }, []);
+
+    // Cargar programas académicos cuando cambian los stages seleccionados
+    useEffect(() => {
+        const loadAcademicPrograms = async () => {
+            try {
+                if (selectedAcademicStages.size > 0) {
+                    const stageIds = Array.from(selectedAcademicStages);
+                    const programs = await getAcademicProgramsByStages(stageIds);
+                    setAcademicPrograms(programs);
+                } else {
+                    setAcademicPrograms([]);
+                    setSelectedAcademicPrograms(new Set());
+                }
+            } catch (err: any) {
+                console.error("Error loading academic programs:", err);
+                setAcademicPrograms([]);
+            }
+        };
+
+        loadAcademicPrograms();
+    }, [selectedAcademicStages]);
+
+    // Cargar años de programa cuando cambian los stages y programs seleccionados
+    useEffect(() => {
+        const loadProgramYears = async () => {
+            try {
+                if (selectedAcademicStages.size > 0 && selectedAcademicPrograms.size > 0) {
+                    const stageIds = Array.from(selectedAcademicStages);
+                    const programIds = Array.from(selectedAcademicPrograms);
+                    const years = await getProgramYearsByStagesAndPrograms(stageIds, programIds);
+                    setProgramYears(years);
+                } else {
+                    setProgramYears([]);
+                    setSelectedProgramYears(new Set());
+                }
+            } catch (err: any) {
+                console.error("Error loading program years:", err);
+                setProgramYears([]);
+            }
+        };
+
+        loadProgramYears();
+    }, [selectedAcademicStages, selectedAcademicPrograms]);
+
+    // Cargar grupos académicos cuando cambian los program years seleccionados
+    useEffect(() => {
+        const loadAcademicGroups = async () => {
+            try {
+                if (selectedProgramYears.size > 0) {
+                    const programYearIds = Array.from(selectedProgramYears);
+                    const groups = await getAcademicGroupsByProgramYears(programYearIds);
+                    setAcademicGroups(groups);
+                } else {
+                    setAcademicGroups([]);
+                    setSelectedAcademicGroups(new Set());
+                }
+            } catch (err: any) {
+                console.error("Error loading academic groups:", err);
+                setAcademicGroups([]);
+            }
+        };
+
+        loadAcademicGroups();
+    }, [selectedProgramYears]);
 
     const handleAcademicYearToggle = (yearId: number, isSelected: boolean) => {
         setSelectedAcademicYears(prev => {
@@ -80,6 +156,69 @@ const PublicationsApp = () => {
             setSelectedAcademicStages(allIds);
         } else {
             setSelectedAcademicStages(new Set());
+        }
+    };
+
+    const handleAcademicProgramToggle = (programId: number, isSelected: boolean) => {
+        setSelectedAcademicPrograms(prev => {
+            const newSet = new Set(prev);
+            if (isSelected) {
+                newSet.add(programId);
+            } else {
+                newSet.delete(programId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAllAcademicPrograms = (isSelected: boolean) => {
+        if (isSelected) {
+            const allIds = new Set(academicPrograms.map(program => program.id));
+            setSelectedAcademicPrograms(allIds);
+        } else {
+            setSelectedAcademicPrograms(new Set());
+        }
+    };
+
+    const handleProgramYearToggle = (yearId: number, isSelected: boolean) => {
+        setSelectedProgramYears(prev => {
+            const newSet = new Set(prev);
+            if (isSelected) {
+                newSet.add(yearId);
+            } else {
+                newSet.delete(yearId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAllProgramYears = (isSelected: boolean) => {
+        if (isSelected) {
+            const allIds = new Set(programYears.map(year => year.id));
+            setSelectedProgramYears(allIds);
+        } else {
+            setSelectedProgramYears(new Set());
+        }
+    };
+
+    const handleAcademicGroupToggle = (groupId: number, isSelected: boolean) => {
+        setSelectedAcademicGroups(prev => {
+            const newSet = new Set(prev);
+            if (isSelected) {
+                newSet.add(groupId);
+            } else {
+                newSet.delete(groupId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAllAcademicGroups = (isSelected: boolean) => {
+        if (isSelected) {
+            const allIds = new Set(academicGroups.map(group => group.id));
+            setSelectedAcademicGroups(allIds);
+        } else {
+            setSelectedAcademicGroups(new Set());
         }
     };
 
@@ -262,6 +401,225 @@ const PublicationsApp = () => {
                         </div>
                     </div>
 
+                    {/* Selección de programas académicos (solo si hay stages seleccionados) */}
+                    {selectedAcademicStages.size > 0 && (
+                        <div className="card bg-base-100 shadow-lg">
+                            <div className="card-body">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="card-title text-lg">
+                                        <span className="iconify lucide--book-open size-5"></span>
+                                        Programas Académicos
+                                    </h3>
+                                    <div className="text-sm text-base-content/70">
+                                        {selectedAcademicPrograms.size} de {academicPrograms.length} seleccionados
+                                    </div>
+                                </div>
+
+                                {academicPrograms.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <span className="iconify lucide--book-open size-16 text-base-content/30 mb-4"></span>
+                                        <p className="text-base-content/70">
+                                            No se encontraron programas académicos para los niveles seleccionados
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {/* Checkbox para seleccionar todos */}
+                                        <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
+                                            <label className="label cursor-pointer flex items-center gap-3 p-0">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkbox checkbox-primary"
+                                                    checked={academicPrograms.length > 0 && selectedAcademicPrograms.size === academicPrograms.length}
+                                                    onChange={(e) => handleSelectAllAcademicPrograms(e.target.checked)}
+                                                />
+                                                <span className="font-medium text-base-content">
+                                                    Seleccionar todos los programas académicos
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        {/* Lista de programas académicos */}
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                                            {academicPrograms.map((program) => (
+                                                <div 
+                                                    key={program.id}
+                                                    className={`card border transition-all duration-200 ${
+                                                        selectedAcademicPrograms.has(program.id) 
+                                                            ? 'border-primary bg-primary/5' 
+                                                            : 'border-base-300 hover:border-base-400'
+                                                    }`}
+                                                >
+                                                    <div className="card-body p-2">
+                                                        <label className="label cursor-pointer p-0 justify-start">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="checkbox checkbox-primary checkbox-sm mr-2"
+                                                                checked={selectedAcademicPrograms.has(program.id)}
+                                                                onChange={(e) => handleAcademicProgramToggle(program.id, e.target.checked)}
+                                                            />
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-base-content">
+                                                                    {program.description}
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Selección de años de programa (solo si hay stages y programs seleccionados) */}
+                    {selectedAcademicStages.size > 0 && selectedAcademicPrograms.size > 0 && (
+                        <div className="card bg-base-100 shadow-lg">
+                            <div className="card-body">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="card-title text-lg">
+                                        <span className="iconify lucide--layers size-5"></span>
+                                        Años de Programa
+                                    </h3>
+                                    <div className="text-sm text-base-content/70">
+                                        {selectedProgramYears.size} de {programYears.length} seleccionados
+                                    </div>
+                                </div>
+
+                                {programYears.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <span className="iconify lucide--layers size-16 text-base-content/30 mb-4"></span>
+                                        <p className="text-base-content/70">
+                                            No se encontraron años de programa para la combinación seleccionada
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {/* Checkbox para seleccionar todos */}
+                                        <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
+                                            <label className="label cursor-pointer flex items-center gap-3 p-0">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkbox checkbox-primary"
+                                                    checked={programYears.length > 0 && selectedProgramYears.size === programYears.length}
+                                                    onChange={(e) => handleSelectAllProgramYears(e.target.checked)}
+                                                />
+                                                <span className="font-medium text-base-content">
+                                                    Seleccionar todos los años de programa
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        {/* Lista de años de programa */}
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                                            {programYears.map((year) => (
+                                                <div 
+                                                    key={year.id}
+                                                    className={`card border transition-all duration-200 ${
+                                                        selectedProgramYears.has(year.id) 
+                                                            ? 'border-primary bg-primary/5' 
+                                                            : 'border-base-300 hover:border-base-400'
+                                                    }`}
+                                                >
+                                                    <div className="card-body p-2">
+                                                        <label className="label cursor-pointer p-0 justify-start">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="checkbox checkbox-primary checkbox-sm mr-2"
+                                                                checked={selectedProgramYears.has(year.id)}
+                                                                onChange={(e) => handleProgramYearToggle(year.id, e.target.checked)}
+                                                            />
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-base-content">
+                                                                    {year.description}
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Selección de grupos académicos (solo si hay program years seleccionados) */}
+                    {selectedProgramYears.size > 0 && (
+                        <div className="card bg-base-100 shadow-lg">
+                            <div className="card-body">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="card-title text-lg">
+                                        <span className="iconify lucide--users size-5"></span>
+                                        Grupos Académicos
+                                    </h3>
+                                    <div className="text-sm text-base-content/70">
+                                        {selectedAcademicGroups.size} de {academicGroups.length} seleccionados
+                                    </div>
+                                </div>
+
+                                {academicGroups.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <span className="iconify lucide--users size-16 text-base-content/30 mb-4"></span>
+                                        <p className="text-base-content/70">
+                                            No se encontraron grupos académicos para los años de programa seleccionados
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {/* Checkbox para seleccionar todos */}
+                                        <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
+                                            <label className="label cursor-pointer flex items-center gap-3 p-0">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkbox checkbox-primary"
+                                                    checked={academicGroups.length > 0 && selectedAcademicGroups.size === academicGroups.length}
+                                                    onChange={(e) => handleSelectAllAcademicGroups(e.target.checked)}
+                                                />
+                                                <span className="font-medium text-base-content">
+                                                    Seleccionar todos los grupos académicos
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        {/* Lista de grupos académicos */}
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                                            {academicGroups.map((group) => (
+                                                <div 
+                                                    key={group.id}
+                                                    className={`card border transition-all duration-200 ${
+                                                        selectedAcademicGroups.has(group.id) 
+                                                            ? 'border-primary bg-primary/5' 
+                                                            : 'border-base-300 hover:border-base-400'
+                                                    }`}
+                                                >
+                                                    <div className="card-body p-2">
+                                                        <label className="label cursor-pointer p-0 justify-start">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="checkbox checkbox-primary checkbox-sm mr-2"
+                                                                checked={selectedAcademicGroups.has(group.id)}
+                                                                onChange={(e) => handleAcademicGroupToggle(group.id, e.target.checked)}
+                                                            />
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-base-content">
+                                                                    {group.label}
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Formulario para crear aviso (aparece cuando se seleccionan años académicos) */}
                     {(selectedAcademicYears.size > 0 || selectedAcademicStages.size > 0) && (
                         <div className="card bg-base-100 shadow-lg">
@@ -271,7 +629,7 @@ const PublicationsApp = () => {
                                     Crear Aviso
                                 </h3>
                                 <p className="text-base-content/70 mb-4">
-                                    El aviso se publicará para {selectedAcademicYears.size} año(s) académico(s) y {selectedAcademicStages.size} nivel(es) académico(s) seleccionados
+                                    El aviso se publicará para {selectedAcademicYears.size} año(s) académico(s), {selectedAcademicStages.size} nivel(es) académico(s), {selectedAcademicPrograms.size} programa(s) académico(s), {selectedProgramYears.size} año(s) de programa y {selectedAcademicGroups.size} grupo(s) académico(s) seleccionados
                                 </p>
                                 
                                 <div className="form-control mb-4">
@@ -329,6 +687,9 @@ const PublicationsApp = () => {
                                         onClick={() => {
                                             setSelectedAcademicYears(new Set());
                                             setSelectedAcademicStages(new Set());
+                                            setSelectedAcademicPrograms(new Set());
+                                            setSelectedProgramYears(new Set());
+                                            setSelectedAcademicGroups(new Set());
                                         }}
                                     >
                                         Cancelar
