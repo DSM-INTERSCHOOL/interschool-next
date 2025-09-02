@@ -69,6 +69,7 @@ const LoginPageContent = () => {
 const LoginPage = () => {
     return (
         <>
+            <title>Iniciar Sesión</title>
             <Suspense fallback={<LoadingSpinner fullScreen />}>
                 <LoginRedirectHandler />
             </Suspense>
