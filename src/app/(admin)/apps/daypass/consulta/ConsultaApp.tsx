@@ -14,6 +14,7 @@ export const ConsultaApp = () => {
     status: "",
     date: ""
   });
+  const [selectedDaypasses, setSelectedDaypasses] = useState<Set<number>>(new Set());
 
   // Cargar datos iniciales una sola vez
   useEffect(() => {
@@ -48,6 +49,32 @@ export const ConsultaApp = () => {
       date: ""
     });
     setSearchTerm("");
+  };
+
+  const handleSelectDaypass = (daypassId: number, isSelected: boolean) => {
+    setSelectedDaypasses(prev => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(daypassId);
+      } else {
+        newSet.delete(daypassId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      const allIds = new Set(filteredDaypasses.map(daypass => daypass.id));
+      setSelectedDaypasses(allIds);
+    } else {
+      setSelectedDaypasses(new Set());
+    }
+  };
+
+  const handlePrint = () => {
+    // TODO: Implementar funcionalidad de impresión
+    console.log('Imprimir pases seleccionados:', Array.from(selectedDaypasses));
   };
 
   const formatDate = (dateString: string) => {
@@ -225,8 +252,19 @@ export const ConsultaApp = () => {
               <span className="iconify lucide--list size-5"></span>
               Pases de salida
             </h3>
-            <div className="text-sm text-base-content/70">
-              {filteredDaypasses.length} pases de salida encontrados
+            <div className="flex items-center gap-4">
+              {selectedDaypasses.size > 0 && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handlePrint}
+                >
+                  <span className="iconify lucide--printer size-4"></span>
+                  Imprimir ({selectedDaypasses.size})
+                </button>
+              )}
+              <div className="text-sm text-base-content/70">
+                {filteredDaypasses.length} pases de salida encontrados
+              </div>
             </div>
           </div>
 
@@ -249,6 +287,16 @@ export const ConsultaApp = () => {
               <table className="table table-zebra w-full text-xs">
                 <thead>
                   <tr>
+                    <th className="p-2">
+                      <label className="label cursor-pointer p-0">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          checked={filteredDaypasses.length > 0 && selectedDaypasses.size === filteredDaypasses.length}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                        />
+                      </label>
+                    </th>
                     <th className="p-2">ID</th>
                     <th className="p-2">Alumno</th>
                     <th className="p-2">ID Alumno</th>
@@ -263,6 +311,16 @@ export const ConsultaApp = () => {
                 <tbody>
                   {filteredDaypasses.map((daypass) => (
                     <tr key={daypass.id}>
+                      <td className="p-2">
+                        <label className="label cursor-pointer p-0">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-sm"
+                            checked={selectedDaypasses.has(daypass.id)}
+                            onChange={(e) => handleSelectDaypass(daypass.id, e.target.checked)}
+                          />
+                        </label>
+                      </td>
                       <td className="font-mono text-xs p-2">{daypass.id}</td>
                       <td className="p-2">
                         <div>

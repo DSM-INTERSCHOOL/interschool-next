@@ -5,6 +5,8 @@ const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_CONSULTATION_URL,
   headers: {
     "Content-Type": "application/json",
+    "x-device-id": "mobile-web-client",
+    "x-url-origin": "https://admin.celta.interschool.mx"
   },
 });
 
