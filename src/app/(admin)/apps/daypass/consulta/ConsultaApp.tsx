@@ -12,8 +12,7 @@ export const ConsultaApp = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     status: "",
-    date: "",
-    person_id: ""
+    date: ""
   });
 
   // Cargar datos iniciales una sola vez
@@ -46,8 +45,7 @@ export const ConsultaApp = () => {
   const handleClearFilters = () => {
     setFilters({
       status: "",
-      date: "",
-      person_id: ""
+      date: ""
     });
     setSearchTerm("");
   };
@@ -118,17 +116,6 @@ export const ConsultaApp = () => {
       }
     }
 
-    // Filtro por ID del estudiante (matrícula)
-    if (filters.person_id) {
-      const personIdLower = filters.person_id.toLowerCase();
-      const studentIdMatch = daypass.student_person_id.toString() === filters.person_id;
-      const matriculaMatch = daypass.person.person_internal_id.toLowerCase().includes(personIdLower);
-      
-      if (!studentIdMatch && !matriculaMatch) {
-        return false;
-      }
-    }
-
     return true;
   });
 
@@ -150,7 +137,7 @@ export const ConsultaApp = () => {
             Filtros de Búsqueda
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Búsqueda general */}
             <div className="form-control">
               <label className="label py-1">
@@ -193,20 +180,6 @@ export const ConsultaApp = () => {
                 className="input input-bordered input-sm text-xs"
                 value={filters.date}
                 onChange={(e) => handleFilterChange('date', e.target.value)}
-              />
-            </div>
-
-            {/* ID del alumno */}
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-xs">ID Alumno</span>
-              </label>
-              <input
-                type="text"
-                placeholder="ID o matrícula del alumno"
-                className="input input-bordered input-sm text-xs"
-                value={filters.person_id}
-                onChange={(e) => handleFilterChange('person_id', e.target.value)}
               />
             </div>
 

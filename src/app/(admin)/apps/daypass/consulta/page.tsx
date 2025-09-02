@@ -7,6 +7,7 @@ import { ConsultaApp } from "./ConsultaApp";
 export default function ConsultaPage() {
   return (
     <>
+      <title>Consulta pases de salida</title>
       <PageTitle
         title="Consulta"
         items={[
