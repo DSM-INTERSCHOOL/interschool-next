@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Editor } from "@tinymce/tinymce-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { IAcademicYear } from "@/interfaces/IAcademicYear";
 import { IAcademicStage } from "@/interfaces/IAcademicStage";
@@ -24,6 +25,8 @@ const PublicationsApp = () => {
     const [selectedProgramYears, setSelectedProgramYears] = useState<Set<number>>(new Set());
     const [academicGroups, setAcademicGroups] = useState<IAcademicGroup[]>([]);
     const [selectedAcademicGroups, setSelectedAcademicGroups] = useState<Set<number>>(new Set());
+    const [selectedRecipientTypes, setSelectedRecipientTypes] = useState<Set<string>>(new Set());
+    const [announcementContent, setAnnouncementContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -222,6 +225,26 @@ const PublicationsApp = () => {
         }
     };
 
+    const handleRecipientTypeToggle = (type: string, isSelected: boolean) => {
+        setSelectedRecipientTypes(prev => {
+            const newSet = new Set(prev);
+            if (isSelected) {
+                newSet.add(type);
+            } else {
+                newSet.delete(type);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAllRecipientTypes = (isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedRecipientTypes(new Set(['STUDENT', 'TEACHER', 'USER', 'RELATIVE']));
+        } else {
+            setSelectedRecipientTypes(new Set());
+        }
+    };
+
     return (
         <div className="bg-base-100 rounded-lg shadow-sm">
             <div className="p-6 border-b border-base-300">
@@ -235,8 +258,79 @@ const PublicationsApp = () => {
 
             <div className="p-6">
                 <div className="space-y-6">
-                    {/* Selección de años académicos */}
-                    <div className="card bg-base-100 shadow-lg">
+                    {/* Selección de tipos de destinatarios */}
+                    <div className="card card-border bg-base-100 shadow-lg">
+                        <div className="card-body">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="card-title text-lg">
+                                    <span className="iconify lucide--users-2 size-5"></span>
+                                    Selecciona Tipo Destinatarios
+                                </h3>
+                                <div className="text-sm text-base-content/70">
+                                    {selectedRecipientTypes.size} de 4 seleccionados
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Checkbox para seleccionar todos */}
+                                <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
+                                    <label className="label cursor-pointer flex items-center gap-3 p-0">
+                                        <input
+                                            type="checkbox"
+                                            className="checkbox checkbox-primary"
+                                            checked={selectedRecipientTypes.size === 4}
+                                            onChange={(e) => handleSelectAllRecipientTypes(e.target.checked)}
+                                        />
+                                        <span className="font-medium text-base-content">
+                                            Seleccionar todos los tipos de destinatarios
+                                        </span>
+                                    </label>
+                                </div>
+
+                                {/* Lista de tipos de destinatarios */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    {[
+                                        { value: 'STUDENT', label: 'Estudiantes', icon: 'lucide--graduation-cap', color: 'primary' },
+                                        { value: 'TEACHER', label: 'Profesores', icon: 'lucide--user-check', color: 'secondary' },
+                                        { value: 'USER', label: 'Usuarios', icon: 'lucide--users', color: 'accent' },
+                                        { value: 'RELATIVE', label: 'Familiares', icon: 'lucide--heart', color: 'success' }
+                                    ].map((recipientType) => (
+                                        <div 
+                                            key={recipientType.value}
+                                            className={`card border transition-all duration-200 ${
+                                                selectedRecipientTypes.has(recipientType.value) 
+                                                    ? `border-${recipientType.color} bg-${recipientType.color}/5` 
+                                                    : 'border-base-300 hover:border-base-400'
+                                            }`}
+                                        >
+                                            <div className="card-body p-3">
+                                                <div className="form-control">
+                                                    <label className="label cursor-pointer p-0 justify-start">
+                                                        <input
+                                                            type="checkbox"
+                                                            className={`checkbox checkbox-${recipientType.color} checkbox-sm mr-3`}
+                                                            checked={selectedRecipientTypes.has(recipientType.value)}
+                                                            onChange={(e) => handleRecipientTypeToggle(recipientType.value, e.target.checked)}
+                                                        />
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`iconify ${recipientType.icon} size-4 text-${recipientType.color}`}></span>
+                                                            <div className="text-sm text-base-content">
+                                                                {recipientType.label}
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Selección de años académicos - Solo mostrar si no es únicamente USER */}
+                    {!(selectedRecipientTypes.size === 1 && selectedRecipientTypes.has('USER')) && (
+                        <div className="card bg-base-100 shadow-lg">
                         <div className="card-body">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="card-title text-lg">
@@ -317,7 +411,11 @@ const PublicationsApp = () => {
                             )}
                         </div>
                     </div>
+                    )}
 
+                    {/* Todas las secciones académicas - Solo mostrar si no es únicamente USER */}
+                    {!(selectedRecipientTypes.size === 1 && selectedRecipientTypes.has('USER')) && (
+                    <>
                     {/* Selección de niveles académicos */}
                     <div className="card bg-base-100 shadow-lg">
                         <div className="card-body">
@@ -619,84 +717,235 @@ const PublicationsApp = () => {
                             </div>
                         </div>
                     )}
+                    </>
+                    )}
 
-                    {/* Formulario para crear aviso (aparece cuando se seleccionan años académicos) */}
-                    {(selectedAcademicYears.size > 0 || selectedAcademicStages.size > 0) && (
-                        <div className="card bg-base-100 shadow-lg">
+                    {/* Formulario para crear aviso (aparece cuando se seleccionan años académicos o solo USER) */}
+                    {(selectedAcademicYears.size > 0 || selectedAcademicStages.size > 0 || (selectedRecipientTypes.size === 1 && selectedRecipientTypes.has('USER'))) && (
+                        <div className="card card-border bg-base-100 shadow-xl">
                             <div className="card-body">
-                                <h3 className="card-title text-lg">
-                                    <span className="iconify lucide--megaphone size-5"></span>
-                                    Crear Aviso
-                                </h3>
-                                <p className="text-base-content/70 mb-4">
-                                    El aviso se publicará para {selectedAcademicYears.size} año(s) académico(s), {selectedAcademicStages.size} nivel(es) académico(s), {selectedAcademicPrograms.size} programa(s) académico(s), {selectedProgramYears.size} año(s) de programa y {selectedAcademicGroups.size} grupo(s) académico(s) seleccionados
-                                </p>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                                        <span className="iconify lucide--megaphone size-6 text-primary"></span>
+                                    </div>
+                                    <div>
+                                        <h3 className="card-title text-xl text-base-content">
+                                            Crear Nuevo Aviso
+                                        </h3>
+                                        <p className="text-sm text-base-content/60">
+                                            Publica información importante para la comunidad educativa
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Resumen de selecciones */}
+                                <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <span className="iconify lucide--info size-5 text-primary mt-0.5"></span>
+                                        <div className="flex-1">
+                                            <h4 className="font-medium text-base-content mb-2">Alcance del Aviso</h4>
+                                            {(selectedRecipientTypes.size === 1 && selectedRecipientTypes.has('USER')) ? (
+                                                // Solo mostrar destinatarios cuando es únicamente USER
+                                                <div className="grid grid-cols-1 gap-3 text-sm">
+                                                    <div className="bg-base-100 rounded-lg p-4 text-center">
+                                                        <div className="font-semibold text-warning text-lg">{selectedRecipientTypes.size}</div>
+                                                        <div className="text-sm text-base-content/70">Tipo de Destinatario Seleccionado</div>
+                                                        <div className="text-xs text-base-content/50 mt-1">El aviso será enviado a todos los usuarios del sistema</div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                // Mostrar todos los contadores cuando hay filtros académicos
+                                                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
+                                                    <div className="bg-base-100 rounded-lg p-2 text-center">
+                                                        <div className="font-semibold text-warning">{selectedRecipientTypes.size}</div>
+                                                        <div className="text-xs text-base-content/70">Destinatarios</div>
+                                                    </div>
+                                                    <div className="bg-base-100 rounded-lg p-2 text-center">
+                                                        <div className="font-semibold text-primary">{selectedAcademicYears.size}</div>
+                                                        <div className="text-xs text-base-content/70">Años Académicos</div>
+                                                    </div>
+                                                    <div className="bg-base-100 rounded-lg p-2 text-center">
+                                                        <div className="font-semibold text-secondary">{selectedAcademicStages.size}</div>
+                                                        <div className="text-xs text-base-content/70">Niveles</div>
+                                                    </div>
+                                                    <div className="bg-base-100 rounded-lg p-2 text-center">
+                                                        <div className="font-semibold text-accent">{selectedAcademicPrograms.size}</div>
+                                                        <div className="text-xs text-base-content/70">Programas</div>
+                                                    </div>
+                                                    <div className="bg-base-100 rounded-lg p-2 text-center">
+                                                        <div className="font-semibold text-info">{selectedProgramYears.size}</div>
+                                                        <div className="text-xs text-base-content/70">Años Programa</div>
+                                                    </div>
+                                                    <div className="bg-base-100 rounded-lg p-2 text-center">
+                                                        <div className="font-semibold text-success">{selectedAcademicGroups.size}</div>
+                                                        <div className="text-xs text-base-content/70">Grupos</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                                 
-                                <div className="form-control mb-4">
-                                    <label className="label">
-                                        <span className="label-text">Título del Aviso</span>
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Ingresa el título del aviso..." 
-                                        className="input input-bordered w-full" 
-                                    />
-                                </div>
-
-                                <div className="form-control mb-4">
-                                    <label className="label">
-                                        <span className="label-text">Contenido</span>
-                                    </label>
-                                    <textarea 
-                                        className="textarea textarea-bordered h-32" 
-                                        placeholder="Escribe el contenido del aviso..."
-                                    ></textarea>
-                                </div>
-
-                                <div className="flex gap-4">
-                                    <div className="form-control">
-                                        <label className="label">
-                                            <span className="label-text">Fecha de Inicio</span>
+                                {/* Formulario */}
+                                <div className="space-y-6">
+                                    {/* Título */}
+                                    <fieldset className="fieldset w-full">
+                                        <legend className="fieldset-legend flex items-center gap-2">
+                                            <span className="iconify lucide--type size-4"></span>
+                                            Título del Aviso
+                                        </legend>
+                                        <label className="input input-primary w-full">
+                                            <span className="iconify lucide--edit-3 text-base-content/60 size-5"></span>
+                                            <input 
+                                                className="grow w-full" 
+                                                type="text" 
+                                                placeholder="Ej: Reunión de padres de familia, Suspensión de clases..."
+                                            />
                                         </label>
-                                        <input 
-                                            type="date" 
-                                            className="input input-bordered" 
-                                        />
+                                        <p className="fieldset-label">* Campo requerido</p>
+                                    </fieldset>
+
+                                    {/* Contenido */}
+                                    <fieldset className="fieldset w-full">
+                                        <legend className="fieldset-legend flex items-center gap-2">
+                                            <span className="iconify lucide--file-text size-4"></span>
+                                            Contenido del Aviso
+                                        </legend>
+                                        <div className="w-full">
+                                            <Editor
+                                                apiKey="a8bvz8ljrja6c147qm0xdh4nplqv7pmodepk5gnc6pgnx0ci"
+                                                init={{
+                                                    height: 600,
+                                                    menubar: false,
+                                                    plugins: [
+                                                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                                                    ],
+                                                    toolbar: 'undo redo | blocks | ' +
+                                                        'bold italic forecolor | alignleft aligncenter ' +
+                                                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                                                        'image link | removeformat | help',
+                                                    content_style: `
+                                                        body { 
+                                                            font-family: ui-sans-serif, system-ui, sans-serif; 
+                                                            font-size: 14px;
+                                                            line-height: 1.6;
+                                                        }
+                                                    `,
+                                                    placeholder: 'Describe los detalles del aviso. Incluye fechas, horarios, ubicaciones y cualquier información relevante...',
+                                                    branding: false,
+                                                    resize: false,
+                                                    statusbar: false,
+                                                    // Configuración para subida de imágenes
+                                                    images_upload_handler: (blobInfo: any, progress: any) => new Promise((resolve, reject) => {
+                                                        const reader = new FileReader();
+                                                        reader.onload = () => {
+                                                            // Convertir la imagen a base64 data URL
+                                                            resolve(reader.result as string);
+                                                        };
+                                                        reader.onerror = () => {
+                                                            reject('Error al procesar la imagen');
+                                                        };
+                                                        reader.readAsDataURL(blobInfo.blob());
+                                                    }),
+                                                    // Permitir pegar imágenes
+                                                    paste_data_images: true,
+                                                    // Mostrar el diálogo de subida de archivos
+                                                    file_picker_types: 'image',
+                                                    file_picker_callback: (callback: any, value: any, meta: any) => {
+                                                        if (meta.filetype === 'image') {
+                                                            const input = document.createElement('input');
+                                                            input.setAttribute('type', 'file');
+                                                            input.setAttribute('accept', 'image/*');
+                                                            input.addEventListener('change', (e: any) => {
+                                                                const file = e.target.files[0];
+                                                                const reader = new FileReader();
+                                                                reader.addEventListener('load', () => {
+                                                                    callback(reader.result, {
+                                                                        alt: file.name
+                                                                    });
+                                                                });
+                                                                reader.readAsDataURL(file);
+                                                            });
+                                                            input.click();
+                                                        }
+                                                    },
+                                                }}
+                                                value={announcementContent}
+                                                onEditorChange={(content) => setAnnouncementContent(content)}
+                                            />
+                                        </div>
+                                        <p className="fieldset-label">Usa las herramientas del editor para dar formato a tu aviso</p>
+                                    </fieldset>
+
+                                    {/* Fechas */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <fieldset className="fieldset">
+                                            <legend className="fieldset-legend flex items-center gap-2">
+                                                <span className="iconify lucide--calendar size-4"></span>
+                                                Fecha de Inicio
+                                            </legend>
+                                            <label className="input input-success">
+                                                <span className="iconify lucide--calendar-days text-base-content/60 size-5"></span>
+                                                <input 
+                                                    className="grow" 
+                                                    type="date" 
+                                                />
+                                            </label>
+                                            <p className="fieldset-label">Cuándo inicia la vigencia</p>
+                                        </fieldset>
+
+                                        <fieldset className="fieldset">
+                                            <legend className="fieldset-legend flex items-center gap-2">
+                                                <span className="iconify lucide--calendar-x size-4"></span>
+                                                Fecha de Fin
+                                            </legend>
+                                            <label className="input input-warning">
+                                                <span className="iconify lucide--calendar-clock text-base-content/60 size-5"></span>
+                                                <input 
+                                                    className="grow" 
+                                                    type="date" 
+                                                />
+                                            </label>
+                                            <p className="fieldset-label">Cuándo expira el aviso</p>
+                                        </fieldset>
                                     </div>
-                                    <div className="form-control">
-                                        <label className="label">
-                                            <span className="label-text">Fecha de Fin</span>
-                                        </label>
-                                        <input 
-                                            type="date" 
-                                            className="input input-bordered" 
-                                        />
+
+                                    {/* Opciones adicionales */}
+                                    <div className="bg-base-200 rounded-xl p-4">
+                                        <h4 className="font-medium text-base-content mb-3 flex items-center gap-2">
+                                            <span className="iconify lucide--settings size-4"></span>
+                                            Configuración Adicional
+                                        </h4>
+                                        <div className="space-y-3">
+                                            <div className="form-control bg-base-100 rounded-lg p-3">
+                                                <label className="label cursor-pointer flex">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="iconify lucide--message-circle size-5 text-accent"></span>
+                                                        <div>
+                                                            <span className="label-text font-medium">Permitir comentarios</span>
+                                                            <div className="text-xs text-base-content/60">Los usuarios podrán comentar en este aviso</div>
+                                                        </div>
+                                                    </div>
+                                                    <input type="checkbox" className="checkbox checkbox-accent" />
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="form-control mt-4">
-                                    <label className="label cursor-pointer justify-start">
-                                        <input type="checkbox" className="checkbox checkbox-primary mr-3" />
-                                        <span className="label-text">Permitir comentarios</span>
-                                    </label>
-                                </div>
-
-                                <div className="card-actions justify-end mt-6">
+                                {/* Acciones */}
+                                <div className="flex justify-end mt-8 pt-6 border-t border-base-300">
                                     <button 
-                                        className="btn btn-outline"
+                                        className="btn btn-primary"
                                         onClick={() => {
-                                            setSelectedAcademicYears(new Set());
-                                            setSelectedAcademicStages(new Set());
-                                            setSelectedAcademicPrograms(new Set());
-                                            setSelectedProgramYears(new Set());
-                                            setSelectedAcademicGroups(new Set());
+                                            // Aquí se implementará la lógica para publicar el aviso
+                                            console.log('Contenido del aviso:', announcementContent);
                                         }}
                                     >
-                                        Cancelar
-                                    </button>
-                                    <button className="btn btn-primary">
                                         <span className="iconify lucide--send size-4"></span>
-                                        Crear Aviso
+                                        Publicar Aviso
                                     </button>
                                 </div>
                             </div>
