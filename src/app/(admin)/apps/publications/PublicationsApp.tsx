@@ -8,11 +8,13 @@ import { IAcademicStage } from "@/interfaces/IAcademicStage";
 import { IAcademicProgram } from "@/interfaces/IAcademicProgram";
 import { IProgramYear } from "@/interfaces/IProgramYear";
 import { IAcademicGroup } from "@/interfaces/IAcademicGroup";
+import { IRecipient, PersonType } from "@/interfaces/IRecipient";
 import { getActiveAcademicYears } from "@/services/academic-year.service";
 import { getAcademicStagesByPrecedence } from "@/services/academic-stage.service";
 import { getAcademicProgramsByStages } from "@/services/academic-program.service";
 import { getProgramYearsByStagesAndPrograms } from "@/services/program-year.service";
 import { getAcademicGroupsByProgramYears } from "@/services/academic-group.service";
+import { getRecipientsWithAcademicFilters } from "@/services/recipient.service";
 
 const PublicationsApp = () => {
     const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);
@@ -26,6 +28,9 @@ const PublicationsApp = () => {
     const [academicGroups, setAcademicGroups] = useState<IAcademicGroup[]>([]);
     const [selectedAcademicGroups, setSelectedAcademicGroups] = useState<Set<number>>(new Set());
     const [selectedRecipientTypes, setSelectedRecipientTypes] = useState<Set<string>>(new Set());
+    const [recipients, setRecipients] = useState<IRecipient[]>([]);
+    const [selectedRecipients, setSelectedRecipients] = useState<Set<number>>(new Set());
+    const [recipientsLoading, setRecipientsLoading] = useState(false);
     const [announcementContent, setAnnouncementContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -119,6 +124,40 @@ const PublicationsApp = () => {
 
         loadAcademicGroups();
     }, [selectedProgramYears]);
+
+    // Cargar recipients cuando cambian los filtros
+    useEffect(() => {
+        const loadRecipients = async () => {
+            try {
+                if (selectedRecipientTypes.size > 0) {
+                    setRecipientsLoading(true);
+                    const personTypes = Array.from(selectedRecipientTypes) as PersonType[];
+                    
+                    // Construir filtros académicos
+                    const academicFilters = {
+                        academic_years: selectedAcademicYears.size > 0 ? Array.from(selectedAcademicYears) : undefined,
+                        academic_stages: selectedAcademicStages.size > 0 ? Array.from(selectedAcademicStages) : undefined,
+                        academic_programs: selectedAcademicPrograms.size > 0 ? Array.from(selectedAcademicPrograms) : undefined,
+                        program_years: selectedProgramYears.size > 0 ? Array.from(selectedProgramYears) : undefined,
+                        academic_groups: selectedAcademicGroups.size > 0 ? Array.from(selectedAcademicGroups) : undefined,
+                    };
+                    
+                    const recipientsData = await getRecipientsWithAcademicFilters(personTypes, academicFilters);
+                    setRecipients(recipientsData);
+                } else {
+                    setRecipients([]);
+                    setSelectedRecipients(new Set());
+                }
+            } catch (err: any) {
+                console.error("Error loading recipients:", err);
+                setRecipients([]);
+            } finally {
+                setRecipientsLoading(false);
+            }
+        };
+
+        loadRecipients();
+    }, [selectedRecipientTypes, selectedAcademicYears, selectedAcademicStages, selectedAcademicPrograms, selectedProgramYears, selectedAcademicGroups]);
 
     const handleAcademicYearToggle = (yearId: number, isSelected: boolean) => {
         setSelectedAcademicYears(prev => {
@@ -245,6 +284,27 @@ const PublicationsApp = () => {
         }
     };
 
+    const handleRecipientToggle = (personId: number, isSelected: boolean) => {
+        setSelectedRecipients(prev => {
+            const newSet = new Set(prev);
+            if (isSelected) {
+                newSet.add(personId);
+            } else {
+                newSet.delete(personId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAllRecipients = (isSelected: boolean) => {
+        if (isSelected) {
+            const allIds = new Set(recipients.map(recipient => recipient.person_id));
+            setSelectedRecipients(allIds);
+        } else {
+            setSelectedRecipients(new Set());
+        }
+    };
+
     return (
         <div className="bg-base-100 rounded-lg shadow-sm">
             <div className="p-6 border-b border-base-300">
@@ -291,9 +351,9 @@ const PublicationsApp = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                     {[
                                         { value: 'STUDENT', label: 'Estudiantes', icon: 'lucide--graduation-cap', color: 'primary' },
+                                        { value: 'RELATIVE', label: 'Familiares', icon: 'lucide--heart', color: 'success' },
                                         { value: 'TEACHER', label: 'Profesores', icon: 'lucide--user-check', color: 'secondary' },
-                                        { value: 'USER', label: 'Usuarios', icon: 'lucide--users', color: 'accent' },
-                                        { value: 'RELATIVE', label: 'Familiares', icon: 'lucide--heart', color: 'success' }
+                                        { value: 'USER', label: 'Usuarios', icon: 'lucide--users', color: 'accent' }
                                     ].map((recipientType) => (
                                         <div 
                                             key={recipientType.value}
@@ -399,7 +459,7 @@ const PublicationsApp = () => {
                                                         />
                                                         <div className="flex-1">
                                                             <div className="text-xs text-base-content">
-                                                                {year.description}
+                                                                {year.academic_year_key}
                                                             </div>
                                                         </div>
                                                     </label>
@@ -486,7 +546,7 @@ const PublicationsApp = () => {
                                                         />
                                                         <div className="flex-1">
                                                             <div className="text-xs text-base-content">
-                                                                {stage.description}
+                                                                ({stage.academic_stage_key}) {stage.description}
                                                             </div>
                                                         </div>
                                                     </label>
@@ -558,7 +618,7 @@ const PublicationsApp = () => {
                                                             />
                                                             <div className="flex-1">
                                                                 <div className="text-xs text-base-content">
-                                                                    {program.description}
+                                                                    ({program.academic_program_key}) {program.description}
                                                                 </div>
                                                             </div>
                                                         </label>
@@ -718,6 +778,164 @@ const PublicationsApp = () => {
                         </div>
                     )}
                     </>
+                    )}
+
+                    {/* Sección de Recipients (solo si hay tipos de destinatarios seleccionados) */}
+                    {selectedRecipientTypes.size > 0 && (
+                        <div className="card card-border bg-base-100 shadow-lg">
+                            <div className="card-body">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="card-title text-lg">
+                                        <span className="iconify lucide--users size-5"></span>
+                                        Destinatarios
+                                    </h3>
+                                    <div className="text-sm text-base-content/70">
+                                        {selectedRecipients.size} de {recipients.length} seleccionados
+                                    </div>
+                                </div>
+
+                                {recipientsLoading ? (
+                                    <div className="flex justify-center py-8">
+                                        <LoadingSpinner message="Cargando destinatarios..." />
+                                    </div>
+                                ) : recipients.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <span className="iconify lucide--users size-16 text-base-content/30 mb-4"></span>
+                                        <p className="text-base-content/70">
+                                            No se encontraron destinatarios para los filtros seleccionados
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {/* Checkbox para seleccionar todos */}
+                                        <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
+                                            <label className="label cursor-pointer flex items-center gap-3 p-0">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkbox checkbox-primary"
+                                                    checked={recipients.length > 0 && selectedRecipients.size === recipients.length}
+                                                    onChange={(e) => handleSelectAllRecipients(e.target.checked)}
+                                                />
+                                                <span className="font-medium text-base-content">
+                                                    Seleccionar todos los destinatarios
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        {/* Tabla de destinatarios */}
+                                        <div className="overflow-x-auto">
+                                            <table className="table table-zebra">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            <input
+                                                                type="checkbox"
+                                                                className="checkbox checkbox-primary"
+                                                                checked={recipients.length > 0 && selectedRecipients.size === recipients.length}
+                                                                onChange={(e) => handleSelectAllRecipients(e.target.checked)}
+                                                            />
+                                                        </th>
+                                                        <th>ID</th>
+                                                        <th>Nombre Completo</th>
+                                                        <th>Tipo</th>
+                                                        <th>Año Académico</th>
+                                                        <th>Nivel</th>
+                                                        <th>Programa</th>
+                                                        <th>Año Programa</th>
+                                                        <th>Grupo</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {recipients.map((recipient) => (
+                                                        <tr 
+                                                            key={recipient.person_id}
+                                                            className={`hover:bg-base-200 cursor-pointer ${
+                                                                selectedRecipients.has(recipient.person_id) 
+                                                                    ? 'bg-primary/5 border-primary/20' 
+                                                                    : ''
+                                                            }`}
+                                                            onClick={() => handleRecipientToggle(
+                                                                recipient.person_id, 
+                                                                !selectedRecipients.has(recipient.person_id)
+                                                            )}
+                                                        >
+                                                            <td>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="checkbox checkbox-primary checkbox-sm"
+                                                                    checked={selectedRecipients.has(recipient.person_id)}
+                                                                    onChange={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleRecipientToggle(recipient.person_id, e.target.checked);
+                                                                    }}
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <div className="font-mono text-xs">
+                                                                    {recipient.person_internal_id}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div className="font-medium">
+                                                                    {recipient.full_name}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div className={`badge badge-sm ${
+                                                                    recipient.person_type === 'STUDENT' ? 'badge-primary' :
+                                                                    recipient.person_type === 'TEACHER' ? 'badge-secondary' :
+                                                                    recipient.person_type === 'USER' ? 'badge-accent' :
+                                                                    'badge-success'
+                                                                }`}>
+                                                                    {recipient.person_type === 'STUDENT' ? 'Estudiante' :
+                                                                     recipient.person_type === 'TEACHER' ? 'Profesor' :
+                                                                     recipient.person_type === 'USER' ? 'Usuario' :
+                                                                     'Familiar'}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <span className="text-sm text-base-content/70">
+                                                                    {recipient.academic_year_key || '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className="text-sm text-base-content/70">
+                                                                    {recipient.academic_stage_key || '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className="text-sm text-base-content/70">
+                                                                    {recipient.academic_program_key || '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className="text-sm text-base-content/70">
+                                                                    {recipient.program_year_key || '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className="text-sm text-base-content/70">
+                                                                    {recipient.academic_group_key || '-'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Paginación si hay muchos resultados */}
+                                        {recipients.length > 50 && (
+                                            <div className="flex justify-center mt-4">
+                                                <div className="text-sm text-base-content/70">
+                                                    Mostrando {recipients.length} destinatarios
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     )}
 
                     {/* Formulario para crear aviso (aparece cuando se seleccionan años académicos o solo USER) */}
