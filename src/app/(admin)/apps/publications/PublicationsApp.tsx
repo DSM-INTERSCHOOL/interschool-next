@@ -823,9 +823,9 @@ const PublicationsApp = () => {
                                         </div>
 
                                         {/* Tabla de destinatarios */}
-                                        <div className="overflow-x-auto">
+                                        <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
                                             <table className="table table-zebra">
-                                                <thead>
+                                                <thead className="sticky top-0 bg-base-100 z-10">
                                                     <tr>
                                                         <th>
                                                             <input
