@@ -14,7 +14,7 @@ import { getAcademicStagesByPrecedence } from "@/services/academic-stage.service
 import { getAcademicProgramsByStages } from "@/services/academic-program.service";
 import { getProgramYearsByStagesAndPrograms } from "@/services/program-year.service";
 import { getAcademicGroupsByProgramYears } from "@/services/academic-group.service";
-import { getRecipientsWithAcademicFilters } from "@/services/recipient.service";
+import { getRecipientsWithEnrollmentFilters } from "@/services/recipient.service";
 
 const PublicationsApp = () => {
     const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);
@@ -31,6 +31,7 @@ const PublicationsApp = () => {
     const [recipients, setRecipients] = useState<IRecipient[]>([]);
     const [selectedRecipients, setSelectedRecipients] = useState<Set<number>>(new Set());
     const [recipientsLoading, setRecipientsLoading] = useState(false);
+    const [recipientsError, setRecipientsError] = useState<string | null>(null);
     const [announcementContent, setAnnouncementContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -125,38 +126,52 @@ const PublicationsApp = () => {
         loadAcademicGroups();
     }, [selectedProgramYears]);
 
-    // Cargar recipients cuando cambian los filtros
-    useEffect(() => {
-        const loadRecipients = async () => {
-            try {
-                if (selectedRecipientTypes.size > 0) {
-                    setRecipientsLoading(true);
-                    const personTypes = Array.from(selectedRecipientTypes) as PersonType[];
-                    
-                    // Construir filtros académicos
-                    const academicFilters = {
-                        academic_years: selectedAcademicYears.size > 0 ? Array.from(selectedAcademicYears) : undefined,
-                        academic_stages: selectedAcademicStages.size > 0 ? Array.from(selectedAcademicStages) : undefined,
-                        academic_programs: selectedAcademicPrograms.size > 0 ? Array.from(selectedAcademicPrograms) : undefined,
-                        program_years: selectedProgramYears.size > 0 ? Array.from(selectedProgramYears) : undefined,
-                        academic_groups: selectedAcademicGroups.size > 0 ? Array.from(selectedAcademicGroups) : undefined,
-                    };
-                    
-                    const recipientsData = await getRecipientsWithAcademicFilters(personTypes, academicFilters);
-                    setRecipients(recipientsData);
-                } else {
-                    setRecipients([]);
-                    setSelectedRecipients(new Set());
-                }
-            } catch (err: any) {
-                console.error("Error loading recipients:", err);
-                setRecipients([]);
-            } finally {
-                setRecipientsLoading(false);
-            }
-        };
+    // Función para cargar recipients manualmente
+    const loadRecipients = async () => {
+        try {
+            // Limpiar errores previos
+            setRecipientsError(null);
 
-        loadRecipients();
+            if (selectedRecipientTypes.size === 0) {
+                setRecipientsError("Debe seleccionar al menos un tipo de destinatario");
+                return;
+            }
+
+            // Validar que hay año académico seleccionado, excepto cuando es únicamente USER
+            const isOnlyUser = selectedRecipientTypes.size === 1 && selectedRecipientTypes.has('USER');
+            if (!isOnlyUser && selectedAcademicYears.size === 0) {
+                setRecipientsError("Debe seleccionar al menos un año académico");
+                return;
+            }
+
+            setRecipientsLoading(true);
+            const personTypes = Array.from(selectedRecipientTypes) as PersonType[];
+            
+            // Construir filtros académicos
+            const academicFilters = {
+                academic_years: selectedAcademicYears.size > 0 ? Array.from(selectedAcademicYears) : undefined,
+                academic_stages: selectedAcademicStages.size > 0 ? Array.from(selectedAcademicStages) : undefined,
+                academic_programs: selectedAcademicPrograms.size > 0 ? Array.from(selectedAcademicPrograms) : undefined,
+                program_years: selectedProgramYears.size > 0 ? Array.from(selectedProgramYears) : undefined,
+                academic_groups: selectedAcademicGroups.size > 0 ? Array.from(selectedAcademicGroups) : undefined,
+            };
+            
+            const recipientsData = await getRecipientsWithEnrollmentFilters(personTypes, academicFilters);
+            setRecipients(recipientsData);
+        } catch (err: any) {
+            console.error("Error loading recipients:", err);
+            setRecipientsError(err.message || "Error al cargar destinatarios");
+            setRecipients([]);
+        } finally {
+            setRecipientsLoading(false);
+        }
+    };
+
+    // Resetear recipients cuando cambian los tipos de destinatarios
+    useEffect(() => {
+        setRecipients([]);
+        setSelectedRecipients(new Set());
+        setRecipientsError(null);
     }, [selectedRecipientTypes, selectedAcademicYears, selectedAcademicStages, selectedAcademicPrograms, selectedProgramYears, selectedAcademicGroups]);
 
     const handleAcademicYearToggle = (yearId: number, isSelected: boolean) => {
@@ -789,10 +804,40 @@ const PublicationsApp = () => {
                                         <span className="iconify lucide--users size-5"></span>
                                         Destinatarios
                                     </h3>
-                                    <div className="text-sm text-base-content/70">
-                                        {selectedRecipients.size} de {recipients.length} seleccionados
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            className="btn btn-primary btn-sm"
+                                            onClick={loadRecipients}
+                                            disabled={recipientsLoading || selectedRecipientTypes.size === 0}
+                                        >
+                                            {recipientsLoading ? (
+                                                <>
+                                                    <span className="loading loading-spinner loading-xs"></span>
+                                                    Cargando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="iconify lucide--search size-4"></span>
+                                                    Buscar Destinatarios
+                                                </>
+                                            )}
+                                        </button>
+                                        <div className="text-sm text-base-content/70">
+                                            {selectedRecipients.size} de {recipients.length} seleccionados
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* Mensaje de error */}
+                                {recipientsError && (
+                                    <div className="alert alert-error shadow-lg mt-4">
+                                        <span className="iconify lucide--alert-circle size-6"></span>
+                                        <div>
+                                            <h3 className="font-bold">Error de validación</h3>
+                                            <div className="text-sm">{recipientsError}</div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {recipientsLoading ? (
                                     <div className="flex justify-center py-8">
@@ -802,7 +847,10 @@ const PublicationsApp = () => {
                                     <div className="text-center py-8">
                                         <span className="iconify lucide--users size-16 text-base-content/30 mb-4"></span>
                                         <p className="text-base-content/70">
-                                            No se encontraron destinatarios para los filtros seleccionados
+                                            {selectedRecipientTypes.size > 0 
+                                                ? "Haz clic en 'Buscar Destinatarios' para cargar la lista con los filtros seleccionados"
+                                                : "Selecciona al menos un tipo de destinatario"
+                                            }
                                         </p>
                                     </div>
                                 ) : (

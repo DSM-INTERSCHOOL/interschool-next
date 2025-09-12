@@ -16,9 +16,13 @@ export const getAcademicYears = async (
   params?: IAcademicYearParams
 ): Promise<IAcademicYear[]> => {
   try {
-  
+    // Always include date_filter_type=ACTUALES parameter
+    const requestParams = {
+      ...params,
+      date_filter_type: "ACTUALES"
+    };
 
-    const response = await api.get(`/${SCHOOL_ID}/academic-years`);
+    const response = await api.get(`/${SCHOOL_ID}/academic-years`, { params: requestParams });
     
     return response.data;
   } catch (error) {

@@ -26,6 +26,7 @@ export interface IAcademicYearResponse {
 // Query parameters for the academic years endpoint
 export interface IAcademicYearParams {
   academic_year?: string; // e.g., "VIGENTES"
+  date_filter_type?: string; // e.g., "ACTUALES"
 }
 
 // Enum for common academic year filters

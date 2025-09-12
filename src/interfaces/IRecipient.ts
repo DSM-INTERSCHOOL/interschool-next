@@ -39,6 +39,8 @@ export interface IRecipientParams {
   academic_programs?: string;
   program_years?: string;
   academic_groups?: string;
+  group_enrollment_filters?: string; // JSON string with enrollment filters
+  relative_enrollment_filters?: string; // JSON string with relative enrollment filters
 }
 
 // Enum for person types
@@ -75,6 +77,16 @@ export interface IRecipientFilters {
 // Grouped recipients by person type
 export interface IRecipientGrouped {
   [personType: string]: IRecipient[];
+}
+
+// Enrollment filters for group and relative recipients
+export interface IEnrollmentFilters {
+  academic_years?: number[];
+  academic_stages?: number[];
+  academic_programs?: number[];
+  academic_modalities?: number[];
+  program_years?: number[];
+  academic_groups?: number[];
 }
 
 // Recipients selection state
