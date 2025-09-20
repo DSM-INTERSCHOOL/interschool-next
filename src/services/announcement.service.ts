@@ -44,7 +44,7 @@ interface LikeArgs {
 // CRUD básico de anuncios
 export const create = async ({ schoolId, dto }: CreateArgs) => {
   const response = await communicationApi.post<IAnnouncementRead>(
-    `/schools/${schoolId}/announcements`,
+    `/v1/schools/${schoolId}/announcements`,
     dto
   );
   return response.data;

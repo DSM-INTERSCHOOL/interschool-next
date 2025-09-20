@@ -87,6 +87,7 @@ export interface IEnrollmentFilters {
   academic_modalities?: number[];
   program_years?: number[];
   academic_groups?: number[];
+  enrollment_types?: string[]; // Used for relative_enrollment_filters
 }
 
 // Recipients selection state

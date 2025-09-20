@@ -15,6 +15,9 @@ import { getAcademicProgramsByStages } from "@/services/academic-program.service
 import { getProgramYearsByStagesAndPrograms } from "@/services/program-year.service";
 import { getAcademicGroupsByProgramYears } from "@/services/academic-group.service";
 import { getRecipientsWithEnrollmentFilters } from "@/services/recipient.service";
+import { create } from "@/services/announcement.service";
+import { IAnnouncementCreate } from "@/interfaces/IAnnouncement";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const PublicationsApp = () => {
     const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);
@@ -33,8 +36,17 @@ const PublicationsApp = () => {
     const [recipientsLoading, setRecipientsLoading] = useState(false);
     const [recipientsError, setRecipientsError] = useState<string | null>(null);
     const [announcementContent, setAnnouncementContent] = useState<string>('');
+    const [announcementTitle, setAnnouncementTitle] = useState<string>('');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const [acceptComments, setAcceptComments] = useState<boolean>(true);
+    const [publishLoading, setPublishLoading] = useState(false);
+    const [publishError, setPublishError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Get auth data
+    const { personId } = useAuthStore();
 
     // Cargar años académicos y niveles académicos
     useEffect(() => {
@@ -317,6 +329,100 @@ const PublicationsApp = () => {
             setSelectedRecipients(allIds);
         } else {
             setSelectedRecipients(new Set());
+        }
+    };
+
+    const handlePublishAnnouncement = async () => {
+        try {
+            setPublishLoading(true);
+            setPublishError(null);
+
+            // Validations
+            if (!announcementTitle.trim()) {
+                setPublishError("El título es requerido");
+                return;
+            }
+
+            if (!announcementContent.trim()) {
+                setPublishError("El contenido es requerido");
+                return;
+            }
+
+            if (!startDate) {
+                setPublishError("La fecha de inicio es requerida");
+                return;
+            }
+
+            if (!endDate) {
+                setPublishError("La fecha de fin es requerida");
+                return;
+            }
+
+            if (selectedRecipients.size === 0) {
+                setPublishError("Debe seleccionar al menos un destinatario");
+                return;
+            }
+
+            if (!personId) {
+                setPublishError("No se pudo obtener la información del usuario");
+                return;
+            }
+
+            // Prepare data for API
+            const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
+
+            // Convert selected recipients to string array
+            const personsArray = Array.from(selectedRecipients).map(id => id.toString());
+
+            // Convert selected academic years to string array
+            const academicYearsArray = Array.from(selectedAcademicYears).map(id => {
+                const year = academicYears.find(y => y.id === id);
+                return year?.academic_year_key || id.toString();
+            });
+
+            // Convert selected academic stages to string array
+            const academicStagesArray = Array.from(selectedAcademicStages).map(id => {
+                const stage = academicStages.find(s => s.id === id);
+                return stage?.academic_stage_key || id.toString();
+            });
+
+            const announcementData: IAnnouncementCreate = {
+                publisher_person_id: personId.toString(),
+                title: announcementTitle.trim(),
+                content: announcementContent.trim(),
+                start_date: new Date(startDate).toISOString(),
+                end_date: new Date(endDate).toISOString(),
+                accept_comments: acceptComments,
+                authorized: true,
+                status: "ACTIVE",
+                persons: personsArray,
+                academic_year: academicYearsArray[0] || null, // Use first selected year
+                academic_stages: academicStagesArray.length > 0 ? academicStagesArray : null,
+                attachments: null
+            };
+
+            // Create announcement
+            const result = await create({
+                schoolId,
+                dto: announcementData
+            });
+
+            // Reset form on success
+            setAnnouncementTitle('');
+            setAnnouncementContent('');
+            setStartDate('');
+            setEndDate('');
+            setAcceptComments(true);
+
+            // Show success message (you might want to add a toast notification here)
+            console.log('Aviso publicado exitosamente:', result);
+            alert('¡Aviso publicado exitosamente!');
+
+        } catch (err: any) {
+            console.error("Error publishing announcement:", err);
+            setPublishError(err.response?.data?.message || err.message || "Error al publicar el aviso");
+        } finally {
+            setPublishLoading(false);
         }
     };
 
@@ -1062,10 +1168,12 @@ const PublicationsApp = () => {
                                         </legend>
                                         <label className="input input-primary w-full">
                                             <span className="iconify lucide--edit-3 text-base-content/60 size-5"></span>
-                                            <input 
-                                                className="grow w-full" 
-                                                type="text" 
+                                            <input
+                                                className="grow w-full"
+                                                type="text"
                                                 placeholder="Ej: Reunión de padres de familia, Suspensión de clases..."
+                                                value={announcementTitle}
+                                                onChange={(e) => setAnnouncementTitle(e.target.value)}
                                             />
                                         </label>
                                         <p className="fieldset-label">* Campo requerido</p>
@@ -1154,9 +1262,11 @@ const PublicationsApp = () => {
                                             </legend>
                                             <label className="input input-success">
                                                 <span className="iconify lucide--calendar-days text-base-content/60 size-5"></span>
-                                                <input 
-                                                    className="grow" 
-                                                    type="date" 
+                                                <input
+                                                    className="grow"
+                                                    type="date"
+                                                    value={startDate}
+                                                    onChange={(e) => setStartDate(e.target.value)}
                                                 />
                                             </label>
                                             <p className="fieldset-label">Cuándo inicia la vigencia</p>
@@ -1169,9 +1279,11 @@ const PublicationsApp = () => {
                                             </legend>
                                             <label className="input input-warning">
                                                 <span className="iconify lucide--calendar-clock text-base-content/60 size-5"></span>
-                                                <input 
-                                                    className="grow" 
-                                                    type="date" 
+                                                <input
+                                                    className="grow"
+                                                    type="date"
+                                                    value={endDate}
+                                                    onChange={(e) => setEndDate(e.target.value)}
                                                 />
                                             </label>
                                             <p className="fieldset-label">Cuándo expira el aviso</p>
@@ -1194,24 +1306,47 @@ const PublicationsApp = () => {
                                                             <div className="text-xs text-base-content/60">Los usuarios podrán comentar en este aviso</div>
                                                         </div>
                                                     </div>
-                                                    <input type="checkbox" className="checkbox checkbox-accent" />
+                                                    <input
+                                                        type="checkbox"
+                                                        className="checkbox checkbox-accent"
+                                                        checked={acceptComments}
+                                                        onChange={(e) => setAcceptComments(e.target.checked)}
+                                                    />
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
+                                {/* Error de publicación */}
+                                {publishError && (
+                                    <div className="alert alert-error shadow-lg">
+                                        <span className="iconify lucide--alert-circle size-6"></span>
+                                        <div>
+                                            <h3 className="font-bold">Error de validación</h3>
+                                            <div className="text-sm">{publishError}</div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Acciones */}
                                 <div className="flex justify-end mt-8 pt-6 border-t border-base-300">
-                                    <button 
+                                    <button
                                         className="btn btn-primary"
-                                        onClick={() => {
-                                            // Aquí se implementará la lógica para publicar el aviso
-                                            console.log('Contenido del aviso:', announcementContent);
-                                        }}
+                                        onClick={handlePublishAnnouncement}
+                                        disabled={publishLoading}
                                     >
-                                        <span className="iconify lucide--send size-4"></span>
-                                        Publicar Aviso
+                                        {publishLoading ? (
+                                            <>
+                                                <span className="loading loading-spinner loading-sm"></span>
+                                                Publicando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="iconify lucide--send size-4"></span>
+                                                Publicar Aviso
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>

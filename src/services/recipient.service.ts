@@ -39,6 +39,9 @@ const buildEnrollmentFilters = (filters: IEnrollmentFilters): string | undefined
   if (filters.academic_groups && filters.academic_groups.length > 0) {
     activeFilters.academic_groups = filters.academic_groups;
   }
+  if (filters.enrollment_types && filters.enrollment_types.length > 0) {
+    activeFilters.enrollment_types = filters.enrollment_types;
+  }
   
   // Return JSON string if we have any filters, undefined otherwise
   return Object.keys(activeFilters).length > 0 ? JSON.stringify(activeFilters) : undefined;
@@ -159,7 +162,28 @@ export const getRecipientsWithEnrollmentFilters = async (
 
     // Add enrollment filters based on person types
     if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
-      const groupFilters = buildEnrollmentFilters(enrollmentFilters);
+      // Build enrollment_types array for group filters
+      const enrollment_types: string[] = [];
+      
+      if (personTypes.includes(PersonType.STUDENT)) {
+        enrollment_types.push('STUDENT');
+      }
+      
+      if (personTypes.includes(PersonType.TEACHER)) {
+        enrollment_types.push('TEACHER');
+      }
+      
+      if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
+        enrollment_types.push('MONITOR');
+      }
+      
+      // Add enrollment_types to the filters
+      const groupFiltersWithTypes = {
+        ...enrollmentFilters,
+        enrollment_types: enrollment_types.length > 0 ? enrollment_types : undefined
+      };
+      
+      const groupFilters = buildEnrollmentFilters(groupFiltersWithTypes);
       if (groupFilters) {
         params.group_enrollment_filters = groupFilters;
       }
