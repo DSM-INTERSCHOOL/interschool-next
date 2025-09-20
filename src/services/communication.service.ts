@@ -1,11 +1,13 @@
 import communicationApi from "./communicationApi";
 
 interface AttachmentResponse {
+  school_id: number;
   file_name: string;
   file_path: string;
   file_type: string;
   file_size: number;
-  uploaded_at: string;
+  bucket_name: string;
+  public_url: string;
 }
 
 export const communicationService = {

@@ -18,6 +18,7 @@ import { getRecipientsWithEnrollmentFilters } from "@/services/recipient.service
 import { create } from "@/services/announcement.service";
 import { IAnnouncementCreate } from "@/interfaces/IAnnouncement";
 import { useAuthStore } from "@/store/useAuthStore";
+import { communicationService } from "@/services/communication.service";
 
 const PublicationsApp = () => {
     const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);
@@ -42,11 +43,38 @@ const PublicationsApp = () => {
     const [acceptComments, setAcceptComments] = useState<boolean>(true);
     const [publishLoading, setPublishLoading] = useState(false);
     const [publishError, setPublishError] = useState<string | null>(null);
+    const [attachments, setAttachments] = useState<File[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // Get auth data
     const { personId } = useAuthStore();
+
+    // Handle file upload for TinyMCE (images in editor content)
+    const handleFileUpload = async (file: File): Promise<string> => {
+        try {
+            const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
+            const result = await communicationService.uploadAttachment(schoolId, file);
+
+            console.log("Upload result:", result);
+            console.log("Using public_url for TinyMCE:", result.public_url);
+
+            // Return the public URL for TinyMCE preview
+            return result.public_url;
+        } catch (error) {
+            console.error("Error uploading file:", error);
+            throw new Error("Error al subir el archivo");
+        }
+    };
+
+    // Handle attachment files (separate from editor images)
+    const handleAddAttachment = (file: File) => {
+        setAttachments(prev => [...prev, file]);
+    };
+
+    const handleRemoveAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
 
     // Cargar años académicos y niveles académicos
     useEffect(() => {
@@ -398,7 +426,7 @@ const PublicationsApp = () => {
                 persons: personsArray,
                 academic_year: academicYearsArray[0] || null, // Use first selected year
                 academic_stages: academicStagesArray.length > 0 ? academicStagesArray : null,
-                attachments: null
+                attachments: []
             };
 
             // Create announcement
@@ -413,6 +441,7 @@ const PublicationsApp = () => {
             setStartDate('');
             setEndDate('');
             setAcceptComments(true);
+            setAttachments([]);
 
             // Show success message (you might want to add a toast notification here)
             console.log('Aviso publicado exitosamente:', result);
@@ -1212,19 +1241,26 @@ const PublicationsApp = () => {
                                                     resize: false,
                                                     statusbar: false,
                                                     // Configuración para subida de imágenes
-                                                    images_upload_handler: (blobInfo: any, progress: any) => new Promise((resolve, reject) => {
-                                                        const reader = new FileReader();
-                                                        reader.onload = () => {
-                                                            // Convertir la imagen a base64 data URL
-                                                            resolve(reader.result as string);
-                                                        };
-                                                        reader.onerror = () => {
-                                                            reject('Error al procesar la imagen');
-                                                        };
-                                                        reader.readAsDataURL(blobInfo.blob());
+                                                    images_upload_handler: (blobInfo: any, progress: any) => new Promise(async (resolve, reject) => {
+                                                        console.log('TinyMCE images_upload_handler called', blobInfo);
+                                                        try {
+                                                            const file = blobInfo.blob();
+                                                            console.log('File to upload:', file.name, file.type, file.size);
+                                                            const fileUrl = await handleFileUpload(file);
+                                                            console.log('Resolving with URL:', fileUrl);
+                                                            resolve(fileUrl);
+                                                        } catch (error) {
+                                                            console.error('Error uploading image:', error);
+                                                            reject(error);
+                                                        }
                                                     }),
                                                     // Permitir pegar imágenes
                                                     paste_data_images: true,
+                                                    // Subidas automáticas
+                                                    automatic_uploads: true,
+                                                    // Configuración adicional para uploads
+                                                    images_upload_url: '/api/upload', // URL ficticia, usaremos el handler
+                                                    images_reuse_filename: true,
                                                     // Mostrar el diálogo de subida de archivos
                                                     file_picker_types: 'image',
                                                     file_picker_callback: (callback: any, value: any, meta: any) => {
@@ -1232,15 +1268,19 @@ const PublicationsApp = () => {
                                                             const input = document.createElement('input');
                                                             input.setAttribute('type', 'file');
                                                             input.setAttribute('accept', 'image/*');
-                                                            input.addEventListener('change', (e: any) => {
+                                                            input.addEventListener('change', async (e: any) => {
                                                                 const file = e.target.files[0];
-                                                                const reader = new FileReader();
-                                                                reader.addEventListener('load', () => {
-                                                                    callback(reader.result, {
-                                                                        alt: file.name
-                                                                    });
-                                                                });
-                                                                reader.readAsDataURL(file);
+                                                                if (file) {
+                                                                    try {
+                                                                        const fileUrl = await handleFileUpload(file);
+                                                                        callback(fileUrl, {
+                                                                            alt: file.name
+                                                                        });
+                                                                    } catch (error) {
+                                                                        console.error('Error uploading file:', error);
+                                                                        alert('Error al subir el archivo');
+                                                                    }
+                                                                }
                                                             });
                                                             input.click();
                                                         }
@@ -1289,6 +1329,82 @@ const PublicationsApp = () => {
                                             <p className="fieldset-label">Cuándo expira el aviso</p>
                                         </fieldset>
                                     </div>
+
+                                    {/* Archivos Adjuntos */}
+                                    <fieldset className="fieldset w-full">
+                                        <legend className="fieldset-legend flex items-center gap-2">
+                                            <span className="iconify lucide--paperclip size-4"></span>
+                                            Archivos Adjuntos
+                                        </legend>
+                                        <div className="space-y-4">
+                                            {/* Drop zone */}
+                                            <div
+                                                className="border-2 border-dashed border-base-300 rounded-lg p-6 text-center hover:border-base-400 transition-colors cursor-pointer"
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    const files = Array.from(e.dataTransfer.files);
+                                                    files.forEach(file => handleAddAttachment(file));
+                                                }}
+                                                onDragOver={(e) => e.preventDefault()}
+                                                onClick={() => {
+                                                    const input = document.createElement('input');
+                                                    input.type = 'file';
+                                                    input.multiple = true;
+                                                    input.accept = '*/*';
+                                                    input.onchange = (e: any) => {
+                                                        const files = Array.from(e.target.files);
+                                                        files.forEach((file: any) => handleAddAttachment(file));
+                                                    };
+                                                    input.click();
+                                                }}
+                                            >
+                                                <span className="iconify lucide--upload size-8 text-base-content/40 mb-2"></span>
+                                                <p className="text-base-content/70 mb-1">
+                                                    Arrastra archivos aquí o haz clic para seleccionar
+                                                </p>
+                                                <p className="text-sm text-base-content/50">
+                                                    Puedes agregar documentos, imágenes, PDFs, etc.
+                                                </p>
+                                            </div>
+
+                                            {/* Lista de archivos adjuntos */}
+                                            {attachments.length > 0 && (
+                                                <div className="space-y-2">
+                                                    <h5 className="font-medium text-base-content">
+                                                        Archivos seleccionados ({attachments.length})
+                                                    </h5>
+                                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                                        {attachments.map((file, index) => (
+                                                            <div
+                                                                key={index}
+                                                                className="flex items-center justify-between p-3 bg-base-100 rounded-lg border border-base-300"
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="iconify lucide--file size-4 text-base-content/60"></span>
+                                                                    <div>
+                                                                        <p className="text-sm font-medium text-base-content">
+                                                                            {file.name}
+                                                                        </p>
+                                                                        <p className="text-xs text-base-content/60">
+                                                                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-ghost btn-sm btn-circle"
+                                                                    onClick={() => handleRemoveAttachment(index)}
+                                                                >
+                                                                    <span className="iconify lucide--x size-4"></span>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="fieldset-label">Los archivos se adjuntarán al aviso</p>
+                                    </fieldset>
 
                                     {/* Opciones adicionales */}
                                     <div className="bg-base-200 rounded-xl p-4">
