@@ -49,22 +49,19 @@ const buildEnrollmentFilters = (filters: IEnrollmentFilters): string | undefined
 
 /**
  * Get recipients for a school with filters
- * @param params - Query parameters for filtering recipients
- * @param requestBody - Request body with academic filters
+ * @param requestBody - Request body with filters (now uses POST method)
  * @returns Promise<IRecipient[]> - Array of recipients
  */
 export const getRecipients = async (
-  params?: IRecipientParams,
-  requestBody?: IRecipientRequest
+  requestBody: IRecipientRequest
 ): Promise<IRecipient[]> => {
   try {
     const response = await api.request({
-      method: 'GET',
+      method: 'POST',
       url: `/${SCHOOL_ID}/recipients`,
-      params,
       data: requestBody
     });
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching recipients:", error);
@@ -85,14 +82,16 @@ export const getRecipientsByPersonTypes = async (
       return [];
     }
 
-    const personTypesParam = personTypes.join(',');
-    
+    const requestBody = {
+      person_types: personTypes
+    };
+
     const response = await api.request({
-      method: 'GET',
+      method: 'POST',
       url: `/${SCHOOL_ID}/recipients`,
-      params: { person_types: personTypesParam }
+      data: requestBody
     });
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching recipients by person types:", error);
@@ -141,8 +140,11 @@ export const getRecipientsWithEnrollmentFilters = async (
       return [];
     }
 
-    const personTypesParam = personTypes.join(',');
-    
+    // Build the request body
+    const requestBody: any = {
+      person_types: personTypes
+    };
+
     // Build enrollment filters for different person types
     const enrollmentFilters: IEnrollmentFilters = {
       academic_years: academicFilters.academic_years,
@@ -152,56 +154,62 @@ export const getRecipientsWithEnrollmentFilters = async (
       academic_groups: academicFilters.academic_groups,
     };
 
-    const params: IRecipientParams = {};
-
-    // Include person_types=USER only when USER is among the selected types
-    // person_types only works for USER, regardless of other types selected
-    if (personTypes.includes(PersonType.USER)) {
-      params.person_types = PersonType.USER;
-    }
-
     // Add enrollment filters based on person types
     if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
       // Build enrollment_types array for group filters
       const enrollment_types: string[] = [];
-      
+
       if (personTypes.includes(PersonType.STUDENT)) {
         enrollment_types.push('STUDENT');
       }
-      
+
       if (personTypes.includes(PersonType.TEACHER)) {
         enrollment_types.push('TEACHER');
       }
-      
+
       if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
         enrollment_types.push('MONITOR');
       }
-      
+
       // Add enrollment_types to the filters
       const groupFiltersWithTypes = {
         ...enrollmentFilters,
         enrollment_types: enrollment_types.length > 0 ? enrollment_types : undefined
       };
-      
-      const groupFilters = buildEnrollmentFilters(groupFiltersWithTypes);
-      if (groupFilters) {
-        params.group_enrollment_filters = groupFilters;
+
+      // Remove undefined values
+      const cleanGroupFilters: any = {};
+      Object.keys(groupFiltersWithTypes).forEach(key => {
+        if (groupFiltersWithTypes[key as keyof typeof groupFiltersWithTypes] !== undefined) {
+          cleanGroupFilters[key] = groupFiltersWithTypes[key as keyof typeof groupFiltersWithTypes];
+        }
+      });
+
+      if (Object.keys(cleanGroupFilters).length > 0) {
+        requestBody.group_enrollment_filters = cleanGroupFilters;
       }
     }
 
     if (personTypes.includes(PersonType.RELATIVE)) {
-      const relativeFilters = buildEnrollmentFilters(enrollmentFilters);
-      if (relativeFilters) {
-        params.relative_enrollment_filters = relativeFilters;
+      // Remove undefined values from relative filters
+      const cleanRelativeFilters: any = {};
+      Object.keys(enrollmentFilters).forEach(key => {
+        if (enrollmentFilters[key as keyof typeof enrollmentFilters] !== undefined) {
+          cleanRelativeFilters[key] = enrollmentFilters[key as keyof typeof enrollmentFilters];
+        }
+      });
+
+      if (Object.keys(cleanRelativeFilters).length > 0) {
+        requestBody.relative_enrollment_filters = cleanRelativeFilters;
       }
     }
-    
+
     const response = await api.request({
-      method: 'GET',
+      method: 'POST',
       url: `/${SCHOOL_ID}/recipients`,
-      params
+      data: requestBody
     });
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching recipients with enrollment filters:", error);

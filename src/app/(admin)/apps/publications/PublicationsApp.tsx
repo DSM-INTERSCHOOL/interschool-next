@@ -1469,8 +1469,8 @@ const PublicationsApp = () => {
                         </div>
                     )}
 
-                    {/* Mensaje cuando no hay elementos seleccionados */}
-                    {!loading && !error && academicYears.length > 0 && selectedAcademicYears.size === 0 && selectedAcademicStages.size === 0 && (
+                    {/* Mensaje cuando no hay elementos seleccionados - Solo mostrar si no es únicamente USER */}
+                    {!loading && !error && academicYears.length > 0 && selectedAcademicYears.size === 0 && selectedAcademicStages.size === 0 && !(selectedRecipientTypes.size === 1 && selectedRecipientTypes.has('USER')) && (
                         <div className="text-center py-12">
                             <span className="iconify lucide--check-square size-16 text-base-content/30 mb-4"></span>
                             <h3 className="text-lg font-medium text-base-content mb-2">
