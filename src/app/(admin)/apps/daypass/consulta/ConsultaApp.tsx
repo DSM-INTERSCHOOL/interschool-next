@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getDaypassesConsulta } from "@/services/daypass-consulta.service";
 import { IDaypassConsulta } from "@/services/daypass-consulta.service";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { downloadDaypassPDF, previewDaypassPDF } from "@/utils/pdfGenerator";
 
 export const ConsultaApp = () => {
   const [allDaypasses, setAllDaypasses] = useState<IDaypassConsulta[]>([]);
@@ -73,8 +74,43 @@ export const ConsultaApp = () => {
   };
 
   const handlePrint = () => {
-    // TODO: Implementar funcionalidad de impresión
-    console.log('Imprimir pases seleccionados:', Array.from(selectedDaypasses));
+    // Obtener los pases seleccionados
+    const selectedDaypassData = filteredDaypasses.filter(daypass =>
+      selectedDaypasses.has(daypass.id)
+    );
+
+    if (selectedDaypassData.length === 0) {
+      alert('No hay pases de salida seleccionados para imprimir');
+      return;
+    }
+
+    try {
+      // Generar y descargar el PDF
+      downloadDaypassPDF(selectedDaypassData);
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert('Error al generar el PDF. Por favor, intenta nuevamente.');
+    }
+  };
+
+  const handlePreviewPDF = () => {
+    // Obtener los pases seleccionados
+    const selectedDaypassData = filteredDaypasses.filter(daypass =>
+      selectedDaypasses.has(daypass.id)
+    );
+
+    if (selectedDaypassData.length === 0) {
+      alert('No hay pases de salida seleccionados para previsualizar');
+      return;
+    }
+
+    try {
+      // Abrir vista previa del PDF
+      previewDaypassPDF(selectedDaypassData);
+    } catch (error) {
+      console.error('Error generando vista previa del PDF:', error);
+      alert('Error al generar la vista previa del PDF. Por favor, intenta nuevamente.');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -254,13 +290,24 @@ export const ConsultaApp = () => {
             </h3>
             <div className="flex items-center gap-4">
               {selectedDaypasses.size > 0 && (
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={handlePrint}
-                >
-                  <span className="iconify lucide--printer size-4"></span>
-                  Imprimir ({selectedDaypasses.size})
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={handlePreviewPDF}
+                    title="Vista previa del PDF"
+                  >
+                    <span className="iconify lucide--eye size-4"></span>
+                    Previsualizar
+                  </button>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={handlePrint}
+                    title="Descargar PDF"
+                  >
+                    <span className="iconify lucide--download size-4"></span>
+                    Descargar PDF ({selectedDaypasses.size})
+                  </button>
+                </div>
               )}
               <div className="text-sm text-base-content/70">
                 {filteredDaypasses.length} pases de salida encontrados
