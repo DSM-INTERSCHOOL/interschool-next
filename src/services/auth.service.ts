@@ -73,13 +73,13 @@ interface AuthError {
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(
-      'https://core-api.idsm.xyz/web-login',
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,
       credentials,
       {
         headers: {
           'x-device-id': 'mobile-web-client',
           'Content-Type': 'application/json',
-          'x-url-origin': 'https://admin.celta.interschool.mx'
+          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || ''
         },
       }
     );
@@ -101,7 +101,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 export const getPermisos = async (): Promise<Permiso[]> => {
   try {
     const response = await axios.post<PermisosResponse>(
-      'http://core-api.idsm.xyz:8090/web-login',
+      `${process.env.NEXT_PUBLIC_API_BASE_URL_DEV}/web-login`,
       {
         person_id: "DSM",
         password: "DATA2023+"
@@ -109,7 +109,7 @@ export const getPermisos = async (): Promise<Permiso[]> => {
       {
         headers: {
           'x-device-id': 'agent-postman',
-          'x-url-origin': 'https://admin.celta.interschool.mx',
+          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
           'Content-Type': 'application/json',
         },
       }

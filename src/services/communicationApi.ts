@@ -6,7 +6,7 @@ const communicationApi = axios.create({
   headers: {
     "Content-Type": "application/json",
     "x-device-id": "mobile-web-client",
-    "x-url-origin": "https://admin.celta.interschool.mx"
+    "x-url-origin": process.env.NEXT_PUBLIC_X_URL_ORIGIN || ""
   },
 });
 

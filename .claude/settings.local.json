@@ -7,7 +7,9 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(npm install:*)",
-      "Bash(git merge main -m \"$(cat <<''EOF''\nMerge main into stage: Replace hardcoded URLs with environment variables\n\nSynchronizing changes from main branch that replace hardcoded URLs with environment variables in all service files for better configuration management.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git checkout:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
