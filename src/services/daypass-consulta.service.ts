@@ -129,11 +129,11 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
       throw new Error('No hay token de autenticación disponible');
     }
 
-    const response = await api.get(`https://core-api.idsm.xyz/schools/${schoolId}/daypasses`, {
+    const response = await api.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/daypasses`, {
       params: queryParams,
       headers: {
         'x-device-id': 'mobile-web-client',
-        'x-url-origin': 'https://admin.celta.interschool.mx',
+        'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }

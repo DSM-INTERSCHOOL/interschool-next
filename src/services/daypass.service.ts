@@ -27,14 +27,14 @@ export const getDaypassAuthorizers = async (params: GetDaypassAuthorizersParams)
     const { schoolId, authorizerPersonId, status } = params;
     
     // Usar la URL real del endpoint
-    const response = await api.get(`https://core-api.idsm.xyz/schools/${schoolId}/daypass-authorizers`, {
+    const response = await api.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/daypass-authorizers`, {
       params: {
         authorizer_person_id: authorizerPersonId,
         status
       },
       headers: {
         'x-device-id': 'mobile-web-client',
-        'x-url-origin': 'https://admin.celta.interschool.mx'
+        'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || ''
       }
     });
 
@@ -102,7 +102,7 @@ export const authorizeDaypass = async (
 ): Promise<any> => {
   try {
     const response = await axios.patch(
-      `https://core-api.idsm.xyz/schools/${schoolId}/daypasses/${daypassId}/authorizers/${personId}/sequences/${sequence}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/daypasses/${daypassId}/authorizers/${personId}/sequences/${sequence}`,
       {
         authorized: true,
         selected_option: selectedOption
@@ -110,7 +110,7 @@ export const authorizeDaypass = async (
       {
         headers: {
           'x-device-id': 'mobile-web-client',
-          'x-url-origin': 'https://admin.celta.interschool.mx',
+          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${useAuthStore.getState().token}`,
         },

@@ -9,8 +9,9 @@ export const findAll = async (
   page?: number,
   per_page?: number
 ) => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_COURSE_URL?.replace('/schools', '') || '';
   const response = await axios.get<IPersonResponse>(
-    `https://course-api.idsm.xyz/schools/${schoolId}/persons?filters=person_type:eq:STUDENT&order_by=second_name`
+    `${baseUrl}/schools/${schoolId}/persons?filters=person_type:eq:STUDENT&order_by=second_name`
   );
   return response.data.data;
 };
