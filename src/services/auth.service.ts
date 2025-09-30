@@ -73,7 +73,7 @@ interface AuthError {
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${process.env.NEXT_PUBLIC_SCHOOL_ID}/app-login`,
       credentials,
       {
         headers: {
