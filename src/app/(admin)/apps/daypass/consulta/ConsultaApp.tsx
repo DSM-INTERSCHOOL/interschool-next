@@ -348,6 +348,7 @@ export const ConsultaApp = () => {
                     <th className="p-2">Alumno</th>
                     <th className="p-2">ID Alumno</th>
                     <th className="p-2">Pariente</th>
+                    <th className="p-2">Persona que recoge</th>
                     <th className="p-2">Motivo</th>
                     <th className="p-2">Fecha</th>
                     <th className="p-2">Hora</th>
@@ -392,6 +393,11 @@ export const ConsultaApp = () => {
                               {daypass.relative.maternal_name}
                             </div>
                           )}
+                        </div>
+                      </td>
+                      <td className="p-2">
+                        <div className="text-xs">
+                          {daypass.pickup_person || '-'}
                         </div>
                       </td>
                       <td className="p-2">

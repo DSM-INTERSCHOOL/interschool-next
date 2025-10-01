@@ -73,6 +73,7 @@ export interface IDaypassConsulta {
   id: number;
   created: string;
   modified: string;
+  pickup_person: string | null;
   authorizers: IDaypassAuthorizer[];
   person: IDaypassPerson;
   relative: IDaypassPerson;

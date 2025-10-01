@@ -32,7 +32,8 @@ export const generateDaypassPDF = (
     `${daypass.person.given_name} ${daypass.person.paternal_name}`,
     daypass.person.person_internal_id,
     `${daypass.relative.given_name} ${daypass.relative.paternal_name}`,
-    daypass.reason.length > 30 ? daypass.reason.substring(0, 30) + '...' : daypass.reason,
+    daypass.pickup_person || '-',
+    daypass.reason.length > 20 ? daypass.reason.substring(0, 20) + '...' : daypass.reason,
     formatDate(daypass.daypass_date),
     formatTime(daypass.daypass_time),
     getStatusText(daypass.status),
@@ -41,12 +42,12 @@ export const generateDaypassPDF = (
 
   // Generar tabla
   autoTable(doc, {
-    head: [['ID', 'Alumno', 'Matrícula', 'Pariente', 'Motivo', 'Fecha', 'Hora', 'Estado', 'Autorizaciones']],
+    head: [['ID', 'Alumno', 'Matrícula', 'Pariente', 'Recoge', 'Motivo', 'Fecha', 'Hora', 'Estado', 'Autorizaciones']],
     body: tableData,
     startY: 45,
     styles: {
-      fontSize: 8,
-      cellPadding: 2,
+      fontSize: 7,
+      cellPadding: 1.5,
     },
     headStyles: {
       fillColor: [41, 128, 185],
@@ -54,15 +55,16 @@ export const generateDaypassPDF = (
       fontStyle: 'bold',
     },
     columnStyles: {
-      0: { cellWidth: 15 }, // ID
-      1: { cellWidth: 25 }, // Alumno
-      2: { cellWidth: 20 }, // Matrícula
-      3: { cellWidth: 25 }, // Pariente
-      4: { cellWidth: 30 }, // Motivo
-      5: { cellWidth: 20 }, // Fecha
-      6: { cellWidth: 15 }, // Hora
-      7: { cellWidth: 20 }, // Estado
-      8: { cellWidth: 15 }, // Autorizaciones
+      0: { cellWidth: 12 }, // ID
+      1: { cellWidth: 22 }, // Alumno
+      2: { cellWidth: 18 }, // Matrícula
+      3: { cellWidth: 22 }, // Pariente
+      4: { cellWidth: 20 }, // Recoge
+      5: { cellWidth: 25 }, // Motivo
+      6: { cellWidth: 18 }, // Fecha
+      7: { cellWidth: 12 }, // Hora
+      8: { cellWidth: 18 }, // Estado
+      9: { cellWidth: 13 }, // Autorizaciones
     },
     alternateRowStyles: {
       fillColor: [245, 245, 245]
