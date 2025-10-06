@@ -66,21 +66,21 @@ export const getAll = async ({
   }
 
   const response = await communicationApi.get<IAnnouncementRead[]>(
-    `/schools/${schoolId}/announcements?${params.toString()}`
+    `/v1/schools/${schoolId}/announcements?${params.toString()}`
   );
   return response.data;
 };
 
 export const getById = async ({ schoolId, announcementId }: AnnouncementArgs) => {
   const response = await communicationApi.get<IAnnouncementRead>(
-    `/schools/${schoolId}/announcements/${announcementId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}`
   );
   return response.data;
 };
 
 export const update = async ({ schoolId, announcementId, dto }: UpdateArgs) => {
   const response = await communicationApi.put<IAnnouncementRead>(
-    `/schools/${schoolId}/announcements/${announcementId}`,
+    `/v1/schools/${schoolId}/announcements/${announcementId}`,
     dto
   );
   return response.data;
@@ -88,7 +88,7 @@ export const update = async ({ schoolId, announcementId, dto }: UpdateArgs) => {
 
 export const remove = async ({ schoolId, announcementId }: AnnouncementArgs) => {
   const response = await communicationApi.delete(
-    `/schools/${schoolId}/announcements/${announcementId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}`
   );
   return response.data;
 };
