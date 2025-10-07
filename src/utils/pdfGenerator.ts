@@ -10,7 +10,11 @@ export const generateDaypassPDF = (
   daypasses: IDaypassConsulta[],
   options: PDFOptions = {}
 ) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  });
 
   // Configuración por defecto
   const config = {
@@ -31,9 +35,14 @@ export const generateDaypassPDF = (
     daypass.id.toString(),
     `${daypass.person.given_name} ${daypass.person.paternal_name}`,
     daypass.person.person_internal_id,
+    formatAcademicInfo(daypass.academic_year),
+    formatAcademicInfo(daypass.academic_stage),
+    formatAcademicInfo(daypass.academic_program),
+    formatAcademicInfo(daypass.program_year),
+    formatAcademicInfo(daypass.academic_group),
     `${daypass.relative.given_name} ${daypass.relative.paternal_name}`,
     daypass.pickup_person || '-',
-    daypass.reason.length > 20 ? daypass.reason.substring(0, 20) + '...' : daypass.reason,
+    daypass.reason.length > 15 ? daypass.reason.substring(0, 15) + '...' : daypass.reason,
     formatDate(daypass.daypass_date),
     formatTime(daypass.daypass_time),
     getStatusText(daypass.status),
@@ -42,29 +51,35 @@ export const generateDaypassPDF = (
 
   // Generar tabla
   autoTable(doc, {
-    head: [['ID', 'Alumno', 'Matrícula', 'Pariente', 'Recoge', 'Motivo', 'Fecha', 'Hora', 'Estado', 'Autorizaciones']],
+    head: [['ID', 'Alumno', 'Matrícula', 'Ciclo', 'Nivel', 'Programa', 'Grado', 'Grupo', 'Pariente', 'Recoge', 'Motivo', 'Fecha', 'Hora', 'Estado', 'Autorizaciones']],
     body: tableData,
     startY: 45,
     styles: {
       fontSize: 7,
-      cellPadding: 1.5,
+      cellPadding: 2,
     },
     headStyles: {
       fillColor: [41, 128, 185],
       textColor: 255,
       fontStyle: 'bold',
+      fontSize: 7,
     },
     columnStyles: {
-      0: { cellWidth: 12 }, // ID
-      1: { cellWidth: 22 }, // Alumno
-      2: { cellWidth: 18 }, // Matrícula
-      3: { cellWidth: 22 }, // Pariente
-      4: { cellWidth: 20 }, // Recoge
-      5: { cellWidth: 25 }, // Motivo
-      6: { cellWidth: 18 }, // Fecha
-      7: { cellWidth: 12 }, // Hora
-      8: { cellWidth: 18 }, // Estado
-      9: { cellWidth: 13 }, // Autorizaciones
+      0: { cellWidth: 10 },  // ID
+      1: { cellWidth: 25 },  // Alumno
+      2: { cellWidth: 15 },  // Matrícula
+      3: { cellWidth: 18 },  // Ciclo
+      4: { cellWidth: 18 },  // Nivel
+      5: { cellWidth: 20 },  // Programa
+      6: { cellWidth: 12 },  // Grado
+      7: { cellWidth: 12 },  // Grupo
+      8: { cellWidth: 25 },  // Pariente
+      9: { cellWidth: 20 },  // Recoge
+      10: { cellWidth: 20 }, // Motivo
+      11: { cellWidth: 18 }, // Fecha
+      12: { cellWidth: 12 }, // Hora
+      13: { cellWidth: 16 }, // Estado
+      14: { cellWidth: 14 }, // Autorizaciones
     },
     alternateRowStyles: {
       fillColor: [245, 245, 245]
@@ -130,4 +145,9 @@ const getStatusText = (status: string): string => {
     'CANCELADO': 'Cancelado'
   };
   return statusMap[status] || status;
+};
+
+const formatAcademicInfo = (info: any): string => {
+  if (!info) return "N/A";
+  return `(${info.key}) ${info.description}`;
 };

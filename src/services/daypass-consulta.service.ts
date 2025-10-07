@@ -59,6 +59,13 @@ export interface IDaypassPerson {
   email: string;
 }
 
+// Interfaz para información académica
+export interface IAcademicInfo {
+  id: number;
+  key: string;
+  description: string;
+}
+
 // Interfaz para la respuesta de consulta de daypasses (estructura real)
 export interface IDaypassConsulta {
   school_id: number;
@@ -77,6 +84,12 @@ export interface IDaypassConsulta {
   authorizers: IDaypassAuthorizer[];
   person: IDaypassPerson;
   relative: IDaypassPerson;
+  academic_year?: IAcademicInfo | null;
+  academic_stage?: IAcademicInfo | null;
+  academic_program?: IAcademicInfo | null;
+  academic_modality?: IAcademicInfo | null;
+  program_year?: IAcademicInfo | null;
+  academic_group?: IAcademicInfo | null;
 }
 
 // Interfaz para los parámetros de consulta

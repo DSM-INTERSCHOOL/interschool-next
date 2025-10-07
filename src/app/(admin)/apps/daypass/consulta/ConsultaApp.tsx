@@ -123,6 +123,11 @@ export const ConsultaApp = () => {
     return timeString.substring(0, 5); // Solo HH:MM
   };
 
+  const formatAcademicInfo = (info: any) => {
+    if (!info) return "N/A";
+    return `(${info.key}) ${info.description}`;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       'PENDIENTE': { color: 'badge-warning', text: 'Pendiente' },
@@ -347,6 +352,11 @@ export const ConsultaApp = () => {
                     <th className="p-2">ID</th>
                     <th className="p-2">Alumno</th>
                     <th className="p-2">ID Alumno</th>
+                    <th className="p-2">Ciclo</th>
+                    <th className="p-2">Nivel</th>
+                    <th className="p-2">Programa</th>
+                    <th className="p-2">Grado</th>
+                    <th className="p-2">Grupo</th>
                     <th className="p-2">Pariente</th>
                     <th className="p-2">Persona que recoge</th>
                     <th className="p-2">Motivo</th>
@@ -383,6 +393,11 @@ export const ConsultaApp = () => {
                         </div>
                       </td>
                       <td className="font-mono text-xs p-2">{daypass.person.person_internal_id}</td>
+                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_year)}</td>
+                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_stage)}</td>
+                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_program)}</td>
+                      <td className="text-xs p-2">{formatAcademicInfo(daypass.program_year)}</td>
+                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_group)}</td>
                       <td className="p-2">
                         <div>
                           <div className="font-medium text-xs">

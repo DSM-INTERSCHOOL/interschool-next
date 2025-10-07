@@ -28,6 +28,8 @@ const DaypassCard = ({
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const personId = useAuthStore((state) => state.personId);
 
+  console.log({daypass})
+
   const formatFullName = (person: any) => {
     return `${person.given_name} ${person.paternal_name}${person.maternal_name ? ` ${person.maternal_name}` : ''}`.trim();
   };
@@ -42,6 +44,11 @@ const DaypassCard = ({
 
   const formatTime = (timeString: string) => {
     return timeString.substring(0, 5); // Extraer solo HH:MM
+  };
+
+  const formatAcademicInfo = (info: any) => {
+    if (!info) return "N/A";
+    return `(${info.key}) ${info.description}`;
   };
 
   // Obtener la configuración de secuencia del primer elemento
@@ -124,6 +131,27 @@ const DaypassCard = ({
               <p className="text-base-content/80 mb-2">
                 <strong>Motivo:</strong> {daypass.reason}
               </p>
+
+              {/* Academic Information */}
+              <div className="mt-3 space-y-1 text-sm text-base-content/70">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="font-semibold">Ciclo:</span> {formatAcademicInfo(firstAuth.academic_year)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Nivel:</span> {formatAcademicInfo(firstAuth.academic_stage)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Programa:</span> {formatAcademicInfo(firstAuth.academic_program)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Grado:</span> {formatAcademicInfo(firstAuth.program_year)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Grupo:</span> {formatAcademicInfo(firstAuth.academic_group)}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex-shrink-0 ml-4">
