@@ -125,7 +125,10 @@ export const ConsultaApp = () => {
 
   const formatAcademicInfo = (info: any) => {
     if (!info) return "N/A";
-    return `(${info.key}) ${info.description}`;
+    if (info.description) {
+      return `(${info.key}) ${info.description}`;
+    }
+    return `(${info.key})`;
   };
 
   const getStatusBadge = (status: string) => {
