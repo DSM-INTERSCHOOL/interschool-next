@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Editor } from "@tinymce/tinymce-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { IAcademicYear } from "@/interfaces/IAcademicYear";
@@ -60,8 +61,9 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     const [subjectName, setSubjectName] = useState<string>('');
     const [dueDate, setDueDate] = useState<string>('');
 
-    // Get auth data
+    // Get auth data and router
     const { personId } = useAuthStore();
+    const router = useRouter();
 
     // Handle file upload for TinyMCE (images in editor content)
     const handleFileUpload = async (file: File): Promise<string> => {
@@ -616,7 +618,10 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                 }
 
                 console.log(`${publicationType === 'assignment' ? 'Tarea' : 'Aviso'} actualizado exitosamente:`, result);
-                alert(`¡${publicationType === 'assignment' ? 'Tarea actualizada' : 'Aviso actualizado'} exitosamente!`);
+
+                // Redirect con parámetros
+                const publicationId = result.id || announcementId;
+                router.push(`/apps/publications?highlightId=${publicationId}&publicationType=${publicationType}`);
             } else {
                 // Create new announcement or assignment
                 if (publicationType === 'assignment') {
@@ -633,20 +638,11 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                     });
                 }
 
-                // Reset form on success
-                setAnnouncementTitle('');
-                setAnnouncementContent('');
-                setStartDate('');
-                setEndDate('');
-                setAcceptComments(true);
-                setAuthorized(true);
-                setAttachments([]);
-                setSubjectId('');
-                setSubjectName('');
-                setDueDate('');
-
                 console.log(`${publicationType === 'assignment' ? 'Tarea' : 'Aviso'} publicado exitosamente:`, result);
-                alert(`¡${publicationType === 'assignment' ? 'Tarea publicada' : 'Aviso publicado'} exitosamente!`);
+
+                // Redirect con parámetros
+                const publicationId = result.id;
+                router.push(`/apps/publications?highlightId=${publicationId}&publicationType=${publicationType}`);
             }
 
         } catch (err: any) {

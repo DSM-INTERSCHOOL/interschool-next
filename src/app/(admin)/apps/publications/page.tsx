@@ -3,6 +3,7 @@
 import { PageTitle } from "@/components/PageTitle";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { FiltersModal } from "./components/FiltersModal";
 import { getAll } from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
@@ -10,16 +11,26 @@ import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function PublicationsPage() {
-    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>('announcement');
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const highlightId = searchParams.get('highlightId');
+    const highlightType = searchParams.get('publicationType') as 'announcement' | 'assignment' | null;
+
+    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>(highlightType || 'announcement');
     const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState<any>(null);
     const [announcements, setAnnouncements] = useState<IAnnouncementRead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [highlightedPublication, setHighlightedPublication] = useState<IAnnouncementRead | null>(null);
 
     useEffect(() => {
         loadPublications();
     }, [publicationType]);
+
+    useEffect(() => {
+        document.title = "Publicaciones - Interschool";
+    }, []);
 
     const loadPublications = async () => {
         try {
@@ -29,6 +40,14 @@ export default function PublicationsPage() {
                 ? await assignmentService.getAll({ schoolId: "1000" })
                 : await getAll({ schoolId: "1000" });
             setAnnouncements(data);
+
+            // Si hay highlightId, buscar y destacar esa publicación
+            if (highlightId) {
+                const highlighted = data.find(pub => pub.id === highlightId);
+                if (highlighted) {
+                    setHighlightedPublication(highlighted);
+                }
+            }
         } catch (err: any) {
             setError(err.message || `Error al cargar ${publicationType === 'assignment' ? 'las tareas' : 'los avisos'}`);
             console.error("Error loading publications:", err);
@@ -40,6 +59,12 @@ export default function PublicationsPage() {
     const handleApplyFilters = (filters: any) => {
         setAppliedFilters(filters);
         console.log("Filtros aplicados:", filters);
+    };
+
+    const handleCloseHighlight = () => {
+        setHighlightedPublication(null);
+        // Limpiar query parameters de la URL
+        router.push('/apps/publications');
     };
 
     const formatDate = (dateString: string | null) => {
@@ -150,7 +175,32 @@ export default function PublicationsPage() {
                                 </Link>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
+                            <>
+                                {/* Sección destacada de publicación recién creada/editada */}
+                                {highlightedPublication && (
+                                    <div className="alert alert-success mb-6">
+                                        <span className="iconify lucide--check-circle size-6"></span>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold">
+                                                {publicationType === 'assignment' ? 'Tarea' : 'Aviso'} {highlightId === highlightedPublication.id ? 'guardado' : 'cargado'} exitosamente
+                                            </h3>
+                                            <div className="text-sm">
+                                                <strong>{highlightedPublication.title}</strong>
+                                                <div className="mt-1 text-sm opacity-80">
+                                                    {highlightedPublication.content?.replace(/<[^>]*>/g, "").substring(0, 100)}...
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            className="btn btn-sm btn-ghost"
+                                            onClick={handleCloseHighlight}
+                                        >
+                                            <span className="iconify lucide--x size-4"></span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="overflow-x-auto max-h-[600px] overflow-y-auto relative">
                                 <table className="table table-zebra w-full">
                                     <thead className="sticky top-0 z-10 bg-base-200">
                                         <tr>
@@ -242,6 +292,7 @@ export default function PublicationsPage() {
                                     </tbody>
                                 </table>
                             </div>
+                            </>
                         )}
                     </div>
                 </div>
