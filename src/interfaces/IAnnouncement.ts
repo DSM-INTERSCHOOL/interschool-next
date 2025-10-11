@@ -20,6 +20,10 @@ export interface IAnnouncementCreate {
   publisher_person_id: string;
   persons: string[];
   attachments?: IAttachmentCreate[] | null;
+  // Campos adicionales para assignments (tareas)
+  subject_id?: string | null;
+  subject_name?: string | null;
+  due_date?: string | null; // ISO date-time
 }
 
 export interface IAnnouncementUpdate {

@@ -16,6 +16,7 @@ import { getProgramYearsByStagesAndPrograms } from "@/services/program-year.serv
 import { getAcademicGroupsByProgramYears } from "@/services/academic-group.service";
 import { getRecipientsWithEnrollmentFilters } from "@/services/recipient.service";
 import { create, getById, update } from "@/services/announcement.service";
+import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementCreate, IAnnouncementRead, IAttachmentCreate, IAttachmentRead } from "@/interfaces/IAnnouncement";
 import { useAuthStore } from "@/store/useAuthStore";
 import { communicationService } from "@/services/communication.service";
@@ -26,6 +27,7 @@ interface PublicationsAppProps {
 }
 
 const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
+    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>('announcement');
     const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);
     const [selectedAcademicYears, setSelectedAcademicYears] = useState<Set<number>>(new Set());
     const [academicStages, setAcademicStages] = useState<IAcademicStage[]>([]);
@@ -46,12 +48,16 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [acceptComments, setAcceptComments] = useState<boolean>(true);
+    const [authorized, setAuthorized] = useState<boolean>(true);
     const [publishLoading, setPublishLoading] = useState(false);
     const [publishError, setPublishError] = useState<string | null>(null);
     const [attachments, setAttachments] = useState<File[]>([]);
     const [existingAttachments, setExistingAttachments] = useState<IAttachmentRead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [subjectId, setSubjectId] = useState<string>('');
+    const [subjectName, setSubjectName] = useState<string>('');
+    const [dueDate, setDueDate] = useState<string>('');
 
     // Get auth data
     const { personId } = useAuthStore();
@@ -468,6 +474,22 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                 return;
             }
 
+            // Validaciones adicionales para tareas
+            if (publicationType === 'assignment') {
+                if (!subjectId.trim()) {
+                    setPublishError("El ID de la materia es requerido para tareas");
+                    return;
+                }
+                if (!subjectName.trim()) {
+                    setPublishError("El nombre de la materia es requerido para tareas");
+                    return;
+                }
+                if (!dueDate) {
+                    setPublishError("La fecha de entrega es requerida para tareas");
+                    return;
+                }
+            }
+
             // Validar destinatarios solo en modo creación
             if (!announcementId && selectedRecipients.size === 0) {
                 setPublishError("Debe seleccionar al menos un destinatario");
@@ -507,14 +529,14 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                 }
             }
 
-            const announcementData: IAnnouncementCreate = {
+            const baseData = {
                 publisher_person_id: personId.toString(),
                 title: announcementTitle.trim(),
                 content: announcementContent.trim(),
                 start_date: new Date(startDate).toISOString(),
                 end_date: new Date(endDate).toISOString(),
                 accept_comments: acceptComments,
-                authorized: true,
+                authorized: authorized,
                 status: "ACTIVE",
                 persons: personsArray,
                 ...(academicYearsArray.length > 0 && { academic_years: academicYearsArray }),
@@ -524,6 +546,16 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                 ...(academicGroupsArray.length > 0 && { academic_groups: academicGroupsArray }),
                 attachments: uploadedAttachments
             };
+
+            // Agregar campos adicionales para tareas
+            const announcementData: IAnnouncementCreate = publicationType === 'assignment'
+                ? {
+                    ...baseData,
+                    subject_id: subjectId.trim(),
+                    subject_name: subjectName.trim(),
+                    due_date: new Date(dueDate).toISOString()
+                }
+                : baseData;
 
             // Create or update announcement
             let result;
@@ -550,11 +582,20 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                 console.log('Aviso actualizado exitosamente:', result);
                 alert('¡Aviso actualizado exitosamente!');
             } else {
-                // Create new announcement
-                result = await create({
-                    schoolId,
-                    dto: announcementData
-                });
+                // Create new announcement or assignment
+                if (publicationType === 'assignment') {
+                    // Create assignment using assignment service
+                    result = await assignmentService.create({
+                        schoolId,
+                        dto: announcementData
+                    });
+                } else {
+                    // Create announcement
+                    result = await create({
+                        schoolId,
+                        dto: announcementData
+                    });
+                }
 
                 // Reset form on success
                 setAnnouncementTitle('');
@@ -562,15 +603,21 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                 setStartDate('');
                 setEndDate('');
                 setAcceptComments(true);
+                setAuthorized(true);
                 setAttachments([]);
+                setSubjectId('');
+                setSubjectName('');
+                setDueDate('');
 
-                console.log('Aviso publicado exitosamente:', result);
-                alert('¡Aviso publicado exitosamente!');
+                console.log(`${publicationType === 'assignment' ? 'Tarea' : 'Aviso'} publicado exitosamente:`, result);
+                alert(`¡${publicationType === 'assignment' ? 'Tarea publicada' : 'Aviso publicado'} exitosamente!`);
             }
 
         } catch (err: any) {
-            console.error("Error publishing announcement:", err);
-            setPublishError(err.response?.data?.message || err.message || "Error al publicar el aviso");
+            console.error("Error publishing:", err);
+            const errorMessage = err.response?.data?.message || err.message ||
+                `Error al publicar ${publicationType === 'assignment' ? 'la tarea' : 'el aviso'}`;
+            setPublishError(errorMessage);
         } finally {
             setPublishLoading(false);
         }
@@ -589,6 +636,80 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
 
             <div className="p-6">
                 <div className="space-y-6">
+                    {/* Selección de tipo de publicación - Solo mostrar si NO estamos en modo edición */}
+                    {!announcementId && (
+                    <div className="card card-border bg-base-100 shadow-lg">
+                        <div className="card-body">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="card-title text-lg">
+                                    <span className="iconify lucide--file-type size-5"></span>
+                                    Tipo de Publicación
+                                </h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Opción Aviso */}
+                                <div
+                                    className={`card border-2 cursor-pointer transition-all duration-200 ${
+                                        publicationType === 'announcement'
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-base-300 hover:border-base-400'
+                                    }`}
+                                    onClick={() => setPublicationType('announcement')}
+                                >
+                                    <div className="card-body">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                publicationType === 'announcement' ? 'bg-primary text-primary-content' : 'bg-base-200'
+                                            }`}>
+                                                <span className="iconify lucide--megaphone size-6"></span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-base">Aviso</h4>
+                                                <p className="text-sm text-base-content/70">
+                                                    Publicar información general para la comunidad educativa
+                                                </p>
+                                            </div>
+                                            {publicationType === 'announcement' && (
+                                                <span className="iconify lucide--check-circle size-6 text-primary"></span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Opción Tarea */}
+                                <div
+                                    className={`card border-2 cursor-pointer transition-all duration-200 ${
+                                        publicationType === 'assignment'
+                                            ? 'border-secondary bg-secondary/10'
+                                            : 'border-base-300 hover:border-base-400'
+                                    }`}
+                                    onClick={() => setPublicationType('assignment')}
+                                >
+                                    <div className="card-body">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                publicationType === 'assignment' ? 'bg-secondary text-secondary-content' : 'bg-base-200'
+                                            }`}>
+                                                <span className="iconify lucide--clipboard-list size-6"></span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-base">Tarea</h4>
+                                                <p className="text-sm text-base-content/70">
+                                                    Asignar tareas y actividades con fecha de entrega
+                                                </p>
+                                            </div>
+                                            {publicationType === 'assignment' && (
+                                                <span className="iconify lucide--check-circle size-6 text-secondary"></span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    )}
+
                     {/* Selección de tipos de destinatarios - Solo mostrar si NO estamos en modo edición */}
                     {!announcementId && (
                     <div className="card card-border bg-base-100 shadow-lg">
@@ -1273,17 +1394,28 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                         <div className="card card-border bg-base-100 shadow-xl">
                             <div className="card-body">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                                        <span className="iconify lucide--megaphone size-6 text-primary"></span>
+                                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                                        publicationType === 'assignment' ? 'bg-secondary/10' : 'bg-primary/10'
+                                    }`}>
+                                        <span className={`iconify size-6 ${
+                                            publicationType === 'assignment'
+                                                ? 'lucide--clipboard-list text-secondary'
+                                                : 'lucide--megaphone text-primary'
+                                        }`}></span>
                                     </div>
                                     <div>
                                         <h3 className="card-title text-xl text-base-content">
-                                            {announcementId ? 'Edición de Aviso' : 'Crear Nuevo Aviso'}
+                                            {announcementId
+                                                ? `Edición de ${publicationType === 'assignment' ? 'Tarea' : 'Aviso'}`
+                                                : `Crear Nueva ${publicationType === 'assignment' ? 'Tarea' : 'Aviso'}`
+                                            }
                                         </h3>
                                         <p className="text-sm text-base-content/60">
                                             {announcementId
                                                 ? 'Edita la información de tu publicación'
-                                                : 'Publica información importante para la comunidad educativa'
+                                                : publicationType === 'assignment'
+                                                    ? 'Asigna tareas y actividades con fecha de entrega a los estudiantes'
+                                                    : 'Publica información importante para la comunidad educativa'
                                             }
                                         </p>
                                     </div>
@@ -1295,14 +1427,17 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                     <fieldset className="fieldset w-full">
                                         <legend className="fieldset-legend flex items-center gap-2">
                                             <span className="iconify lucide--type size-4"></span>
-                                            Título del Aviso
+                                            Título del {publicationType === 'assignment' ? 'Tarea' : 'Aviso'}
                                         </legend>
                                         <label className="input input-primary w-full">
                                             <span className="iconify lucide--edit-3 text-base-content/60 size-5"></span>
                                             <input
                                                 className="grow w-full"
                                                 type="text"
-                                                placeholder="Ej: Reunión de padres de familia, Suspensión de clases..."
+                                                placeholder={publicationType === 'assignment'
+                                                    ? "Ej: Tarea de Matemáticas, Proyecto de Ciencias..."
+                                                    : "Ej: Reunión de padres de familia, Suspensión de clases..."
+                                                }
                                                 value={announcementTitle}
                                                 onChange={(e) => setAnnouncementTitle(e.target.value)}
                                             />
@@ -1310,11 +1445,69 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                         <p className="fieldset-label">* Campo requerido</p>
                                     </fieldset>
 
+                                    {/* Campos de materia - Solo para tareas */}
+                                    {publicationType === 'assignment' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <fieldset className="fieldset">
+                                                <legend className="fieldset-legend flex items-center gap-2">
+                                                    <span className="iconify lucide--hash size-4"></span>
+                                                    MateriaId
+                                                </legend>
+                                                <label className="input input-secondary">
+                                                    <span className="iconify lucide--key text-base-content/60 size-5"></span>
+                                                    <input
+                                                        className="grow"
+                                                        type="text"
+                                                        placeholder="Ej: MAT101, SCI202..."
+                                                        value={subjectId}
+                                                        onChange={(e) => setSubjectId(e.target.value)}
+                                                    />
+                                                </label>
+                                                <p className="fieldset-label">ID de la materia</p>
+                                            </fieldset>
+
+                                            <fieldset className="fieldset">
+                                                <legend className="fieldset-legend flex items-center gap-2">
+                                                    <span className="iconify lucide--book-open size-4"></span>
+                                                    Materia
+                                                </legend>
+                                                <label className="input input-secondary">
+                                                    <span className="iconify lucide--bookmark text-base-content/60 size-5"></span>
+                                                    <input
+                                                        className="grow"
+                                                        type="text"
+                                                        placeholder="Ej: Matemáticas, Ciencias..."
+                                                        value={subjectName}
+                                                        onChange={(e) => setSubjectName(e.target.value)}
+                                                    />
+                                                </label>
+                                                <p className="fieldset-label">Nombre de la materia</p>
+                                            </fieldset>
+
+                                            <fieldset className="fieldset">
+                                                <legend className="fieldset-legend flex items-center gap-2">
+                                                    <span className="iconify lucide--calendar-clock size-4"></span>
+                                                    Fecha de entrega
+                                                </legend>
+                                                <label className="input input-secondary">
+                                                    <span className="iconify lucide--calendar-days text-base-content/60 size-5"></span>
+                                                    <input
+                                                        className="grow"
+                                                        type="date"
+                                                        value={dueDate}
+                                                        onChange={(e) => setDueDate(e.target.value)}
+                                                    />
+                                                </label>
+                                                <p className="fieldset-label">Fecha límite de entrega</p>
+                                            </fieldset>
+                                        </div>
+                                    )}
+
                                     {/* Contenido */}
                                     <fieldset className="fieldset w-full">
                                         <legend className="fieldset-legend flex items-center gap-2">
                                             <span className="iconify lucide--file-text size-4"></span>
-                                            Contenido del Aviso
+                                            Contenido de la {publicationType === 'assignment' ? 'Tarea' : 'Aviso'}
                                         </legend>
                                         <div className="w-full">
                                             <Editor
@@ -1338,7 +1531,9 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                                             line-height: 1.6;
                                                         }
                                                     `,
-                                                    placeholder: 'Describe los detalles del aviso. Incluye fechas, horarios, ubicaciones y cualquier información relevante...',
+                                                    placeholder: publicationType === 'assignment'
+                                                        ? 'Describe los detalles de la tarea. Incluye instrucciones, objetivos, criterios de evaluación y recursos necesarios...'
+                                                        : 'Describe los detalles del aviso. Incluye fechas, horarios, ubicaciones y cualquier información relevante...',
                                                     branding: false,
                                                     resize: false,
                                                     statusbar: false,
@@ -1392,7 +1587,7 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                                 onEditorChange={(content) => setAnnouncementContent(content)}
                                             />
                                         </div>
-                                        <p className="fieldset-label">Usa las herramientas del editor para dar formato a tu aviso</p>
+                                        <p className="fieldset-label">Usa las herramientas del editor para dar formato a tu {publicationType === 'assignment' ? 'tarea' : 'aviso'}</p>
                                     </fieldset>
 
                                     {/* Fechas */}
@@ -1428,7 +1623,7 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                                     onChange={(e) => setEndDate(e.target.value)}
                                                 />
                                             </label>
-                                            <p className="fieldset-label">Cuándo expira el aviso</p>
+                                            <p className="fieldset-label">Cuándo expira {publicationType === 'assignment' ? 'la tarea' : 'el aviso'}</p>
                                         </fieldset>
                                     </div>
 
@@ -1553,7 +1748,7 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="fieldset-label">Los archivos se adjuntarán al aviso</p>
+                                        <p className="fieldset-label">Los archivos se adjuntarán a {publicationType === 'assignment' ? 'la tarea' : 'al aviso'}</p>
                                     </fieldset>
 
                                     {/* Opciones adicionales */}
@@ -1569,7 +1764,9 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                                         <span className="iconify lucide--message-circle size-5 text-accent"></span>
                                                         <div>
                                                             <span className="label-text font-medium">Permitir comentarios</span>
-                                                            <div className="text-xs text-base-content/60">Los usuarios podrán comentar en este aviso</div>
+                                                            <div className="text-xs text-base-content/60">
+                                                                Los usuarios podrán comentar en esta {publicationType === 'assignment' ? 'tarea' : 'aviso'}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <input
@@ -1577,6 +1774,26 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                                         className="checkbox checkbox-accent"
                                                         checked={acceptComments}
                                                         onChange={(e) => setAcceptComments(e.target.checked)}
+                                                    />
+                                                </label>
+                                            </div>
+
+                                            <div className="form-control bg-base-100 rounded-lg p-3">
+                                                <label className="label cursor-pointer flex">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="iconify lucide--shield-check size-5 text-success"></span>
+                                                        <div>
+                                                            <span className="label-text font-medium">Autorizar publicación</span>
+                                                            <div className="text-xs text-base-content/60">
+                                                                La publicación estará autorizada y visible para los destinatarios
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="checkbox checkbox-success"
+                                                        checked={authorized}
+                                                        onChange={(e) => setAuthorized(e.target.checked)}
                                                     />
                                                 </label>
                                             </div>
@@ -1610,7 +1827,10 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                                         ) : (
                                             <>
                                                 <span className="iconify lucide--send size-4"></span>
-                                                {announcementId ? 'Actualizar Aviso' : 'Publicar Aviso'}
+                                                {announcementId
+                                                    ? `Actualizar ${publicationType === 'assignment' ? 'Tarea' : 'Aviso'}`
+                                                    : `Publicar ${publicationType === 'assignment' ? 'Tarea' : 'Aviso'}`
+                                                }
                                             </>
                                         )}
                                     </button>
