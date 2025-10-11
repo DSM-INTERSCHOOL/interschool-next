@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FiltersModal } from "./components/FiltersModal";
+import { PublicationDetailModal } from "./components/PublicationDetailModal";
 import { getAll } from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
@@ -23,6 +24,8 @@ export default function PublicationsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [highlightedPublication, setHighlightedPublication] = useState<IAnnouncementRead | null>(null);
+    const [selectedPublication, setSelectedPublication] = useState<IAnnouncementRead | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     useEffect(() => {
         loadPublications();
@@ -65,6 +68,16 @@ export default function PublicationsPage() {
         setHighlightedPublication(null);
         // Limpiar query parameters de la URL
         router.push('/apps/publications');
+    };
+
+    const handleViewPublication = (publication: IAnnouncementRead) => {
+        setSelectedPublication(publication);
+        setIsDetailModalOpen(true);
+    };
+
+    const handleCloseDetailModal = () => {
+        setIsDetailModalOpen(false);
+        setSelectedPublication(null);
     };
 
     const formatDate = (dateString: string | null) => {
@@ -272,7 +285,11 @@ export default function PublicationsPage() {
                                                 </td>
                                                 <td>
                                                     <div className="flex gap-1">
-                                                        <button className="btn btn-ghost btn-xs" title="Ver">
+                                                        <button
+                                                            className="btn btn-ghost btn-xs"
+                                                            title="Ver"
+                                                            onClick={() => handleViewPublication(announcement)}
+                                                        >
                                                             <span className="iconify lucide--eye size-4"></span>
                                                         </button>
                                                         <Link
@@ -302,6 +319,13 @@ export default function PublicationsPage() {
                 isOpen={isFiltersModalOpen}
                 onClose={() => setIsFiltersModalOpen(false)}
                 onApplyFilters={handleApplyFilters}
+            />
+
+            <PublicationDetailModal
+                publication={selectedPublication}
+                isOpen={isDetailModalOpen}
+                onClose={handleCloseDetailModal}
+                publicationType={publicationType}
             />
         </>
     );
