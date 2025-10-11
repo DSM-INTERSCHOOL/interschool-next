@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { FiltersModal } from "./components/FiltersModal";
 import { getAll } from "@/services/announcement.service";
+import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function PublicationsPage() {
+    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>('announcement');
     const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState<any>(null);
     const [announcements, setAnnouncements] = useState<IAnnouncementRead[]>([]);
@@ -16,18 +18,20 @@ export default function PublicationsPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        loadAnnouncements();
-    }, []);
+        loadPublications();
+    }, [publicationType]);
 
-    const loadAnnouncements = async () => {
+    const loadPublications = async () => {
         try {
             setLoading(true);
             setError(null);
-            const data = await getAll({ schoolId: "1000" });
+            const data = publicationType === 'assignment'
+                ? await assignmentService.getAll({ schoolId: "1000" })
+                : await getAll({ schoolId: "1000" });
             setAnnouncements(data);
         } catch (err: any) {
-            setError(err.message || "Error al cargar las publicaciones");
-            console.error("Error loading announcements:", err);
+            setError(err.message || `Error al cargar ${publicationType === 'assignment' ? 'las tareas' : 'los avisos'}`);
+            console.error("Error loading publications:", err);
         } finally {
             setLoading(false);
         }
@@ -75,10 +79,32 @@ export default function PublicationsPage() {
             <div className="mt-6">
                 <div className="card bg-base-100 shadow-lg">
                     <div className="card-body">
+                        {/* Selector de tipo de publicación */}
+                        <div className="flex justify-center mb-6">
+                            <div className="join">
+                                <button
+                                    className={`join-item btn ${publicationType === 'announcement' ? 'btn-primary' : 'btn-outline'}`}
+                                    onClick={() => setPublicationType('announcement')}
+                                >
+                                    <span className="iconify lucide--megaphone size-5"></span>
+                                    Avisos
+                                </button>
+                                <button
+                                    className={`join-item btn ${publicationType === 'assignment' ? 'btn-secondary' : 'btn-outline'}`}
+                                    onClick={() => setPublicationType('assignment')}
+                                >
+                                    <span className="iconify lucide--clipboard-list size-5"></span>
+                                    Tareas
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="card-title text-2xl">
-                                <span className="iconify lucide--megaphone size-6"></span>
-                                Lista de Publicaciones
+                                <span className={`iconify size-6 ${
+                                    publicationType === 'assignment' ? 'lucide--clipboard-list' : 'lucide--megaphone'
+                                }`}></span>
+                                Lista de {publicationType === 'assignment' ? 'Tareas' : 'Avisos'}
                             </h2>
                             <div className="flex gap-2">
                                 <button
@@ -97,7 +123,7 @@ export default function PublicationsPage() {
 
                         {loading ? (
                             <div className="flex justify-center py-16">
-                                <LoadingSpinner message="Cargando publicaciones..." />
+                                <LoadingSpinner message={`Cargando ${publicationType === 'assignment' ? 'tareas' : 'avisos'}...`} />
                             </div>
                         ) : error ? (
                             <div className="alert alert-error">
@@ -109,16 +135,18 @@ export default function PublicationsPage() {
                             </div>
                         ) : announcements.length === 0 ? (
                             <div className="text-center py-16">
-                                <span className="iconify lucide--inbox size-24 text-base-content/20 mb-4"></span>
+                                <span className={`iconify size-24 text-base-content/20 mb-4 ${
+                                    publicationType === 'assignment' ? 'lucide--clipboard-list' : 'lucide--inbox'
+                                }`}></span>
                                 <h3 className="text-xl font-medium text-base-content mb-2">
-                                    No hay publicaciones
+                                    No hay {publicationType === 'assignment' ? 'tareas' : 'avisos'}
                                 </h3>
                                 <p className="text-base-content/60 mb-6">
-                                    Crea tu primera publicación para comenzar
+                                    Crea tu primer{publicationType === 'assignment' ? 'a tarea' : ' aviso'} para comenzar
                                 </p>
                                 <Link href="/apps/publications/create" className="btn btn-primary btn-sm">
                                     <span className="iconify lucide--plus size-4"></span>
-                                    Crear primera publicación
+                                    Crear primer{publicationType === 'assignment' ? 'a tarea' : ' aviso'}
                                 </Link>
                             </div>
                         ) : (
@@ -197,7 +225,11 @@ export default function PublicationsPage() {
                                                         <button className="btn btn-ghost btn-xs" title="Ver">
                                                             <span className="iconify lucide--eye size-4"></span>
                                                         </button>
-                                                        <Link href={`/apps/publications/${announcement.id}`} className="btn btn-ghost btn-xs" title="Editar">
+                                                        <Link
+                                                            href={`/apps/publications/${announcement.id}?publicationType=${publicationType}`}
+                                                            className="btn btn-ghost btn-xs"
+                                                            title="Editar"
+                                                        >
                                                             <span className="iconify lucide--pencil size-4"></span>
                                                         </Link>
                                                         <button className="btn btn-ghost btn-xs text-error" title="Eliminar">

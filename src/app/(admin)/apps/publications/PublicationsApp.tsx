@@ -24,10 +24,11 @@ import { DestinatariosInfo } from "./DestinatariosInfo";
 
 interface PublicationsAppProps {
     announcementId?: string;
+    type?: 'announcement' | 'assignment';
 }
 
-const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
-    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>('announcement');
+const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
+    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>(type || 'announcement');
     const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);
     const [selectedAcademicYears, setSelectedAcademicYears] = useState<Set<number>>(new Set());
     const [academicStages, setAcademicStages] = useState<IAcademicStage[]>([]);
@@ -123,38 +124,53 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
 
     // Cargar announcement existente si hay announcementId
     useEffect(() => {
-        const loadAnnouncement = async () => {
+        const loadPublication = async () => {
             if (!announcementId) return;
 
             try {
                 setLoading(true);
                 const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
-                const announcement = await getById({ schoolId, announcementId });
+                let publication;
 
-                // Guardar el announcement cargado
-                setLoadedAnnouncement(announcement);
+                // Cargar según el tipo de publicación
+                if (publicationType === 'assignment') {
+                    publication = await assignmentService.getById({ schoolId, assignmentId: announcementId });
+                } else {
+                    publication = await getById({ schoolId, announcementId });
+                }
 
-                // Prellenar el formulario con los datos del announcement
-                setAnnouncementTitle(announcement.title || '');
-                setAnnouncementContent(announcement.content || '');
-                setStartDate(announcement.start_date ? announcement.start_date.split('T')[0] : '');
-                setEndDate(announcement.end_date ? announcement.end_date.split('T')[0] : '');
-                setAcceptComments(announcement.accept_comments ?? true);
+                // Guardar la publicación cargada
+                setLoadedAnnouncement(publication);
+
+                // Prellenar el formulario con los datos de la publicación
+                setAnnouncementTitle(publication.title || '');
+                setAnnouncementContent(publication.content || '');
+                setStartDate(publication.start_date ? publication.start_date.split('T')[0] : '');
+                setEndDate(publication.end_date ? publication.end_date.split('T')[0] : '');
+                setAcceptComments(publication.accept_comments ?? true);
+                setAuthorized(publication.authorized ?? true);
+
+                // Para assignments, cargar campos adicionales
+                if (publicationType === 'assignment' && 'subject_id' in publication) {
+                    setSubjectId((publication as any).subject_id || '');
+                    setSubjectName((publication as any).subject_name || '');
+                    setDueDate((publication as any).due_date ? (publication as any).due_date.split('T')[0] : '');
+                }
 
                 // Cargar attachments existentes
-                if (announcement.attachments && announcement.attachments.length > 0) {
-                    setExistingAttachments(announcement.attachments);
+                if (publication.attachments && publication.attachments.length > 0) {
+                    setExistingAttachments(publication.attachments);
                 }
             } catch (err: any) {
-                console.error("Error loading announcement:", err);
+                console.error("Error loading publication:", err);
                 setError(err.message || "Error al cargar la publicación");
             } finally {
                 setLoading(false);
             }
         };
 
-        loadAnnouncement();
-    }, [announcementId]);
+        loadPublication();
+    }, [announcementId, publicationType]);
 
     // Prellenar selecciones académicas cuando se carguen los datos y el announcement
     useEffect(() => {
@@ -566,21 +582,41 @@ const PublicationsApp = ({ announcementId }: PublicationsAppProps) => {
                     ...uploadedAttachments
                 ];
 
-                // Update existing announcement
-                result = await update({
-                    schoolId,
-                    announcementId,
-                    dto: {
-                        title: announcementTitle.trim(),
-                        content: announcementContent.trim(),
-                        start_date: new Date(startDate).toISOString(),
-                        end_date: new Date(endDate).toISOString(),
-                        accept_comments: acceptComments,
-                        attachments: allAttachments, // Siempre enviar, incluso si está vacío
-                    }
-                });
-                console.log('Aviso actualizado exitosamente:', result);
-                alert('¡Aviso actualizado exitosamente!');
+                // Preparar DTO de actualización
+                const updateDto: any = {
+                    title: announcementTitle.trim(),
+                    content: announcementContent.trim(),
+                    start_date: new Date(startDate).toISOString(),
+                    end_date: new Date(endDate).toISOString(),
+                    accept_comments: acceptComments,
+                    authorized: authorized,
+                    attachments: allAttachments, // Siempre enviar, incluso si está vacío
+                };
+
+                // Agregar campos de assignment si es una tarea
+                if (publicationType === 'assignment') {
+                    updateDto.subject_id = subjectId.trim();
+                    updateDto.subject_name = subjectName.trim();
+                    updateDto.due_date = new Date(dueDate).toISOString();
+                }
+
+                // Update existing publication (announcement or assignment)
+                if (publicationType === 'assignment') {
+                    result = await assignmentService.update({
+                        schoolId,
+                        assignmentId: announcementId,
+                        dto: updateDto
+                    });
+                } else {
+                    result = await update({
+                        schoolId,
+                        announcementId,
+                        dto: updateDto
+                    });
+                }
+
+                console.log(`${publicationType === 'assignment' ? 'Tarea' : 'Aviso'} actualizado exitosamente:`, result);
+                alert(`¡${publicationType === 'assignment' ? 'Tarea actualizada' : 'Aviso actualizado'} exitosamente!`);
             } else {
                 // Create new announcement or assignment
                 if (publicationType === 'assignment') {
