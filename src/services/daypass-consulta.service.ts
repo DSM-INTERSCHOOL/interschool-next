@@ -114,8 +114,6 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
   try {
     const {
       schoolId = "1000",
-      page = 1,
-      limit = 10,
       status,
       date_from,
       date_to,
@@ -123,11 +121,8 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
       relative_id
     } = params;
 
-    // Construir los parámetros de consulta
-    const queryParams: any = {
-      page,
-      limit
-    };
+    // Construir los parámetros de consulta (sin page y limit)
+    const queryParams: any = {};
 
     // Agregar filtros opcionales
     if (status) queryParams.status = status;
