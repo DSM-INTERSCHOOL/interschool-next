@@ -17,18 +17,31 @@ export const ConsultaApp = () => {
   });
   const [selectedDaypasses, setSelectedDaypasses] = useState<Set<number>>(new Set());
 
-  // Cargar datos iniciales una sola vez
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage] = useState(10);
+  const [hasMorePages, setHasMorePages] = useState(true);
+
+  // Cargar datos cuando cambie la página
   useEffect(() => {
     loadInitialDaypasses();
-  }, []);
+  }, [currentPage]);
 
   const loadInitialDaypasses = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const result = await getDaypassesConsulta();
+      const skip = currentPage * itemsPerPage;
+      const result = await getDaypassesConsulta({
+        skip,
+        limit: itemsPerPage
+      });
+
       setAllDaypasses(result.data);
+
+      // Si recibimos menos datos que el límite, no hay más páginas
+      setHasMorePages(result.data.length === itemsPerPage);
     } catch (err: any) {
       setError(err.message);
       console.error("Error loading daypasses:", err);
@@ -116,6 +129,15 @@ export const ConsultaApp = () => {
   const formatDate = (dateString: string) => {
     // La fecha viene en formato "YYYY-MM-DD", solo cambiar el formato de visualización
     const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatDateTime = (dateTimeString: string) => {
+    // Para fechas con timestamp ISO como "2025-09-26T17:42:42.814105Z"
+    const date = new Date(dateTimeString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
@@ -272,7 +294,7 @@ export const ConsultaApp = () => {
           {/* Contador de resultados */}
           <div className="flex justify-end mt-2">
             <div className="text-xs text-base-content/70">
-              {filteredDaypasses.length} de {allDaypasses.length} pases de salida
+              Mostrando {filteredDaypasses.length} pases de salida en esta página
             </div>
           </div>
         </div>
@@ -318,7 +340,7 @@ export const ConsultaApp = () => {
                 </div>
               )}
               <div className="text-sm text-base-content/70">
-                {filteredDaypasses.length} pases de salida encontrados
+                Página {currentPage + 1}
               </div>
             </div>
           </div>
@@ -353,8 +375,8 @@ export const ConsultaApp = () => {
                       </label>
                     </th>
                     <th className="p-2">ID</th>
-                    <th className="p-2">Alumno</th>
                     <th className="p-2">ID Alumno</th>
+                    <th className="p-2">Alumno</th>
                     <th className="p-2">Ciclo</th>
                     <th className="p-2">Nivel</th>
                     <th className="p-2">Programa</th>
@@ -363,8 +385,9 @@ export const ConsultaApp = () => {
                     <th className="p-2">Pariente</th>
                     <th className="p-2">Persona que recoge</th>
                     <th className="p-2">Motivo</th>
-                    <th className="p-2">Fecha</th>
-                    <th className="p-2">Hora</th>
+                    <th className="p-2">Fecha Solicitud</th>
+                    <th className="p-2">Fecha Pase</th>
+                    <th className="p-2">Hora Pase</th>
                     <th className="p-2">Estado</th>
                     <th className="p-2">Autorizadores</th>
                   </tr>
@@ -383,6 +406,7 @@ export const ConsultaApp = () => {
                         </label>
                       </td>
                       <td className="font-mono text-xs p-2">{daypass.id}</td>
+                       <td className="font-mono text-xs p-2">{daypass.person.person_internal_id}</td>
                       <td className="p-2">
                         <div>
                           <div className="font-medium text-xs">
@@ -395,12 +419,12 @@ export const ConsultaApp = () => {
                           )}
                         </div>
                       </td>
-                      <td className="font-mono text-xs p-2">{daypass.person.person_internal_id}</td>
-                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_year)}</td>
-                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_stage)}</td>
-                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_program)}</td>
-                      <td className="text-xs p-2">{formatAcademicInfo(daypass.program_year)}</td>
-                      <td className="text-xs p-2">{formatAcademicInfo(daypass.academic_group)}</td>
+                     
+                      <td className="text-xs p-2">{daypass.academic_year?.key}</td>
+                      <td className="text-xs p-2">{daypass.academic_stage?.description}</td>
+                      <td className="text-xs p-2">{daypass.academic_program?.description}</td>
+                      <td className="text-xs p-2">{daypass.program_year?.description}</td>
+                      <td className="text-xs p-2">{daypass.academic_group?.label}</td>
                       <td className="p-2">
                         <div>
                           <div className="font-medium text-xs">
@@ -423,6 +447,7 @@ export const ConsultaApp = () => {
                           {daypass.reason}
                         </div>
                       </td>
+                      <td className="font-mono text-xs p-2">{formatDateTime(daypass.created)}</td>
                       <td className="font-mono text-xs p-2">{formatDate(daypass.daypass_date)}</td>
                       <td className="font-mono text-xs p-2">{formatTime(daypass.daypass_time)}</td>
                       <td className="p-2">
@@ -443,6 +468,36 @@ export const ConsultaApp = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Paginación */}
+          {!loading && filteredDaypasses.length > 0 && (
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-base-300">
+              <div className="text-sm text-base-content/70">
+                Mostrando {filteredDaypasses.length} pases de salida
+              </div>
+              <div className="join">
+                <button
+                  className="join-item btn btn-sm"
+                  onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                  disabled={currentPage === 0}
+                >
+                  <span className="iconify lucide--chevron-left size-4"></span>
+                  Anterior
+                </button>
+                <button className="join-item btn btn-sm btn-disabled">
+                  Página {currentPage + 1}
+                </button>
+                <button
+                  className="join-item btn btn-sm"
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={!hasMorePages}
+                >
+                  Siguiente
+                  <span className="iconify lucide--chevron-right size-4"></span>
+                </button>
+              </div>
             </div>
           )}
         </div>

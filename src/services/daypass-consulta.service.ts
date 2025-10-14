@@ -64,6 +64,7 @@ export interface IAcademicInfo {
   id: number;
   key: string;
   description: string;
+  label?: string;
 }
 
 // Interfaz para la respuesta de consulta de daypasses (estructura real)
@@ -95,7 +96,7 @@ export interface IDaypassConsulta {
 // Interfaz para los parámetros de consulta
 export interface GetDaypassesConsultaParams {
   schoolId?: string;
-  page?: number;
+  skip?: number;
   limit?: number;
   status?: string;
   date_from?: string;
@@ -114,6 +115,8 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
   try {
     const {
       schoolId = "1000",
+      skip = 0,
+      limit = 10,
       status,
       date_from,
       date_to,
@@ -121,8 +124,12 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
       relative_id
     } = params;
 
-    // Construir los parámetros de consulta (sin page y limit)
-    const queryParams: any = {};
+    // Construir los parámetros de consulta con paginación
+    const queryParams: any = {
+      filter_by_user_access_scope: true,
+      skip,
+      limit
+    };
 
     // Agregar filtros opcionales
     if (status) queryParams.status = status;
@@ -232,10 +239,10 @@ export const validateConsultaParams = (params: GetDaypassesConsultaParams): stri
   if (params.limit && (params.limit < 1 || params.limit > 100)) {
     errors.push('El límite debe estar entre 1 y 100');
   }
-  
-  if (params.page && params.page < 1) {
-    errors.push('La página debe ser mayor a 0');
+
+  if (params.skip !== undefined && params.skip < 0) {
+    errors.push('El skip debe ser mayor o igual a 0');
   }
-  
+
   return errors;
 };

@@ -43,6 +43,7 @@ export const generateDaypassPDF = (
     `${daypass.relative.given_name} ${daypass.relative.paternal_name}`,
     daypass.pickup_person || '-',
     daypass.reason.length > 15 ? daypass.reason.substring(0, 15) + '...' : daypass.reason,
+    formatDateTime(daypass.created),
     formatDate(daypass.daypass_date),
     formatTime(daypass.daypass_time),
     getStatusText(daypass.status),
@@ -51,40 +52,24 @@ export const generateDaypassPDF = (
 
   // Generar tabla
   autoTable(doc, {
-    head: [['ID', 'Alumno', 'Matrícula', 'Ciclo', 'Nivel', 'Programa', 'Grado', 'Grupo', 'Pariente', 'Recoge', 'Motivo', 'Fecha', 'Hora', 'Estado', 'Autorizaciones']],
+    head: [['ID', 'Alumno', 'Matrícula', 'Ciclo', 'Nivel', 'Programa', 'Grado', 'Grupo', 'Pariente', 'Recoge', 'Motivo', 'F.Solicitud', 'Fecha Pase', 'Hora Pase', 'Estado', 'Autorizaciones']],
     body: tableData,
     startY: 45,
     styles: {
-      fontSize: 7,
-      cellPadding: 2,
+      fontSize: 6,
+      cellPadding: 1.5,
     },
     headStyles: {
       fillColor: [41, 128, 185],
       textColor: 255,
       fontStyle: 'bold',
-      fontSize: 7,
+      fontSize: 6,
     },
-    columnStyles: {
-      0: { cellWidth: 10 },  // ID
-      1: { cellWidth: 25 },  // Alumno
-      2: { cellWidth: 15 },  // Matrícula
-      3: { cellWidth: 18 },  // Ciclo
-      4: { cellWidth: 18 },  // Nivel
-      5: { cellWidth: 20 },  // Programa
-      6: { cellWidth: 12 },  // Grado
-      7: { cellWidth: 12 },  // Grupo
-      8: { cellWidth: 25 },  // Pariente
-      9: { cellWidth: 20 },  // Recoge
-      10: { cellWidth: 20 }, // Motivo
-      11: { cellWidth: 18 }, // Fecha
-      12: { cellWidth: 12 }, // Hora
-      13: { cellWidth: 16 }, // Estado
-      14: { cellWidth: 14 }, // Autorizaciones
-    },
+    tableWidth: 'auto',
     alternateRowStyles: {
       fillColor: [245, 245, 245]
     },
-    margin: { top: 45, left: 10, right: 10 },
+    margin: { top: 45, left: 5, right: 5 },
   });
 
   // Pie de página
@@ -130,6 +115,15 @@ export const previewDaypassPDF = (
 // Funciones auxiliares
 const formatDate = (dateString: string): string => {
   const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+const formatDateTime = (dateTimeString: string): string => {
+  // Para fechas con timestamp ISO como "2025-09-26T17:42:42.814105Z"
+  const date = new Date(dateTimeString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
 

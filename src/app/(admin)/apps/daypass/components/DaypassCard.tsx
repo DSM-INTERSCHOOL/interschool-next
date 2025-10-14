@@ -104,6 +104,11 @@ const DaypassCard = ({
         <div className="card-body">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
+              <div className="mb-2">
+                <span className="pl-4 text-sm text-base-content/70">
+                  <strong>ID Pase:</strong> {daypass.id}
+                </span>
+              </div>
               <div className="flex items-center gap-2 mb-2">
                 <UserIcon className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold text-base-content">
@@ -113,7 +118,9 @@ const DaypassCard = ({
                   {daypass.person.person_internal_id}
                 </span>
               </div>
-              
+
+            
+
               <div className="flex items-center gap-2 mb-2">
                 <UserIcon className="w-4 h-4 text-secondary" />
                 <span className="text-base-content/70">
@@ -121,10 +128,18 @@ const DaypassCard = ({
                 </span>
               </div>
 
+              
+
               <div className="flex items-center gap-2 mb-2">
                 <CalendarIcon className="w-4 h-4 text-secondary" />
                 <span className="text-base-content/70">
-                  {formatDate(daypass.daypass_date)} a las {formatTime(daypass.daypass_time)}
+                  Fecha de pase: {formatDate(daypass.daypass_date)} a las {formatTime(daypass.daypass_time)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarIcon className="w-4 h-4 text-secondary" />
+                <span className="text-base-content/70">
+                  Fecha de solicitud: {formatDate(daypass.created)}
                 </span>
               </div>
 
@@ -136,19 +151,19 @@ const DaypassCard = ({
               <div className="mt-3 space-y-1 text-sm text-base-content/70">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="font-semibold">Ciclo:</span> {formatAcademicInfo(firstAuth.academic_year)}
+                    <span className="font-semibold">Ciclo:</span> {firstAuth.academic_year?.key}
                   </div>
                   <div>
-                    <span className="font-semibold">Nivel:</span> {formatAcademicInfo(firstAuth.academic_stage)}
+                    <span className="font-semibold">Nivel:</span> {firstAuth.academic_stage?.description}
                   </div>
                   <div>
-                    <span className="font-semibold">Programa:</span> {formatAcademicInfo(firstAuth.academic_program)}
+                    <span className="font-semibold">Programa:</span> {(firstAuth.academic_program?.description)}
                   </div>
                   <div>
-                    <span className="font-semibold">Grado:</span> {formatAcademicInfo(firstAuth.program_year)}
+                    <span className="font-semibold">Grado:</span> {(firstAuth.program_year?.description)}
                   </div>
                   <div>
-                    <span className="font-semibold">Grupo:</span> {formatAcademicInfo(firstAuth.academic_group)}
+                    <span className="font-semibold">Grupo:</span> {(firstAuth.academic_group?.key)}
                   </div>
                 </div>
               </div>
