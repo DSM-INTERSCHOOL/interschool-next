@@ -35,11 +35,11 @@ const DaypassCard = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    // Formatear directamente sin convertir a Date para evitar conversión UTC
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
   };
 
   const formatTime = (timeString: string) => {
