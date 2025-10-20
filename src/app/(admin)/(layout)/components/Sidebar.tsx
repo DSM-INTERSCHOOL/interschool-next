@@ -25,6 +25,7 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
     const { permisos, isLoading: isLoadingPermisos, error: permisosError } = usePermisos();
 
     const menuItems2 = buildSidebarMenuFromPermisos(permisos);
+    console.log({menuItems2})
 
     const activatedParents = useMemo(
         () => new Set(getActivatedItemParentKeys(menuItems, pathname)),
@@ -80,7 +81,12 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                 <div className="relative min-h-0 grow">
                     <SimpleBar ref={scrollRef} className="size-full">
                         <div id="sidebar-menu" className="pt-2">
-                            {/* Sección de permisos comentada temporalmente
+                            {/* Sección hardcodeada de Apps */}
+                            {menuItems.map((item, index) => (
+                                <SidebarMenuItem {...item} key={index} activated={activatedParents} />
+                            ))}
+
+                            {/* Sección dinámica de Legacy (permisos) */}
                             {isLoadingPermisos && (
                                 <div className="flex items-center justify-center p-4">
                                     <div className="loading loading-spinner loading-sm"></div>
@@ -95,14 +101,8 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                                     <span className="text-xs">Error al cargar permisos</span>
                                 </div>
                             )}
-                            */}
-                            {/* Sección dinámica de Legacy comentada temporalmente
                             {!isLoadingPermisos && !permisosError && menuItems2.map((item, index) => (
-                                <SidebarMenuItem {...item} key={index} activated={activatedParents} />
-                            ))}
-                            */}
-                            {menuItems.map((item, index) => (
-                                <SidebarMenuItem {...item} key={index} activated={activatedParents} />
+                                <SidebarMenuItem {...item} key={`legacy-${index}`} activated={activatedParents} />
                             ))}
                         </div>
                     </SimpleBar>

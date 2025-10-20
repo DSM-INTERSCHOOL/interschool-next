@@ -13,7 +13,7 @@ const LegacyPage = () => {
         <>
            <div style={{ width: '100%', height: '100vh' }}>
       <iframe
-        src={`https://admin.celta.interschool.mx/${legacyUrl}`}
+        src={`https://admin.celta.idsm.xyz/${legacyUrl}`}
         title="Google"
         width="100%"
         height="100%"

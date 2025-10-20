@@ -116,6 +116,7 @@ export const getPermisos = async (): Promise<Permiso[]> => {
     );
 
     console.log('Respuesta completa de la API:', response.data);
+    console.log('headers response:', response.headers['set-cookie'])
     console.log('Status de la respuesta:', response.data.status);
     console.log('Meta data:', response.data.meta_data);
     console.log('Permisos en meta_data:', response.data.meta_data?.permisos);
