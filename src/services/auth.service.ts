@@ -101,7 +101,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 export const getPermisos = async (): Promise<Permiso[]> => {
   try {
     const response = await axios.post<PermisosResponse>(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL_DEV}/web-login`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,
       {
         person_id: "DSM",
         password: "DATA2023+"
