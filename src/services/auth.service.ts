@@ -115,8 +115,13 @@ export const getPermisos = async (): Promise<Permiso[]> => {
       }
     );
 
-    const googlis = "googlis=testtttLCR2N0!&D5?F0UDSGWWI=Z!H-RNWA; Domain=.idsm.xyz; Path=/; Expires=Fri, 31-Oct-2025 02:06:24 GMT; SameSite=None; Secure; Partitioned"
-    document.cookie = googlis;
+
+    const cookies = response.data.cookies;
+    for (let cookie of cookies) {
+      document.cookie = cookie
+    }
+
+    
 
 
     console.log('Respuesta completa de la API:', response.data);
