@@ -98,13 +98,13 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
   }
 };
 
-export const getPermisos = async (): Promise<Permiso[]> => {
+export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]> => {
   try {
     const response = await axios.post<PermisosResponse>(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,
       {
-        person_id: "DSM",
-        password: "DATA2023+"
+        person_id: credentials.person_id,
+        password: credentials.password
       },
       {
         headers: {

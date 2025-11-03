@@ -27,11 +27,11 @@ export const useAuth = () => {
   const login = async (personId: string, password: string, schoolId: string = "1000") => {
     try {
       const authData = await loginService({ person_id: personId, password });
-      
+
       // Construir el nombre completo
       const fullName = authData.name || 'Usuario';
-      
-      // Guardar en el store
+
+      // Guardar en el store (incluyendo credenciales para el sistema legacy)
       storeLogin({
         token: authData.token,
         personId: authData.person_id,
@@ -45,8 +45,10 @@ export const useAuth = () => {
         timeZone: authData.time_zone,
         lastLogin: authData.last_login,
         permisos: [], // Los permisos se cargan por separado
+        legacyPersonId: personId, // Guardar credenciales para sistema legacy
+        legacyPassword: password, // NOTA: En producción debería estar encriptado
       });
-      
+
       return { success: true };
     } catch (error: any) {
       console.error('Error en login:', error);

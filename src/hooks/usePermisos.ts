@@ -24,19 +24,30 @@ interface Permiso {
 export const usePermisos = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const permisos = useAuthStore((state) => state.permisos);
   const setPermisos = useAuthStore((state) => state.setPermisos);
+  const legacyPersonId = useAuthStore((state) => state.legacyPersonId);
+  const legacyPassword = useAuthStore((state) => state.legacyPassword);
 
   const loadPermisos = async () => {
+    // Validar que existan credenciales
+    if (!legacyPersonId || !legacyPassword) {
+      console.warn('No hay credenciales legacy disponibles para cargar permisos');
+      return;
+    }
+
     // Solo cargar si no hay permisos y no se está cargando
     if (permisos.length === 0 && !isLoading) {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         console.log('Cargando permisos desde la API...');
-        const permisosData = await getPermisos();
+        const permisosData = await getPermisos({
+          person_id: legacyPersonId,
+          password: legacyPassword,
+        });
         console.log('Permisos cargados:', permisosData);
         setPermisos(permisosData);
       } catch (err: any) {
@@ -50,15 +61,24 @@ export const usePermisos = () => {
 
   useEffect(() => {
     loadPermisos();
-  }, []); // Solo ejecutar una vez al montar el componente
+  }, [legacyPersonId, legacyPassword]); // Re-ejecutar si cambian las credenciales
 
   const refreshPermisos = async () => {
+    // Validar que existan credenciales
+    if (!legacyPersonId || !legacyPassword) {
+      setError('No hay credenciales legacy disponibles');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       console.log('Actualizando permisos desde la API...');
-      const permisosData = await getPermisos();
+      const permisosData = await getPermisos({
+        person_id: legacyPersonId,
+        password: legacyPassword,
+      });
       console.log('Permisos actualizados:', permisosData);
       setPermisos(permisosData);
     } catch (err: any) {
