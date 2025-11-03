@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useHydration } from "@/hooks/useHydration";
@@ -11,7 +11,7 @@ type PortalCode = "MT" | "ST" | "TC";
 type PortalMap = Record<PortalCode, string>;
 type OrgsMap = Record<string, PortalMap>;
 
-export default function RootPage() {
+function RootPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const isHydrated = useHydration();
@@ -114,5 +114,21 @@ export default function RootPage() {
                 fullScreen
             />
         </div>
+    );
+}
+
+export default function RootPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner
+                    message="Cargando..."
+                    size="lg"
+                    fullScreen
+                />
+            </div>
+        }>
+            <RootPageContent />
+        </Suspense>
     );
 }
