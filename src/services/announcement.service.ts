@@ -135,21 +135,21 @@ export const getPersons = async ({
 // Gestión de likes
 export const like = async ({ schoolId, announcementId, personId }: LikeArgs) => {
   const response = await communicationApi.post<IAnnouncementLikeRead>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
   );
   return response.data;
 };
 
 export const unlike = async ({ schoolId, announcementId, personId }: LikeArgs) => {
   const response = await communicationApi.delete<IAnnouncementLikeRead>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
   );
   return response.data;
 };
 
 export const getLike = async ({ schoolId, announcementId, personId }: LikeArgs) => {
   const response = await communicationApi.get<IAnnouncementLikeRead>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
   );
   return response.data;
 };
@@ -166,15 +166,27 @@ export const getLikes = async ({
   });
 
   const response = await communicationApi.get<IAnnouncementLikeRead[]>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes?${params.toString()}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes?${params.toString()}`
   );
   return response.data;
 };
 
 // Gestión de vistas
-export const addView = async ({ schoolId, announcementId }: AnnouncementArgs) => {
+export const addView = async ({
+  schoolId,
+  announcementId,
+  personId
+}: {
+  schoolId: string | number;
+  announcementId: string;
+  personId: string;
+}) => {
   const response = await communicationApi.post(
-    `/schools/${schoolId}/announcements/${announcementId}/views`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/views`,
+    {
+      announcement_id: announcementId,
+      person_id: personId
+    }
   );
   return response.data;
 };

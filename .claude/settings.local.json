@@ -9,7 +9,12 @@
       "Bash(npm install:*)",
       "Bash(git checkout:*)",
       "Bash(git remote set-url:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(ls:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

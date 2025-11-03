@@ -97,12 +97,13 @@ export const adminMenuItems: ISidebarMenuItem[] = [
             },
         ],
     },
-    // {
-    //     id: "apps-publications",
-    //     icon: "lucide--newspaper",
-    //     label: "Publicaciones",
-    //     url: "/apps/publications",
-    // },
+    {
+        id: "apps-publications",
+        icon: "lucide--newspaper",
+        label: "Publicaciones",
+        url: "/apps/publications",
+    },
+  
 
     // {
     //     id: "label-pages",

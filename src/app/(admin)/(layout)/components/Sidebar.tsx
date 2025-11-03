@@ -159,12 +159,6 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                             </li>
                             <li>
                                 <div>
-                                    <span className="iconify lucide--bell size-4" />
-                                    <span>Notification</span>
-                                </div>
-                            </li>
-                            <li>
-                                <div>
                                     <span className="iconify lucide--arrow-left-right size-4" />
                                     <span>Switch Account</span>
                                 </div>
