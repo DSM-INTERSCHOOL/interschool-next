@@ -1,7 +1,7 @@
 import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
+import { getOrgConfig } from "@/lib/orgConfig";
 
 const BASE_URL = "https://stage.communication.idsm.xyz/v1";
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
 
 interface PublicationParams {
     personId?: string;
@@ -38,12 +38,14 @@ export const getAnnouncements = async ({
     limit = 100,
     token,
 }: PublicationParams): Promise<IAnnouncement[]> => {
+    const { schoolId, portalName } = getOrgConfig();
     const filters = buildFilters(personId);
-    const url = `${BASE_URL}/schools/${SCHOOL_ID}/announcements?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
+    const url = `${BASE_URL}/schools/${schoolId}/announcements?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
 
     const response = await fetch(url, {
         headers: {
             "x-device-id": "web-app",
+            "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },
     });
@@ -64,12 +66,14 @@ export const getAssignments = async ({
     limit = 100,
     token,
 }: PublicationParams): Promise<IAssignment[]> => {
+    const { schoolId, portalName } = getOrgConfig();
     const filters = buildFilters(personId);
-    const url = `${BASE_URL}/schools/${SCHOOL_ID}/assignments?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
+    const url = `${BASE_URL}/schools/${schoolId}/assignments?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
 
     const response = await fetch(url, {
         headers: {
             "x-device-id": "mobile-web-client",
+            "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },
     });
@@ -89,13 +93,15 @@ export const likePublication = async (
     type: "announcement" | "assignment",
     token: string,
 ): Promise<void> => {
+    const { schoolId, portalName } = getOrgConfig();
     const endpoint = type === "announcement" ? "announcements" : "assignments";
-    const url = `${BASE_URL}/schools/${SCHOOL_ID}/${endpoint}/${publicationId}/like`;
+    const url = `${BASE_URL}/schools/${schoolId}/${endpoint}/${publicationId}/like`;
 
     const response = await fetch(url, {
         method: "POST",
         headers: {
             "x-device-id": "web-app",
+            "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },
     });
@@ -113,13 +119,15 @@ export const unlikePublication = async (
     type: "announcement" | "assignment",
     token: string,
 ): Promise<void> => {
+    const { schoolId, portalName } = getOrgConfig();
     const endpoint = type === "announcement" ? "announcements" : "assignments";
-    const url = `${BASE_URL}/schools/${SCHOOL_ID}/${endpoint}/${publicationId}/like`;
+    const url = `${BASE_URL}/schools/${schoolId}/${endpoint}/${publicationId}/like`;
 
     const response = await fetch(url, {
         method: "DELETE",
         headers: {
             "x-device-id": "web-app",
+            "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },
     });

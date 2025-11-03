@@ -1,21 +1,26 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getOrgConfig } from "@/lib/orgConfig";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_CONSULTATION_URL,
   headers: {
     "Content-Type": "application/json",
-    "x-device-id": "mobile-web-client",
-    "x-url-origin": process.env.NEXT_PUBLIC_X_URL_ORIGIN || ""
+    "x-device-id": "mobile-web-client"
   },
 });
 
-// Interceptor para agregar el token a todas las peticiones
+// Interceptor para agregar el token y x-url-origin a todas las peticiones
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
+    const { portalName } = getOrgConfig();
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (portalName) {
+      config.headers["x-url-origin"] = portalName;
     }
     return config;
   },
@@ -36,7 +41,7 @@ api.interceptors.response.use(
       
       // Redirigir al login si estamos en el cliente
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
+      //  window.location.href = '/auth/login';
       }
     } else if (error.response?.status === 440) {
       // Código HTTP 440 - Session Timeout
@@ -45,7 +50,7 @@ api.interceptors.response.use(
       
       // Mostrar mensaje de sesión expirada y redirigir al login si estamos en el cliente
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
+       // window.location.href = '/auth/login';
       }
     }
     return Promise.reject(error);

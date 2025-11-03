@@ -20,6 +20,7 @@
 
 import api from "./api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getOrgConfig } from "@/lib/orgConfig";
 
 // Interfaz para el autorizador dentro de authorizers
 export interface IDaypassAuthorizer {
@@ -140,6 +141,7 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
 
     // Obtener el token del store
     const token = useAuthStore.getState().token;
+    const { portalName } = getOrgConfig();
 
     if (!token) {
       throw new Error('No hay token de autenticación disponible');
@@ -149,7 +151,7 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
       params: queryParams,
       headers: {
         'x-device-id': 'mobile-web-client',
-        'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
+        'x-url-origin': portalName,
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }

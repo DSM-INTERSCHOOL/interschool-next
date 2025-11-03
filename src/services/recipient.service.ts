@@ -1,16 +1,15 @@
 import api from "./api";
-import { 
-  IRecipient, 
+import { getOrgConfig } from "@/lib/orgConfig";
+import {
+  IRecipient,
   IRecipientRequest,
-  IRecipientParams, 
+  IRecipientParams,
   PersonType,
   IRecipientDisplay,
   IRecipientFilters,
   IRecipientGrouped,
-  IEnrollmentFilters 
+  IEnrollmentFilters
 } from "@/interfaces/IRecipient";
-
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
 
 /**
  * Build enrollment filters JSON string
@@ -56,9 +55,10 @@ export const getRecipients = async (
   requestBody: IRecipientRequest
 ): Promise<IRecipient[]> => {
   try {
+    const { schoolId } = getOrgConfig();
     const response = await api.request({
       method: 'POST',
-      url: `/${SCHOOL_ID}/recipients`,
+      url: `/${schoolId}/recipients`,
       data: requestBody
     });
 
@@ -82,13 +82,14 @@ export const getRecipientsByPersonTypes = async (
       return [];
     }
 
+    const { schoolId } = getOrgConfig();
     const requestBody = {
       person_types: personTypes
     };
 
     const response = await api.request({
       method: 'POST',
-      url: `/${SCHOOL_ID}/recipients`,
+      url: `/${schoolId}/recipients`,
       data: requestBody
     });
 
@@ -204,9 +205,10 @@ export const getRecipientsWithEnrollmentFilters = async (
       }
     }
 
+    const { schoolId } = getOrgConfig();
     const response = await api.request({
       method: 'POST',
-      url: `/${SCHOOL_ID}/recipients`,
+      url: `/${schoolId}/recipients`,
       data: requestBody
     });
 

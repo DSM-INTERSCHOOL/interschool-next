@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getOrgConfig } from "@/lib/orgConfig";
 
 interface LoginRequest {
   person_id: string;
@@ -72,14 +73,16 @@ interface AuthError {
 
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
+    const { schoolId, portalName } = getOrgConfig();
+
     const response = await axios.post<LoginResponse>(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${process.env.NEXT_PUBLIC_SCHOOL_ID}/app-login`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/app-login`,
       credentials,
       {
         headers: {
           'x-device-id': 'mobile-web-client',
           'Content-Type': 'application/json',
-          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || ''
+          'x-url-origin': portalName
         },
       }
     );
@@ -100,6 +103,8 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 
 export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]> => {
   try {
+    const { portalName } = getOrgConfig();
+
     const response = await axios.post<PermisosResponse>(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,
       {
@@ -108,8 +113,8 @@ export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]>
       },
       {
         headers: {
-          'x-device-id': 'agent-postman',
-          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
+          'x-device-id': 'mobile-web-clientXX',
+          'x-url-origin': portalName,
           'Content-Type': 'application/json',
         },
       }

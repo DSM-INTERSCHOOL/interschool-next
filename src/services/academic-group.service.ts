@@ -1,14 +1,13 @@
 import api from "./api";
-import { 
-  IAcademicGroup, 
-  IAcademicGroupParams, 
+import { getOrgConfig } from "@/lib/orgConfig";
+import {
+  IAcademicGroup,
+  IAcademicGroupParams,
   SchoolShift,
   IAcademicGroupDisplay,
   IAcademicGroupFilters,
-  IAcademicGroupGrouped 
+  IAcademicGroupGrouped
 } from "@/interfaces/IAcademicGroup";
-
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
 
 /**
  * Get academic groups for a school
@@ -19,7 +18,8 @@ export const getAcademicGroups = async (
   params?: IAcademicGroupParams
 ): Promise<IAcademicGroup[]> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/academic-groups`, { params });
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/academic-groups`, { params });
     
     return response.data;
   } catch (error) {
@@ -41,11 +41,12 @@ export const getAcademicGroupsByProgramYears = async (
       return [];
     }
 
+    const { schoolId } = getOrgConfig();
     // Create filter string: program_year_id::in::[7;6]
     const programYearIdsStr = programYearIds.join(';');
     const filters = `program_year_id::in::[${programYearIdsStr}]`;
-    
-    const response = await api.get(`/${SCHOOL_ID}/academic-groups`, {
+
+    const response = await api.get(`/${schoolId}/academic-groups`, {
       params: { filters }
     });
     
@@ -71,17 +72,18 @@ export const getAcademicGroupsByProgramYearsAndStages = async (
       return [];
     }
 
+    const { schoolId } = getOrgConfig();
     // Create filter string with program year IDs (required)
     const programYearIdsStr = programYearIds.join(';');
     let filters = `program_year_id::in::[${programYearIdsStr}]`;
-    
+
     // Add academic stage filter if provided and not empty
     if (academicStageIds && academicStageIds.length > 0) {
       const stageIdsStr = academicStageIds.join(';');
       filters += `,academic_stage_id::in::[${stageIdsStr}]`;
     }
-    
-    const response = await api.get(`/${SCHOOL_ID}/academic-groups`, {
+
+    const response = await api.get(`/${schoolId}/academic-groups`, {
       params: { filters }
     });
     
@@ -110,7 +112,8 @@ export const getAcademicGroupById = async (
   academicGroupId: number
 ): Promise<IAcademicGroup> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/academic-groups/${academicGroupId}`);
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/academic-groups/${academicGroupId}`);
     
     return response.data;
   } catch (error) {

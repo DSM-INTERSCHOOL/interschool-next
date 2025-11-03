@@ -1,12 +1,11 @@
 import api from "./api";
-import { 
-  IAcademicStage, 
-  IAcademicStageParams, 
+import { getOrgConfig } from "@/lib/orgConfig";
+import {
+  IAcademicStage,
+  IAcademicStageParams,
   AcademicStageStatus,
-  IAcademicStageDisplay 
+  IAcademicStageDisplay
 } from "@/interfaces/IAcademicStage";
-
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
 
 /**
  * Get academic stages for a school
@@ -17,7 +16,8 @@ export const getAcademicStages = async (
   params?: IAcademicStageParams
 ): Promise<IAcademicStage[]> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/academic-stages`, { params });
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/academic-stages`, { params });
     
     return response.data;
   } catch (error) {
@@ -43,7 +43,8 @@ export const getAcademicStageById = async (
   academicStageId: number
 ): Promise<IAcademicStage> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/academic-stages/${academicStageId}`);
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/academic-stages/${academicStageId}`);
     
     return response.data;
   } catch (error) {

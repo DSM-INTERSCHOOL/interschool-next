@@ -8,6 +8,7 @@ import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
 import { getAnnouncements, getAssignments } from "@/services/publications.service";
 import * as announcementService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
+import { getOrgConfig } from "@/lib/orgConfig";
 
 import { PublicationDetail, PublicationListItem } from "./components";
 
@@ -64,7 +65,7 @@ export default function PublicationsPage() {
 
         // Registrar la vista
         try {
-            const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
+            const { schoolId } = getOrgConfig();
 
             if (activeTab === "announcements") {
                 await announcementService.addView({
@@ -92,7 +93,7 @@ export default function PublicationsPage() {
             const publication = currentList.find((p) => p.id === id);
             if (!publication) return;
 
-            const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
+            const { schoolId } = getOrgConfig();
 
             // Llamar al servicio correspondiente
             if (activeTab === "announcements") {

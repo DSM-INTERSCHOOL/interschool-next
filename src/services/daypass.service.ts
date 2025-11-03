@@ -2,6 +2,7 @@ import api from "./api";
 import { IDaypass, IDaypassAuthorizer } from "@/interfaces/IDaypass";
 import axios from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getOrgConfig } from "@/lib/orgConfig";
 
 interface GetDaypassAuthorizersParams {
   schoolId: string;
@@ -25,7 +26,8 @@ interface AuthorizeDaypassResponse {
 export const getDaypassAuthorizers = async (params: GetDaypassAuthorizersParams): Promise<IDaypassAuthorizer[][]> => {
   try {
     const { schoolId, authorizerPersonId, status } = params;
-    
+    const { portalName } = getOrgConfig();
+
     // Usar la URL real del endpoint
     const response = await api.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/daypass-authorizers`, {
       params: {
@@ -34,7 +36,7 @@ export const getDaypassAuthorizers = async (params: GetDaypassAuthorizersParams)
       },
       headers: {
         'x-device-id': 'mobile-web-client',
-        'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || ''
+        'x-url-origin': portalName
       }
     });
 
@@ -98,11 +100,14 @@ export const authorizeDaypass = async (
   personId: number,
   sequence: number,
   selectedOption: string,
-  schoolId: number = 1000
+  schoolId?: number
 ): Promise<any> => {
   try {
+    const { schoolId: configSchoolId, portalName } = getOrgConfig();
+    const finalSchoolId = schoolId || configSchoolId;
+
     const response = await axios.patch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/daypasses/${daypassId}/authorizers/${personId}/sequences/${sequence}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${finalSchoolId}/daypasses/${daypassId}/authorizers/${personId}/sequences/${sequence}`,
       {
         authorized: true,
         selected_option: selectedOption
@@ -110,7 +115,7 @@ export const authorizeDaypass = async (
       {
         headers: {
           'x-device-id': 'mobile-web-client',
-          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
+          'x-url-origin': portalName,
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${useAuthStore.getState().token}`,
         },

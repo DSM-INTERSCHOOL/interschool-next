@@ -21,6 +21,7 @@ import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementCreate, IAnnouncementRead, IAttachmentCreate, IAttachmentRead } from "@/interfaces/IAnnouncement";
 import { useAuthStore } from "@/store/useAuthStore";
 import { communicationService } from "@/services/communication.service";
+import { getOrgConfig } from "@/lib/orgConfig";
 import { DestinatariosInfo } from "./DestinatariosInfo";
 
 interface PublicationsAppProps {
@@ -68,7 +69,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     // Handle file upload for TinyMCE (images in editor content)
     const handleFileUpload = async (file: File): Promise<string> => {
         try {
-            const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
+            const { schoolId } = getOrgConfig();
             const result = await communicationService.uploadAttachment(schoolId, file);
 
             console.log("Upload result:", result);
@@ -131,7 +132,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
 
             try {
                 setLoading(true);
-                const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
+                const { schoolId } = getOrgConfig();
                 let publication;
 
                 // Cargar según el tipo de publicación
@@ -520,7 +521,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
             }
 
             // Prepare data for API
-            const schoolId = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
+            const { schoolId } = getOrgConfig();
 
             // Convert selected recipients to string array
             const personsArray = Array.from(selectedRecipients).map(id => id.toString());

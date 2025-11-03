@@ -1,11 +1,10 @@
 import api from "./api";
-import { 
-  IAcademicYear, 
-  IAcademicYearParams, 
-  AcademicYearFilter 
+import { getOrgConfig } from "@/lib/orgConfig";
+import {
+  IAcademicYear,
+  IAcademicYearParams,
+  AcademicYearFilter
 } from "@/interfaces/IAcademicYear";
-
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
 
 /**
  * Get academic years for a school
@@ -16,13 +15,14 @@ export const getAcademicYears = async (
   params?: IAcademicYearParams
 ): Promise<IAcademicYear[]> => {
   try {
+    const { schoolId } = getOrgConfig();
     // Always include date_filter_type=ACTUALES parameter
     const requestParams = {
       ...params,
       date_filter_type: "ACTUALES"
     };
 
-    const response = await api.get(`/${SCHOOL_ID}/academic-years`, { params: requestParams });
+    const response = await api.get(`/${schoolId}/academic-years`, { params: requestParams });
     
     return response.data;
   } catch (error) {
