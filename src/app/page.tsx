@@ -20,9 +20,9 @@ function RootPageContent() {
 
     const orgsMap: OrgsMap = {
         "1000": {
-            "MT": "https://legacy.celta.idsm.xyz/ISMeta",
-            "ST": "https://legacy.celta.idsm.xyz/ISAlumno",
-            "TC": "https://legacy.celta.idsm.xyz/ISProfesor"
+            "MT": "https://meta.celta.idsm.xyz",
+            "ST": " https://alumno.celta.idsm.xyz",
+            "TC": " https://profesor.celta.idsm.xyz"
         }
         // Aquí puedes agregar más schools en el futuro:
         // "2000": {

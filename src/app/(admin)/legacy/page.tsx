@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 const LegacyPage = () => {
     const legacyUrl = useAuthStore((state) => state.legacyUrl) as any;
     const { portalName } = getOrgConfig();
-    const completPath = `https://admin.celta.interschool.mx/${legacyUrl}`;
+    const completPath = `${portalName}${legacyUrl}`;
 
     console.log({completPath})
 
