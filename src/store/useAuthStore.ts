@@ -65,6 +65,7 @@ interface AuthState {
   logout: () => void;
   setPermisos: (permisos: Permiso[]) => void;
   setLegacyUrl: (url: string) => void;
+  setAuthData: (authData: any) => void;
 
   // Utilidades
   isAuthenticated: () => boolean;
@@ -125,10 +126,33 @@ export const useAuthStore = create<AuthState>()(
         permisos: [],
         legacyUrl: 'ISMeta/rol/showEdicionRol',
       }),
-      
+
       setPermisos: (permisos) => set({ permisos }),
       setLegacyUrl: (url) => set({ legacyUrl: url }),
-      
+
+      setAuthData: (authData) => {
+        const fullName = [
+          authData.given_name,
+          authData.paternal_name,
+          authData.maternal_name
+        ].filter(Boolean).join(' ') || 'Usuario';
+
+        set({
+          token: authData.token || null,
+          personId: authData.person_id || null,
+          email: authData.email || null,
+          name: fullName,
+          schoolId: authData.school_id || null,
+          personInternalId: authData.person_internal_id || null,
+          status: authData.status || null,
+          personType: authData.person_type || null,
+          personPhoto: authData.person_photo || null,
+          timeZone: authData.time_zone || null,
+          lastLogin: authData.last_login || null,
+          permisos: authData.meta_data?.permisos || [],
+        });
+      },
+
       // Utilidades
       isAuthenticated: () => {
         const state = get();

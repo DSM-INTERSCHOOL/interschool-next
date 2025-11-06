@@ -1,16 +1,16 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { getDeviceId } from "@/lib/deviceId";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_CONSULTATION_URL,
   headers: {
     "Content-Type": "application/json",
-    "x-device-id": "mobile-web-client"
   },
 });
 
-// Interceptor para agregar el token y x-url-origin a todas las peticiones
+// Interceptor para agregar el token, x-url-origin y x-device-id a todas las peticiones
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
@@ -22,6 +22,10 @@ api.interceptors.request.use(
     if (portalName) {
       config.headers["x-url-origin"] = portalName;
     }
+
+    // Agregar device-id dinámico a cada petición
+    config.headers["x-device-id"] = getDeviceId();
+
     return config;
   },
   (error) => {

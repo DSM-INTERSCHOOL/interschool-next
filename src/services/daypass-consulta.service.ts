@@ -21,6 +21,7 @@
 import api from "./api";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { getDeviceId } from "@/lib/deviceId";
 
 // Interfaz para el autorizador dentro de authorizers
 export interface IDaypassAuthorizer {
@@ -150,7 +151,7 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
     const response = await api.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/daypasses`, {
       params: queryParams,
       headers: {
-        'x-device-id': 'mobile-web-client',
+        'x-device-id': getDeviceId(),
         'x-url-origin': portalName,
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

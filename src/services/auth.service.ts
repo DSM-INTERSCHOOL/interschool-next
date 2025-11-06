@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { getDeviceId } from "@/lib/deviceId";
 
 interface LoginRequest {
   person_id: string;
@@ -80,7 +81,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
       credentials,
       {
         headers: {
-          'x-device-id': 'mobile-web-client',
+          'x-device-id': getDeviceId(),
           'Content-Type': 'application/json',
           'x-url-origin': portalName
         },
@@ -101,7 +102,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
   }
 };
 
-export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]> => {
+export const getPermisos = async (credentials: LoginRequest): Promise<PermisosResponse> => {
   try {
     const { portalName } = getOrgConfig();
 
@@ -113,7 +114,7 @@ export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]>
       },
       {
         headers: {
-          'x-device-id': 'mobile-web-clientXX',
+          'x-device-id': getDeviceId(),
           'x-url-origin': portalName,
           'Content-Type': 'application/json',
         },
@@ -126,7 +127,7 @@ export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]>
       document.cookie = cookie
     }
 
-    
+
 
 
     console.log('Respuesta completa de la API:', response.data);
@@ -140,10 +141,10 @@ export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]>
     // Verificar que la respuesta sea exitosa
     const permisos = response.data.meta_data?.permisos;
     const status = response.data.status;
-    
+
     if (permisos && Array.isArray(permisos)) {
       console.log('Permisos válidos encontrados, retornando:', permisos.length, 'permisos');
-      return permisos;
+      return response.data;
     } else {
       console.error('Respuesta inválida - Status:', status, 'Permisos:', permisos);
       console.error('Estructura completa de la respuesta:', JSON.stringify(response.data, null, 2));
@@ -151,11 +152,11 @@ export const getPermisos = async (credentials: LoginRequest): Promise<Permiso[]>
     }
   } catch (error: any) {
     console.error('Error fetching permisos:', error);
-    
+
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);
     } else if (error.response?.status === 401) {
-      throw new Error('No autorizado para obtener permisos');
+      throw new Error('Credenciales inválidas');
     } else if (error.response?.status >= 500) {
       throw new Error('Error del servidor al obtener permisos');
     } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {

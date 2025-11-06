@@ -73,8 +73,8 @@ const DaypassApp = () => {
       }
 
       const currentSequence = daypassAuth.authorization_sequence;
-      const currentSchoolId = schoolId || 1000;
-      const currentPersonId = personId || 8121;
+      const currentSchoolId = schoolId! ;
+      const currentPersonId = personId! ;
 
       await authorizeDaypass(
         parseInt(daypassId),

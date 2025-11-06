@@ -1,5 +1,6 @@
 import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { getDeviceId } from "@/lib/deviceId";
 
 const BASE_URL = "https://stage.communication.idsm.xyz/v1";
 
@@ -44,7 +45,7 @@ export const getAnnouncements = async ({
 
     const response = await fetch(url, {
         headers: {
-            "x-device-id": "web-app",
+            "x-device-id": getDeviceId(),
             "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },
@@ -72,7 +73,7 @@ export const getAssignments = async ({
 
     const response = await fetch(url, {
         headers: {
-            "x-device-id": "mobile-web-client",
+            "x-device-id": getDeviceId(),
             "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },
@@ -100,7 +101,7 @@ export const likePublication = async (
     const response = await fetch(url, {
         method: "POST",
         headers: {
-            "x-device-id": "web-app",
+            "x-device-id": getDeviceId(),
             "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },
@@ -126,7 +127,7 @@ export const unlikePublication = async (
     const response = await fetch(url, {
         method: "DELETE",
         headers: {
-            "x-device-id": "web-app",
+            "x-device-id": getDeviceId(),
             "x-url-origin": portalName,
             Authorization: `Bearer ${token}`,
         },

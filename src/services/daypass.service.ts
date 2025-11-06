@@ -3,6 +3,7 @@ import { IDaypass, IDaypassAuthorizer } from "@/interfaces/IDaypass";
 import axios from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { getDeviceId } from "@/lib/deviceId";
 
 interface GetDaypassAuthorizersParams {
   schoolId: string;
@@ -35,7 +36,7 @@ export const getDaypassAuthorizers = async (params: GetDaypassAuthorizersParams)
         status
       },
       headers: {
-        'x-device-id': 'mobile-web-client',
+        'x-device-id': getDeviceId(),
         'x-url-origin': portalName
       }
     });
@@ -114,7 +115,7 @@ export const authorizeDaypass = async (
       },
       {
         headers: {
-          'x-device-id': 'mobile-web-client',
+          'x-device-id': getDeviceId(),
           'x-url-origin': portalName,
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${useAuthStore.getState().token}`,

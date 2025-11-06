@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/store/useAuthStore';
-import { login as loginService } from '@/services/auth.service';
+import { getPermisos } from '@/services/auth.service';
 import { useRouter } from 'next/navigation';
 import { useHydration } from './useHydration';
 
@@ -21,31 +21,20 @@ export const useAuth = () => {
   const lastLogin = useAuthStore((state) => state.lastLogin);
   const permisos = useAuthStore((state) => state.permisos);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
-  const storeLogin = useAuthStore((state) => state.login);
+  const setAuthData = useAuthStore((state) => state.setAuthData);
   const storeLogout = useAuthStore((state) => state.logout);
 
-  const login = async (personId: string, password: string, schoolId: string = "1000") => {
+  const login = async (personId: string, password: string) => {
     try {
-      const authData = await loginService({ person_id: personId, password });
+      // Usar getPermisos que nos trae el token y los permisos en una sola llamada
+      const authData = await getPermisos({ person_id: personId, password });
 
-      // Construir el nombre completo
-      const fullName = authData.name || 'Usuario';
+      // Guardar todos los datos en el store (incluyendo credenciales legacy)
+      setAuthData(authData);
 
-      // Guardar en el store (incluyendo credenciales para el sistema legacy)
-      storeLogin({
-        token: authData.token,
-        personId: authData.person_id,
-        email: authData.email,
-        name: fullName,
-        schoolId: authData.school_id,
-        personInternalId: authData.person_internal_id,
-        status: authData.status,
-        personType: authData.person_type,
-        personPhoto: authData.person_photo,
-        timeZone: authData.time_zone,
-        lastLogin: authData.last_login,
-        permisos: [], // Los permisos se cargan por separado
-        legacyPersonId: personId, // Guardar credenciales para sistema legacy
+      // Guardar credenciales legacy por separado
+      useAuthStore.setState({
+        legacyPersonId: personId,
         legacyPassword: password, // NOTA: En producción debería estar encriptado
       });
 
