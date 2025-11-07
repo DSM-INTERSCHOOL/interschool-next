@@ -23,7 +23,14 @@ function RootPageContent() {
             "MT": "https://meta.celta.idsm.xyz",
             "ST": " https://alumno.celta.idsm.xyz",
             "TC": " https://profesor.celta.idsm.xyz"
-        }
+        },
+        
+        "1017": {
+            "MT": "https://meta.ccolumbia.idsm.xyz",
+            "ST": " https://alumno.ccolumbia.idsm.xyz",
+            "TC": " https://profesor.ccolumbia.idsm.xyz"
+        },
+        
         // Aquí puedes agregar más schools en el futuro:
         // "2000": {
         //     "MT": "http://...",
@@ -45,24 +52,23 @@ function RootPageContent() {
         try {
             // Decodificar de base64
             const decodedValue = atob(decodeURIComponent(orgParam));
-            console.log('Org param decoded:', decodedValue);
             const [schoolId, portalCode] = decodedValue.split("_");
 
             // Validar que existan los valores en el mapa
             if (schoolId in orgsMap && portalCode in orgsMap[schoolId]) {
                 const portalName = orgsMap[schoolId][portalCode as PortalCode];
-                console.log({portalName, schoolId});
 
                 // Guardar en localStorage
                 localStorage.setItem('schoolId', schoolId);
                 localStorage.setItem('portalName', portalName);
 
-                // Continuar con la lógica de redirección
+                // Continuar con la lógica de redirección solo si está hidratado
+                // y solo hacer el redirect una vez
                 if (isHydrated) {
                     if (isAuthenticated) {
-                        router.push('/home');
+                        router.replace('/home');
                     } else {
-                        router.push('/auth/login');
+                        router.replace('/auth/login');
                     }
                 }
             } else {
@@ -73,7 +79,9 @@ function RootPageContent() {
             console.error('Error decoding org param:', error);
             setHasError(true);
         }
-    }, [isHydrated, isAuthenticated, router, searchParams]);
+    // Solo ejecutar una vez cuando se monta el componente y cuando isHydrated cambia
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isHydrated]);
 
     // Mostrar error si no hay parámetro org o es inválido
     if (hasError) {

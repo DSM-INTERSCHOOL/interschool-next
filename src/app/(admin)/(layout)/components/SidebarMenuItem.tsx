@@ -29,7 +29,6 @@ export const SidebarMenuItem = ({
 }: ISidebarMenuItem & { activated: Set<string> }) => {
     const selected = activated.has(id);
         const setLegacyUrl = useAuthStore((state) => state.setLegacyUrl) as any;
-    
 
     if (isTitle) {
         return <p className="sidebar-menu-title">{label}</p>;

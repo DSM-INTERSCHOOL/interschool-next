@@ -8,11 +8,11 @@ import { PageTitle } from "@/components/PageTitle";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const LegacyPage = () => {
-    const legacyUrl = useAuthStore((state) => state.legacyUrl) as any;
+    const legacyUrl = useAuthStore((state) => state.legacyUrl) as string;
     const { portalName } = getOrgConfig();
-    const completPath = `${portalName}${legacyUrl}`;
+    const completPath = legacyUrl?.startsWith('https://')? legacyUrl : `${portalName}${legacyUrl}`;
 
-    console.log({completPath})
+    console.log({completPath, legacyUrl})
 
     return (
         <>

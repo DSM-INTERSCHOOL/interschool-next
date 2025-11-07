@@ -14,7 +14,8 @@
       "Bash(mkdir:*)",
       "Bash(cp:*)",
       "Bash(ls:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

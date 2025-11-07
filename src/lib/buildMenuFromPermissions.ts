@@ -16,7 +16,7 @@ type Permiso = {
 
 export function buildSidebarMenuFromPermisos(permisos: Permiso[]): ISidebarMenuItem[] {
   const modulosMap = new Map<string, ISidebarMenuItem>();
-
+  console.log({permisos})
 
   for (const permiso of permisos.filter(p => p.Discriminator === "Menu")) {
     const moduloId = permiso.NombreModulo.toUpperCase();
@@ -52,7 +52,7 @@ export function buildSidebarMenuFromPermisos(permisos: Permiso[]): ISidebarMenuI
       id: permisoId,
       label: permiso.Etiqueta,
       url: `/legacy`,
-      legacyUrl: `/${permiso.Contexto}/${permiso.Namespace}/${permiso.Accion}`,
+      legacyUrl: permiso.Accion.startsWith('https://')? permiso.Accion : `/${permiso.Contexto}/${permiso.Namespace}/${permiso.Accion}`,
     });
   }
   const menuItems: ISidebarMenuItem[] = [

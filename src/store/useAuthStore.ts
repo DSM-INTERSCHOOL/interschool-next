@@ -21,6 +21,29 @@ interface Permiso {
   Descripcion?: string;
 }
 
+interface AlumnoInfo {
+  [studentId: string]: string;
+}
+
+interface StudentSelectionData {
+  person_id?: number;
+  person_internal_id?: string;
+  token?: string;
+  school_id?: number;
+  given_name?: string;
+  paternal_name?: string;
+  maternal_name?: string;
+  email?: string;
+  status?: string;
+  person_type?: string;
+  meta_data?: {
+    alumnos?: AlumnoInfo[];
+    status?: string;
+    nombreEscuela?: string;
+    baseUrl?: string;
+  };
+}
+
 interface AuthState {
   // Datos de autenticación
   token: string | null;
@@ -45,6 +68,10 @@ interface AuthState {
   permisos: Permiso[];
   legacyUrl: string;
 
+  // Caso especial: selección de alumno
+  studentSelectionData: StudentSelectionData | null;
+  selectedStudentId: string | null;
+
   // Acciones
   login: (authData: {
     token: string;
@@ -66,9 +93,13 @@ interface AuthState {
   setPermisos: (permisos: Permiso[]) => void;
   setLegacyUrl: (url: string) => void;
   setAuthData: (authData: any) => void;
+  setStudentSelectionData: (data: StudentSelectionData) => void;
+  clearStudentSelection: () => void;
+  setSelectedStudentId: (studentId: string) => void;
 
   // Utilidades
   isAuthenticated: () => boolean;
+  requiresStudentSelection: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -90,6 +121,8 @@ export const useAuthStore = create<AuthState>()(
       lastLogin: null,
       permisos: [],
       legacyUrl: 'ISMeta/rol/showEdicionRol',
+      studentSelectionData: null,
+      selectedStudentId: null,
 
       // Acciones
       login: (authData) => set({
@@ -125,38 +158,73 @@ export const useAuthStore = create<AuthState>()(
         lastLogin: null,
         permisos: [],
         legacyUrl: 'ISMeta/rol/showEdicionRol',
+        studentSelectionData: null,
+        selectedStudentId: null,
       }),
 
       setPermisos: (permisos) => set({ permisos }),
       setLegacyUrl: (url) => set({ legacyUrl: url }),
 
       setAuthData: (authData) => {
+        // Mantener el token y datos básicos del padre si no vienen en la respuesta
+        const currentState = get();
+        const existingToken = currentState.token;
+        const existingPersonId = currentState.personId;
+
         const fullName = [
           authData.given_name,
           authData.paternal_name,
           authData.maternal_name
-        ].filter(Boolean).join(' ') || 'Usuario';
+        ].filter(Boolean).join(' ') || currentState.name || 'Usuario';
 
         set({
-          token: authData.token || null,
-          personId: authData.person_id || null,
-          email: authData.email || null,
+          // Si no hay token en authData, mantener el token existente (caso de student permissions)
+          token: authData.token || existingToken,
+          // Si no hay person_id, mantener el existente
+          personId: authData.person_id || existingPersonId,
+          email: authData.email || currentState.email,
           name: fullName,
-          schoolId: authData.school_id || null,
-          personInternalId: authData.person_internal_id || null,
-          status: authData.status || null,
-          personType: authData.person_type || null,
-          personPhoto: authData.person_photo || null,
-          timeZone: authData.time_zone || null,
-          lastLogin: authData.last_login || null,
-          permisos: authData.meta_data?.permisos || [],
+          schoolId: authData.school_id || currentState.schoolId,
+          personInternalId: authData.person_internal_id || currentState.personInternalId,
+          status: authData.status || currentState.status,
+          personType: authData.person_type || currentState.personType,
+          personPhoto: authData.person_photo || currentState.personPhoto,
+          timeZone: authData.time_zone || currentState.timeZone,
+          lastLogin: authData.last_login || currentState.lastLogin,
+          // Los permisos vienen en diferentes estructuras según el endpoint
+          permisos: authData.meta_data?.permisos || authData.permisos || [],
+          // Limpiar datos de selección de alumno cuando se completa la autenticación
+          studentSelectionData: null,
+          selectedStudentId: null,
         });
       },
+
+      setStudentSelectionData: (data) => set({
+        studentSelectionData: data
+      }),
+
+      clearStudentSelection: () => set({
+        studentSelectionData: null,
+        selectedStudentId: null
+      }),
+
+      setSelectedStudentId: (studentId) => set({
+        selectedStudentId: studentId
+      }),
 
       // Utilidades
       isAuthenticated: () => {
         const state = get();
         return !!(state.token && state.personId);
+      },
+
+      requiresStudentSelection: () => {
+        const state = get();
+        return !!(
+          state.studentSelectionData &&
+          state.studentSelectionData.meta_data?.status === 'seleccion_alumno' &&
+          !state.selectedStudentId
+        );
       },
     }),
     {

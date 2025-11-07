@@ -40,10 +40,10 @@ const LoginAuthContent = () => {
 
     const handleSubmit = async () => {
         if (isLoading) return;
-        
+
         // Limpiar errores previos
         setLoginError('');
-        
+
         // Validar que los campos no estén vacíos
         if (!formData.person_id) {
             setLoginError('El ID de usuario es requerido');
@@ -54,15 +54,19 @@ const LoginAuthContent = () => {
             setLoginError('La contraseña es requerida');
             return;
         }
-        
+
         setIsLoading(true);
         try {
             const result = await login(formData.person_id, formData.password);
-            
             if (result.success) {
-                // Redirigir a la página original o al home
-                const redirectTo = searchParams.get('redirectTo') || '/home';
-                router.push(redirectTo);
+                // Verificar si requiere selección de alumno
+                if (result.requiresStudentSelection) {
+                    router.push('/auth/select-student');
+                } else {
+                    // Redirigir a la página original o al home
+                    const redirectTo = searchParams.get('redirectTo') || '/home';
+                    router.push(redirectTo);
+                }
             } else {
                 setLoginError(result.message || 'Error al iniciar sesión');
             }

@@ -40,6 +40,10 @@ interface Permiso {
   Descripcion?: string;
 }
 
+interface AlumnoInfo {
+  [studentId: string]: string; // key: studentId, value: nombre completo del alumno
+}
+
 interface PermisosResponse {
   person_id?: number;
   person_internal_id?: string;
@@ -53,6 +57,10 @@ interface PermisosResponse {
   last_login?: string;
   time_zone?: string;
   person_type?: string;
+  profile_picture_url?: string | null;
+  academic_year?: number | null;
+  academic_stage_id?: number | null;
+  cookies?: string[];
   meta_data?: {
     duration?: number;
     sessionNumber?: number;
@@ -62,6 +70,9 @@ interface PermisosResponse {
     sessionIdEncripted?: string;
     nombreUsuario?: string;
     permisos?: Permiso[];
+    alumnos?: AlumnoInfo[];
+    status?: string; // 'seleccion_alumno' indica que debe elegir alumno
+    baseUrl?: string;
   };
   // Campos adicionales que podrían estar presentes
   [key: string]: any;
@@ -87,9 +98,6 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
         },
       }
     );
-
-    console.log('response headres',response.headers)
-
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 401) {
@@ -123,33 +131,23 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
 
 
     const cookies = response.data.cookies;
-    for (let cookie of cookies) {
-      document.cookie = cookie
+    if (cookies && Array.isArray(cookies)) {
+      for (let cookie of cookies) {
+        document.cookie = cookie
+      }
     }
 
 
 
 
     console.log('Respuesta completa de la API:', response.data);
-    console.log('headers response:', response.headers['set-cookie'])
-    console.log('Status de la respuesta:', response.data.status);
-    console.log('Meta data:', response.data.meta_data);
-    console.log('Permisos en meta_data:', response.data.meta_data?.permisos);
-    console.log('Tipo de permisos:', typeof response.data.meta_data?.permisos);
-    console.log('Es array:', Array.isArray(response.data.meta_data?.permisos));
+
 
     // Verificar que la respuesta sea exitosa
     const permisos = response.data.meta_data?.permisos;
     const status = response.data.status;
-
-    if (permisos && Array.isArray(permisos)) {
-      console.log('Permisos válidos encontrados, retornando:', permisos.length, 'permisos');
-      return response.data;
-    } else {
-      console.error('Respuesta inválida - Status:', status, 'Permisos:', permisos);
-      console.error('Estructura completa de la respuesta:', JSON.stringify(response.data, null, 2));
-      throw new Error('Respuesta inválida del servidor');
-    }
+    return response.data;
+ 
   } catch (error: any) {
     console.error('Error fetching permisos:', error);
 
@@ -169,7 +167,59 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
   }
 };
 
+export const getStudentPermissions = async (
+  studentId: string,
+  token: string,
+  legacyUrl: string
+): Promise<PermisosResponse> => {
+  try {
+    const { schoolId, portalName } = getOrgConfig();
+
+    const response = await axios.post<PermisosResponse>(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/student-permissions`,
+      {
+        person_id: studentId,
+        legacy_url: legacyUrl
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-device-id': getDeviceId(),
+          'x-url-origin': portalName,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const cookies = response.data.cookies;
+    if (cookies && Array.isArray(cookies)) {
+      for (let cookie of cookies) {
+        document.cookie = cookie
+      }
+    }
+
+    console.log('Permisos del estudiante obtenidos:', response.data);
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching student permissions:', error);
+
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 401) {
+      throw new Error('No autorizado para obtener permisos del estudiante');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Error del servidor al obtener permisos del estudiante');
+    } else {
+      throw new Error('Error al obtener permisos del estudiante');
+    }
+  }
+};
+
 export const logout = async (): Promise<void> => {
   // Implementar logout en el backend si es necesario
   console.log('Logout realizado');
 };
+
+// Exportar tipos para uso en otros archivos
+export type { PermisosResponse, Permiso, AlumnoInfo };

@@ -10,6 +10,7 @@ export function middleware(request: NextRequest) {
     '/auth/register',
     '/auth/forgot-password',
     '/auth/reset-password',
+    '/auth/select-student',
     '/landing',
   ];
   
