@@ -41,7 +41,7 @@ export const getAnnouncements = async ({
 }: PublicationParams): Promise<IAnnouncement[]> => {
     const { schoolId, portalName } = getOrgConfig();
     const filters = buildFilters(personId);
-    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/schools/${schoolId}/announcements?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
+    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/v1/schools/${schoolId}/announcements?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
 
     const response = await fetch(url, {
         headers: {
@@ -69,7 +69,7 @@ export const getAssignments = async ({
 }: PublicationParams): Promise<IAssignment[]> => {
     const { schoolId, portalName } = getOrgConfig();
     const filters = buildFilters(personId);
-    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/schools/${schoolId}/assignments?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
+    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/v1/schools/${schoolId}/assignments?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
 
     const response = await fetch(url, {
         headers: {
@@ -96,7 +96,7 @@ export const likePublication = async (
 ): Promise<void> => {
     const { schoolId, portalName } = getOrgConfig();
     const endpoint = type === "announcement" ? "announcements" : "assignments";
-    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/schools/${schoolId}/${endpoint}/${publicationId}/like`;
+    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/v1/schools/${schoolId}/${endpoint}/${publicationId}/like`;
 
     const response = await fetch(url, {
         method: "POST",
@@ -122,7 +122,7 @@ export const unlikePublication = async (
 ): Promise<void> => {
     const { schoolId, portalName } = getOrgConfig();
     const endpoint = type === "announcement" ? "announcements" : "assignments";
-    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/schools/${schoolId}/${endpoint}/${publicationId}/like`;
+    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/v1/schools/${schoolId}/${endpoint}/${publicationId}/like`;
 
     const response = await fetch(url, {
         method: "DELETE",
