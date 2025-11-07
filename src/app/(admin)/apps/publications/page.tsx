@@ -10,6 +10,7 @@ import { getAll } from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { getOrgConfig } from "@/lib/orgConfig";
 
 export default function PublicationsPage() {
     const router = useRouter();
@@ -39,9 +40,10 @@ export default function PublicationsPage() {
         try {
             setLoading(true);
             setError(null);
+            const { schoolId } = getOrgConfig();
             const data = publicationType === 'assignment'
-                ? await assignmentService.getAll({ schoolId: "1000" })
-                : await getAll({ schoolId: "1000" });
+                ? await assignmentService.getAll({ schoolId })
+                : await getAll({ schoolId });
             setAnnouncements(data);
 
             // Si hay highlightId, buscar y destacar esa publicación

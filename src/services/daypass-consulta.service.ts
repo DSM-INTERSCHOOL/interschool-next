@@ -116,7 +116,6 @@ export interface DaypassesConsultaResponse {
 export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = {}): Promise<DaypassesConsultaResponse> => {
   try {
     const {
-      schoolId = "1000",
       skip = 0,
       limit = 10,
       status,
@@ -142,7 +141,7 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
 
     // Obtener el token del store
     const token = useAuthStore.getState().token;
-    const { portalName } = getOrgConfig();
+    const { portalName, schoolId } = getOrgConfig();
 
     if (!token) {
       throw new Error('No hay token de autenticación disponible');
