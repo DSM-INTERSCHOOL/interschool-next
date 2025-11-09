@@ -132,6 +132,18 @@ export interface IPersonRead {
   profile_picture_url?: string | null;
 }
 
+export interface IAnnouncementRecipient {
+  id: string;
+  school_id: number;
+  given_name: string | null;
+  paternal_surname: string | null;
+  maternal_surname: string | null;
+  person_internal_id: string | null;
+  type: string | null;
+  official_picture_url: string | null;
+  profile_picture_url: string | null;
+}
+
 
 
 

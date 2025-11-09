@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FiltersModal } from "./components/FiltersModal";
 import { PublicationDetailModal } from "./components/PublicationDetailModal";
+import { RecipientsModal } from "./components/RecipientsModal";
 import { getAll } from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
@@ -27,6 +28,9 @@ export default function PublicationsPage() {
     const [highlightedPublication, setHighlightedPublication] = useState<IAnnouncementRead | null>(null);
     const [selectedPublication, setSelectedPublication] = useState<IAnnouncementRead | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<string | null>(null);
+    const [selectedAnnouncementTitle, setSelectedAnnouncementTitle] = useState<string | null>(null);
+    const [isRecipientsModalOpen, setIsRecipientsModalOpen] = useState(false);
 
     useEffect(() => {
         loadPublications();
@@ -80,6 +84,18 @@ export default function PublicationsPage() {
     const handleCloseDetailModal = () => {
         setIsDetailModalOpen(false);
         setSelectedPublication(null);
+    };
+
+    const handleViewRecipients = (announcementId: string, announcementTitle: string | null | undefined) => {
+        setSelectedAnnouncementId(announcementId);
+        setSelectedAnnouncementTitle(announcementTitle || null);
+        setIsRecipientsModalOpen(true);
+    };
+
+    const handleCloseRecipientsModal = () => {
+        setIsRecipientsModalOpen(false);
+        setSelectedAnnouncementId(null);
+        setSelectedAnnouncementTitle(null);
     };
 
     const formatDate = (dateString: string | null) => {
@@ -227,6 +243,7 @@ export default function PublicationsPage() {
                                             <th className="bg-base-200">Vistas</th>
                                             <th className="bg-base-200">Likes</th>
                                             <th className="bg-base-200">Comentarios</th>
+                                            <th className="bg-base-200">Destinatarios</th>
                                             <th className="bg-base-200">Acciones</th>
                                         </tr>
                                     </thead>
@@ -286,6 +303,15 @@ export default function PublicationsPage() {
                                                     </div>
                                                 </td>
                                                 <td>
+                                                    <button
+                                                        className="btn btn-ghost btn-xs text-primary"
+                                                        onClick={() => handleViewRecipients(announcement.id, announcement.title)}
+                                                    >
+                                                        <span className="iconify lucide--users size-4"></span>
+                                                        Ver destinatarios
+                                                    </button>
+                                                </td>
+                                                <td>
                                                     <div className="flex gap-1">
                                                         <button
                                                             className="btn btn-ghost btn-xs"
@@ -327,6 +353,14 @@ export default function PublicationsPage() {
                 publication={selectedPublication}
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseDetailModal}
+                publicationType={publicationType}
+            />
+
+            <RecipientsModal
+                announcementId={selectedAnnouncementId}
+                announcementTitle={selectedAnnouncementTitle}
+                isOpen={isRecipientsModalOpen}
+                onClose={handleCloseRecipientsModal}
                 publicationType={publicationType}
             />
         </>

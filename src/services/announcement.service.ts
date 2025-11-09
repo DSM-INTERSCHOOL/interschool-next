@@ -4,6 +4,7 @@ import {
   IAnnouncementUpdate,
   IAnnouncementPersonCreate,
   IAnnouncementLikeRead,
+  IAnnouncementRecipient,
 } from "@/interfaces/IAnnouncement";
 import communicationApi from "./communicationApi";
 
@@ -113,21 +114,12 @@ export const removePersons = async ({ schoolId, announcementId, dto }: PersonArg
 export const getPersons = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
-  filters,
-}: AnnouncementArgs) => {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
-  });
-  
-  if (filters) {
-    params.append("filters", filters);
-  }
-
-  const response = await communicationApi.get(
-    `/schools/${schoolId}/announcements/${announcementId}/persons?${params.toString()}`
+}: {
+  schoolId: string | number;
+  announcementId: string;
+}) => {
+  const response = await communicationApi.get<IAnnouncementRecipient[]>(
+    `/v1/schools/${schoolId}/announcements/${announcementId}/persons`
   );
   return response.data;
 };

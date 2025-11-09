@@ -2,6 +2,7 @@ import {
   IAnnouncementCreate,
   IAnnouncementRead,
   IAnnouncementUpdate,
+  IAnnouncementRecipient,
 } from "@/interfaces/IAnnouncement";
 import communicationApi from "./communicationApi";
 
@@ -188,6 +189,20 @@ export const getView = async ({
 }) => {
   const response = await communicationApi.get(
     `/v1/schools/${schoolId}/assignments/${assignmentId}/views`
+  );
+  return response.data;
+};
+
+// Gestión de destinatarios
+export const getPersons = async ({
+  schoolId,
+  assignmentId,
+}: {
+  schoolId: string | number;
+  assignmentId: string;
+}) => {
+  const response = await communicationApi.get<IAnnouncementRecipient[]>(
+    `/v1/schools/${schoolId}/assignments/${assignmentId}/persons`
   );
   return response.data;
 };
