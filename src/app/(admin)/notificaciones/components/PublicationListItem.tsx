@@ -15,10 +15,18 @@ export const PublicationListItem = ({ publication, isActive, onClick }: Publicat
         const diffTime = Math.abs(now.getTime() - date.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays === 0) return "Hoy";
-        if (diffDays === 1) return "Ayer";
-        if (diffDays < 7) return `hace ${diffDays} días`;
-        return date.toLocaleDateString("es-MX", { month: "short", day: "numeric" });
+        const timeStr = date.toLocaleTimeString("es-MX", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+        });
+
+        if (diffDays === 0) return `Hoy ${timeStr}`;
+        if (diffDays === 1) return `Ayer ${timeStr}`;
+        if (diffDays < 7) return `hace ${diffDays} días ${timeStr}`;
+
+        const dateStr = date.toLocaleDateString("es-MX", { month: "short", day: "numeric" });
+        return `${dateStr} ${timeStr}`;
     };
 
     const getPublisherInitials = () => {

@@ -76,6 +76,12 @@ export const PublicationDetail = ({ publication, type, onLike }: PublicationDeta
                                     month: "long",
                                     day: "numeric",
                                 })}
+                                {" a las "}
+                                {new Date(publication.created_at).toLocaleTimeString("es-MX", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                })}
                             </span>
                         </div>
                         <div className="flex items-center gap-3">
