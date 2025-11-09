@@ -63,6 +63,23 @@ export default function PublicationsPage() {
         // Seleccionar la publicación
         setSelectedId(id);
 
+        // Actualizar user_viewed localmente
+        const updateList = (list: (IAnnouncement | IAssignment)[]) =>
+            list.map((p) =>
+                p.id === id
+                    ? {
+                          ...p,
+                          user_viewed: true,
+                      }
+                    : p,
+            );
+
+        if (activeTab === "announcements") {
+            setAnnouncements(updateList(announcements) as IAnnouncement[]);
+        } else {
+            setAssignments(updateList(assignments) as IAssignment[]);
+        }
+
         // Registrar la vista
         try {
             const { schoolId } = getOrgConfig();

@@ -53,6 +53,7 @@ export interface IAnnouncement {
     attachments: IAttachment[];
     publisher: IPublisher;
     user_liked: boolean;
+    user_viewed: boolean;
 }
 
 export interface IAssignment {
@@ -83,6 +84,7 @@ export interface IAssignment {
     attachments: IAttachment[];
     publisher: IPublisher;
     user_liked: boolean;
+    user_viewed: boolean;
 }
 
 export interface IPublicationFilters {

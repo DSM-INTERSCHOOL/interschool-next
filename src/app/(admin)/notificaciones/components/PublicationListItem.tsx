@@ -40,11 +40,14 @@ export const PublicationListItem = ({ publication, isActive, onClick }: Publicat
         return text.length > 100 ? text.substring(0, 100) + "..." : text;
     };
 
+    // Determinar si la publicación no ha sido vista
+    const isUnread = !publication.user_viewed;
+
     return (
         <div
             onClick={onClick}
             className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-all hover:bg-base-200 ${
-                isActive ? "bg-base-200" : ""
+                isActive ? "bg-base-200" : isUnread ? "bg-primary/5 border-l-4 border-primary" : ""
             }`}>
             <div className="avatar placeholder">
                 <div className="bg-neutral text-neutral-content w-10 rounded-full">
@@ -58,7 +61,12 @@ export const PublicationListItem = ({ publication, isActive, onClick }: Publicat
 
             <div className="flex-1 overflow-hidden">
                 <div className="flex items-baseline justify-between gap-2">
-                    <h4 className="text-sm font-semibold ">{publication.title}</h4>
+                    <h4 className={`text-sm ${isUnread ? "font-bold" : "font-semibold"}`}>
+                        {publication.title}
+                    </h4>
+                    {isUnread && (
+                        <div className="badge badge-primary badge-xs">Nuevo</div>
+                    )}
                 </div>
                 <p className="text-base-content/60 text-xs">{getPublisherName()}</p>
                 <span className="text-base-content/60 text-xs whitespace-nowrap">
