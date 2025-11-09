@@ -9,6 +9,7 @@ import { getAnnouncements, getAssignments } from "@/services/publications.servic
 import * as announcementService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { useNotifications } from "@/contexts/NotificationsContext";
 
 import { PublicationDetail, PublicationListItem } from "./components";
 
@@ -21,6 +22,7 @@ export default function PublicationsPage() {
     const [error, setError] = useState<string | null>(null);
 
     const { token, personId } = useAuth();
+    const { decrementUnread } = useNotifications();
 
     // Cargar datos cuando cambia el tab, token o personId
     useEffect(() => {
@@ -63,6 +65,10 @@ export default function PublicationsPage() {
         // Seleccionar la publicación
         setSelectedId(id);
 
+        // Verificar si la publicación no ha sido vista
+        const publication = currentList.find((p) => p.id === id);
+        const wasUnread = publication && !publication.user_viewed;
+
         // Actualizar user_viewed localmente
         const updateList = (list: (IAnnouncement | IAssignment)[]) =>
             list.map((p) =>
@@ -78,6 +84,11 @@ export default function PublicationsPage() {
             setAnnouncements(updateList(announcements) as IAnnouncement[]);
         } else {
             setAssignments(updateList(assignments) as IAssignment[]);
+        }
+
+        // Decrementar el contador si la publicación no había sido vista
+        if (wasUnread) {
+            decrementUnread();
         }
 
         // Registrar la vista

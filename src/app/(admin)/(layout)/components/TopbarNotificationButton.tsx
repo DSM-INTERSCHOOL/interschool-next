@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-// import { MegaphoneIcon } from "@heroicons/react/24/outline";
+import { useNotifications } from "@/contexts/NotificationsContext";
 
 export const TopbarNotificationButton = () => {
-    // const closeMenu = () => {
-    //     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    // };
+    const { unreadCount } = useNotifications();
 
     return (
         <Link href="/notificaciones">
-            <div tabIndex={0} role="button" className="btn btn-circle btn-ghost btn-sm" aria-label="Notifications">
+            <div tabIndex={0} role="button" className="btn btn-circle btn-ghost btn-sm indicator" aria-label="Notifications">
+                {unreadCount > 0 && (
+                    <span className="indicator-item badge badge-primary badge-sm">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                )}
                 <span className="iconify lucide--bell size-4.5" />
             </div>
         </Link>
