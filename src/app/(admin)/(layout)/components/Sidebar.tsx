@@ -25,7 +25,6 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
     const { permisos, isLoading: isLoadingPermisos, error: permisosError } = usePermisos();
 
     const menuItems2 = buildSidebarMenuFromPermisos(permisos);
-    console.log({menuItems2})
 
     const activatedParents = useMemo(
         () => new Set(getActivatedItemParentKeys(menuItems, pathname)),

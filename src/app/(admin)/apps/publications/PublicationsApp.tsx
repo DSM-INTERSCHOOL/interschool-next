@@ -148,8 +148,25 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                 // Prellenar el formulario con los datos de la publicación
                 setAnnouncementTitle(publication.title || '');
                 setAnnouncementContent(publication.content || '');
-                setStartDate(publication.start_date ? publication.start_date.split('T')[0] : '');
-                setEndDate(publication.end_date ? publication.end_date.split('T')[0] : '');
+
+                // Convertir de UTC a hora local del navegador para mostrar
+                // Formato datetime-local: "YYYY-MM-DDTHH:MM"
+                if (publication.start_date) {
+                    const startDateLocal = new Date(publication.start_date);
+                    const startDateString = new Date(startDateLocal.getTime() - startDateLocal.getTimezoneOffset() * 60000)
+                        .toISOString()
+                        .slice(0, 16);
+                    setStartDate(startDateString);
+                }
+
+                if (publication.end_date) {
+                    const endDateLocal = new Date(publication.end_date);
+                    const endDateString = new Date(endDateLocal.getTime() - endDateLocal.getTimezoneOffset() * 60000)
+                        .toISOString()
+                        .slice(0, 16);
+                    setEndDate(endDateString);
+                }
+
                 setAcceptComments(publication.accept_comments ?? true);
                 setAuthorized(publication.authorized ?? true);
 
@@ -157,7 +174,14 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                 if (publicationType === 'assignment' && 'subject_id' in publication) {
                     setSubjectId((publication as any).subject_id || '');
                     setSubjectName((publication as any).subject_name || '');
-                    setDueDate((publication as any).due_date ? (publication as any).due_date.split('T')[0] : '');
+
+                    if ((publication as any).due_date) {
+                        const dueDateLocal = new Date((publication as any).due_date);
+                        const dueDateString = new Date(dueDateLocal.getTime() - dueDateLocal.getTimezoneOffset() * 60000)
+                            .toISOString()
+                            .slice(0, 16);
+                        setDueDate(dueDateString);
+                    }
                 }
 
                 // Cargar attachments existentes
@@ -548,12 +572,22 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                 }
             }
 
+            // Convertir fechas a UTC
+            const startDateUTC = new Date(startDate).toISOString();
+            const endDateUTC = new Date(endDate).toISOString();
+
+            console.log('📅 Conversión de fechas a UTC:');
+            console.log('  - Fecha inicio (input local):', startDate);
+            console.log('  - Fecha inicio (UTC):', startDateUTC);
+            console.log('  - Fecha fin (input local):', endDate);
+            console.log('  - Fecha fin (UTC):', endDateUTC);
+
             const baseData = {
                 publisher_person_id: personId.toString(),
                 title: announcementTitle.trim(),
                 content: announcementContent.trim(),
-                start_date: new Date(startDate).toISOString(),
-                end_date: new Date(endDate).toISOString(),
+                start_date: startDateUTC,
+                end_date: endDateUTC,
                 accept_comments: acceptComments,
                 authorized: authorized,
                 status: "ACTIVE",
@@ -567,14 +601,20 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
             };
 
             // Agregar campos adicionales para tareas
-            const announcementData: IAnnouncementCreate = publicationType === 'assignment'
-                ? {
+            let announcementData: IAnnouncementCreate = baseData;
+
+            if (publicationType === 'assignment') {
+                const dueDateUTC = new Date(dueDate).toISOString();
+                console.log('  - Fecha entrega (input local):', dueDate);
+                console.log('  - Fecha entrega (UTC):', dueDateUTC);
+
+                announcementData = {
                     ...baseData,
                     subject_id: subjectId.trim(),
                     subject_name: subjectName.trim(),
-                    due_date: new Date(dueDate).toISOString()
-                }
-                : baseData;
+                    due_date: dueDateUTC
+                };
+            }
 
             // Create or update announcement
             let result;
@@ -586,11 +626,13 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                 ];
 
                 // Preparar DTO de actualización
+                console.log('📝 Actualizando publicación con fechas UTC');
+
                 const updateDto: any = {
                     title: announcementTitle.trim(),
                     content: announcementContent.trim(),
-                    start_date: new Date(startDate).toISOString(),
-                    end_date: new Date(endDate).toISOString(),
+                    start_date: startDateUTC,
+                    end_date: endDateUTC,
                     accept_comments: acceptComments,
                     authorized: authorized,
                     attachments: allAttachments, // Siempre enviar, incluso si está vacío
@@ -598,9 +640,12 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
 
                 // Agregar campos de assignment si es una tarea
                 if (publicationType === 'assignment') {
+                    const dueDateUpdateUTC = new Date(dueDate).toISOString();
+                    console.log('  - Fecha entrega actualización (UTC):', dueDateUpdateUTC);
+
                     updateDto.subject_id = subjectId.trim();
                     updateDto.subject_name = subjectName.trim();
-                    updateDto.due_date = new Date(dueDate).toISOString();
+                    updateDto.due_date = dueDateUpdateUTC;
                 }
 
                 // Update existing publication (announcement or assignment)
@@ -1520,18 +1565,18 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                                             <fieldset className="fieldset">
                                                 <legend className="fieldset-legend flex items-center gap-2">
                                                     <span className="iconify lucide--calendar-clock size-4"></span>
-                                                    Fecha de entrega
+                                                    Fecha y hora de entrega
                                                 </legend>
                                                 <label className="input input-secondary">
                                                     <span className="iconify lucide--calendar-days text-base-content/60 size-5"></span>
                                                     <input
                                                         className="grow"
-                                                        type="date"
+                                                        type="datetime-local"
                                                         value={dueDate}
                                                         onChange={(e) => setDueDate(e.target.value)}
                                                     />
                                                 </label>
-                                                <p className="fieldset-label">Fecha límite de entrega</p>
+                                                <p className="fieldset-label">Fecha y hora límite de entrega</p>
                                             </fieldset>
                                         </div>
                                     )}
@@ -1628,13 +1673,13 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                                         <fieldset className="fieldset">
                                             <legend className="fieldset-legend flex items-center gap-2">
                                                 <span className="iconify lucide--calendar size-4"></span>
-                                                Fecha de Inicio
+                                                Fecha y Hora de Inicio
                                             </legend>
                                             <label className="input input-success">
                                                 <span className="iconify lucide--calendar-days text-base-content/60 size-5"></span>
                                                 <input
                                                     className="grow"
-                                                    type="date"
+                                                    type="datetime-local"
                                                     value={startDate}
                                                     onChange={(e) => setStartDate(e.target.value)}
                                                 />
@@ -1645,13 +1690,13 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                                         <fieldset className="fieldset">
                                             <legend className="fieldset-legend flex items-center gap-2">
                                                 <span className="iconify lucide--calendar-x size-4"></span>
-                                                Fecha de Fin
+                                                Fecha y Hora de Fin
                                             </legend>
                                             <label className="input input-warning">
                                                 <span className="iconify lucide--calendar-clock text-base-content/60 size-5"></span>
                                                 <input
                                                     className="grow"
-                                                    type="date"
+                                                    type="datetime-local"
                                                     value={endDate}
                                                     onChange={(e) => setEndDate(e.target.value)}
                                                 />
