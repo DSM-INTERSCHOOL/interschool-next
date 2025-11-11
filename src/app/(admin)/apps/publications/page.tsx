@@ -170,10 +170,10 @@ export default function PublicationsPage() {
                                     <span className="iconify lucide--filter size-5"></span>
                                     Filtros
                                 </button>
-                                <Link href="/apps/publications/create" className="btn btn-primary">
+                                {/* <Link href="/apps/publications/create" className="btn btn-primary">
                                     <span className="iconify lucide--plus size-5"></span>
                                     Nueva Publicación
-                                </Link>
+                                </Link> */}
                             </div>
                         </div>
 
@@ -198,12 +198,12 @@ export default function PublicationsPage() {
                                     No hay {publicationType === 'assignment' ? 'tareas' : 'avisos'}
                                 </h3>
                                 <p className="text-base-content/60 mb-6">
-                                    Crea tu primer{publicationType === 'assignment' ? 'a tarea' : ' aviso'} para comenzar
+                                    No se encontraron {publicationType === 'assignment' ? 'tareas' : 'avisos'} publicados
                                 </p>
-                                <Link href="/apps/publications/create" className="btn btn-primary btn-sm">
+                                {/* <Link href="/apps/publications/create" className="btn btn-primary btn-sm">
                                     <span className="iconify lucide--plus size-4"></span>
                                     Crear primer{publicationType === 'assignment' ? 'a tarea' : ' aviso'}
-                                </Link>
+                                </Link> */}
                             </div>
                         ) : (
                             <>

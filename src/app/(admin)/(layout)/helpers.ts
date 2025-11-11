@@ -101,7 +101,18 @@ export const adminMenuItems: ISidebarMenuItem[] = [
         id: "apps-publications",
         icon: "lucide--newspaper",
         label: "Publicaciones",
-        url: "/apps/publications",
+        children: [
+            {
+                id: "apps-publications-list",
+                label: "Ver Publicaciones",
+                url: "/apps/publications",
+            },
+            {
+                id: "apps-publications-create",
+                label: "Crear Publicación",
+                url: "/apps/publications/create",
+            },
+        ],
     },
   
 
