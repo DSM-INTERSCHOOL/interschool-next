@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { FiltersModal } from "./components/FiltersModal";
 import { PublicationDetailModal } from "./components/PublicationDetailModal";
 import { RecipientsModal } from "./components/RecipientsModal";
+import { LikesModal } from "./components/LikesModal";
 import { getAll } from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
@@ -31,6 +32,9 @@ export default function PublicationsPage() {
     const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<string | null>(null);
     const [selectedAnnouncementTitle, setSelectedAnnouncementTitle] = useState<string | null>(null);
     const [isRecipientsModalOpen, setIsRecipientsModalOpen] = useState(false);
+    const [selectedLikesPublicationId, setSelectedLikesPublicationId] = useState<string | null>(null);
+    const [selectedLikesPublicationTitle, setSelectedLikesPublicationTitle] = useState<string | null>(null);
+    const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
 
     useEffect(() => {
         loadPublications();
@@ -96,6 +100,18 @@ export default function PublicationsPage() {
         setIsRecipientsModalOpen(false);
         setSelectedAnnouncementId(null);
         setSelectedAnnouncementTitle(null);
+    };
+
+    const handleViewLikes = (publicationId: string, publicationTitle: string | null | undefined) => {
+        setSelectedLikesPublicationId(publicationId);
+        setSelectedLikesPublicationTitle(publicationTitle || null);
+        setIsLikesModalOpen(true);
+    };
+
+    const handleCloseLikesModal = () => {
+        setIsLikesModalOpen(false);
+        setSelectedLikesPublicationId(null);
+        setSelectedLikesPublicationTitle(null);
     };
 
     const formatDate = (dateString: string | null) => {
@@ -241,8 +257,8 @@ export default function PublicationsPage() {
                                             <th className="bg-base-200">Fecha Fin</th>
                                             <th className="bg-base-200">Estado</th>
                                             <th className="bg-base-200">Vistas</th>
-                                            <th className="bg-base-200">Likes</th>
                                             <th className="bg-base-200">Comentarios</th>
+                                            <th className="bg-base-200">Likes</th>
                                             <th className="bg-base-200">Destinatarios</th>
                                             <th className="bg-base-200">Acciones</th>
                                         </tr>
@@ -292,15 +308,18 @@ export default function PublicationsPage() {
                                                 </td>
                                                 <td>
                                                     <div className="flex items-center gap-1">
-                                                        <span className="iconify lucide--heart size-4"></span>
-                                                        {announcement.likes || 0}
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div className="flex items-center gap-1">
                                                         <span className="iconify lucide--message-circle size-4"></span>
                                                         {announcement.comments || 0}
                                                     </div>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="btn btn-ghost btn-xs text-error"
+                                                        onClick={() => handleViewLikes(announcement.id, announcement.title)}
+                                                    >
+                                                        <span className="iconify lucide--heart size-4"></span>
+                                                        {announcement.likes || 0}
+                                                    </button>
                                                 </td>
                                                 <td>
                                                     <button
@@ -362,6 +381,14 @@ export default function PublicationsPage() {
                 isOpen={isRecipientsModalOpen}
                 onClose={handleCloseRecipientsModal}
                 publicationType={publicationType}
+            />
+
+            <LikesModal
+                publicationId={selectedLikesPublicationId}
+                publicationTitle={selectedLikesPublicationTitle}
+                publicationType={publicationType}
+                isOpen={isLikesModalOpen}
+                onClose={handleCloseLikesModal}
             />
         </>
     );
