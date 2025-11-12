@@ -10,8 +10,8 @@ import communicationApi from "./communicationApi";
 
 interface ServiceArgs {
   schoolId: string | number;
-  page?: number;
-  per_page?: number;
+  skip?: number;
+  limit?: number;
   filters?: string;
 }
 
@@ -53,13 +53,13 @@ export const create = async ({ schoolId, dto }: CreateArgs) => {
 
 export const getAll = async ({
   schoolId,
-  page = 1,
-  per_page = 10,
+  skip = 0,
+  limit = 100,
   filters,
 }: ServiceArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    skip: skip.toString(),
+    limit: limit.toString(),
   });
   
   if (filters) {
@@ -149,12 +149,12 @@ export const getLike = async ({ schoolId, announcementId, personId }: LikeArgs) 
 export const getLikes = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
+  skip = 0,
+  limit = 100,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    skip: skip.toString(),
+    limit: limit.toString(),
   });
 
   const response = await communicationApi.get<IAnnouncementLikeRead[]>(
@@ -186,13 +186,13 @@ export const addView = async ({
 export const getViews = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
+  skip = 0,
+  limit = 100,
   filters,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    skip: skip.toString(),
+    limit: limit.toString(),
   });
   
   if (filters) {
@@ -243,13 +243,13 @@ export const addComment = async ({
 export const getComments = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
+  skip = 0,
+  limit = 100,
   filters,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    skip: skip.toString(),
+    limit: limit.toString(),
   });
   
   if (filters) {
