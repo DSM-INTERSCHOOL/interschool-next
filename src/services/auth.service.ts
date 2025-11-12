@@ -170,30 +170,40 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
 export const getStudentPermissions = async (
   studentId: string,
   token: string,
-  legacyUrl: string
+  legacyUrl: string,
+  initialCookies?: string[]
 ): Promise<PermisosResponse> => {
   try {
     const { schoolId, portalName } = getOrgConfig();
 
+    // Preparar el body de la petición
+    const requestBody: any = {
+      person_id: studentId,
+      legacy_url: legacyUrl
+    };
+
+    // Agregar cookies en el body si existen
+    if (initialCookies && initialCookies.length > 0) {
+      requestBody.cookies = initialCookies;
+      console.log('📧 Enviando cookies en body:', initialCookies);
+    }
+
     const response = await axios.post<PermisosResponse>(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/student-permissions`,
-      {
-        person_id: studentId,
-        legacy_url: legacyUrl
-      },
+      requestBody,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-device-id': getDeviceId(),
           'x-url-origin': portalName,
           'Content-Type': 'application/json',
-        },
+        }
       }
     );
 
-    const cookies = response.data.cookies;
-    if (cookies && Array.isArray(cookies)) {
-      for (let cookie of cookies) {
+    const responseCookies = response.data.cookies;
+    if (responseCookies && Array.isArray(responseCookies)) {
+      for (let cookie of responseCookies) {
         document.cookie = cookie
       }
     }

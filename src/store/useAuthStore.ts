@@ -36,6 +36,7 @@ interface StudentSelectionData {
   email?: string;
   status?: string;
   person_type?: string;
+  cookies?: string[];
   meta_data?: {
     alumnos?: AlumnoInfo[];
     status?: string;

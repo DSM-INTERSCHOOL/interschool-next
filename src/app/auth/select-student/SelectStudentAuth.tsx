@@ -49,8 +49,16 @@ const SelectStudentAuthContent = () => {
         setError("");
 
         try {
+            // Obtener las cookies del login inicial
+            const cookies = studentSelectionData?.cookies;
+
             // Obtener permisos del estudiante seleccionado
-            const permisosResponse = await getStudentPermissions(selectedStudent, token, legacyUrl);
+            const permisosResponse = await getStudentPermissions(
+                selectedStudent,
+                token,
+                legacyUrl,
+                cookies
+            );
 
             // Actualizar el store con los datos completos del alumno
             setAuthData(permisosResponse);
