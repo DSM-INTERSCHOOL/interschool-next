@@ -142,9 +142,14 @@ export const getRecipientsWithEnrollmentFilters = async (
     }
 
     // Build the request body
-    const requestBody: any = {
-      person_types: personTypes
-    };
+    const includePersonTypes = personTypes.includes(PersonType.USER);
+    const requestBody: any = {};
+
+    if (includePersonTypes){
+      requestBody.person_types = [PersonType.USER]
+    }
+
+    
 
     // Build enrollment filters for different person types
     const enrollmentFilters: IEnrollmentFilters = {
