@@ -40,6 +40,13 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     const isAdmin = userRole === 'admin';
     const isAssignment = publicationType === 'assignment';
 
+    // Seleccionar STUDENT por defecto para profesores
+    useEffect(() => {
+        if (isTeacher && !announcementId && selections.selectedRecipientTypes.size === 0) {
+            selections.handleRecipientTypeToggle('STUDENT', true);
+        }
+    }, [isTeacher, announcementId]);
+
     // Cargar programas académicos cuando cambian los stages seleccionados
     useEffect(() => {
         academicData.loadAcademicPrograms(selections.selectedAcademicStages);
@@ -88,6 +95,8 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     }, [publicationForm.loadedAnnouncement, academicData.academicYears]);
 
     const handleLoadRecipients = () => {
+        const subjectIds = teacherSubjects.subjects.map(s => s.subject_id);
+
         recipientsData.loadRecipients(
             selections.selectedRecipientTypes,
             {
@@ -106,7 +115,9 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                 academic_groups: selections.selectedAcademicGroups.size > 0
                     ? Array.from(selections.selectedAcademicGroups)
                     : undefined,
-            }
+            },
+            userRole,
+            subjectIds
         );
     };
 
@@ -158,6 +169,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                             selected={selections.selectedRecipientTypes}
                             onToggle={selections.handleRecipientTypeToggle}
                             onSelectAll={selections.handleSelectAllRecipientTypes}
+                            userRole={userRole}
                         />
                     )}
 

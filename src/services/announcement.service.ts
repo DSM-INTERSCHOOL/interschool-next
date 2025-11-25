@@ -61,7 +61,7 @@ export const getAll = async ({
     skip: skip.toString(),
     limit: limit.toString(),
   });
-  
+
   if (filters) {
     params.append("filters", filters);
   }

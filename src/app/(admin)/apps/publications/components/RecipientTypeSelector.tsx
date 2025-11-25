@@ -2,6 +2,7 @@ interface RecipientTypeSelectorProps {
     selected: Set<string>;
     onToggle: (type: string, isSelected: boolean) => void;
     onSelectAll: (isSelected: boolean) => void;
+    userRole?: 'admin' | 'teacher' | 'alumno' | 'unknown';
 }
 
 const RECIPIENT_TYPES = [
@@ -11,7 +12,8 @@ const RECIPIENT_TYPES = [
     { value: 'USER', label: 'Usuarios', icon: 'lucide--users', color: 'accent' }
 ] as const;
 
-export const RecipientTypeSelector = ({ selected, onToggle, onSelectAll }: RecipientTypeSelectorProps) => {
+export const RecipientTypeSelector = ({ selected, onToggle, onSelectAll, userRole }: RecipientTypeSelectorProps) => {
+    const isTeacher = userRole === 'teacher';
     return (
         <div className="card card-border bg-base-100 shadow-lg">
             <div className="card-body">
@@ -27,51 +29,58 @@ export const RecipientTypeSelector = ({ selected, onToggle, onSelectAll }: Recip
 
                 <div className="space-y-4">
                     {/* Checkbox para seleccionar todos */}
-                    <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
-                        <label className="label cursor-pointer flex items-center gap-3 p-0">
-                            <input
-                                type="checkbox"
-                                className="checkbox checkbox-primary"
-                                checked={selected.size === RECIPIENT_TYPES.length}
-                                onChange={(e) => onSelectAll(e.target.checked)}
-                            />
-                            <span className="font-medium text-base-content">
-                                Seleccionar todos los tipos de destinatarios
-                            </span>
-                        </label>
-                    </div>
+                    {!isTeacher && (
+                        <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
+                            <label className="label cursor-pointer flex items-center gap-3 p-0">
+                                <input
+                                    type="checkbox"
+                                    className="checkbox checkbox-primary"
+                                    checked={selected.size === RECIPIENT_TYPES.length}
+                                    onChange={(e) => onSelectAll(e.target.checked)}
+                                />
+                                <span className="font-medium text-base-content">
+                                    Seleccionar todos los tipos de destinatarios
+                                </span>
+                            </label>
+                        </div>
+                    )}
 
                     {/* Lista de tipos de destinatarios */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        {RECIPIENT_TYPES.map((recipientType) => (
-                            <div
-                                key={recipientType.value}
-                                className={`card border transition-all duration-200 ${
-                                    selected.has(recipientType.value)
-                                        ? `border-${recipientType.color} bg-${recipientType.color}/5`
-                                        : 'border-base-300 hover:border-base-400'
-                                }`}
-                            >
-                                <div className="card-body p-3">
-                                    <div className="form-control">
-                                        <label className="label cursor-pointer p-0 justify-start">
-                                            <input
-                                                type="checkbox"
-                                                className={`checkbox checkbox-${recipientType.color} checkbox-sm mr-3`}
-                                                checked={selected.has(recipientType.value)}
-                                                onChange={(e) => onToggle(recipientType.value, e.target.checked)}
-                                            />
-                                            <div className="flex items-center gap-2">
-                                                <span className={`iconify ${recipientType.icon} size-4 text-${recipientType.color}`}></span>
-                                                <div className="text-sm text-base-content">
-                                                    {recipientType.label}
+                        {RECIPIENT_TYPES.map((recipientType) => {
+                            const isDisabled = isTeacher && recipientType.value !== 'STUDENT';
+
+                            return (
+                                <div
+                                    key={recipientType.value}
+                                    className={`card border transition-all duration-200 ${
+                                        selected.has(recipientType.value)
+                                            ? `border-${recipientType.color} bg-${recipientType.color}/5`
+                                            : 'border-base-300 hover:border-base-400'
+                                    } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="card-body p-3">
+                                        <div className="form-control">
+                                            <label className={`label p-0 justify-start ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                                <input
+                                                    type="checkbox"
+                                                    className={`checkbox checkbox-${recipientType.color} checkbox-sm mr-3`}
+                                                    checked={selected.has(recipientType.value)}
+                                                    onChange={(e) => onToggle(recipientType.value, e.target.checked)}
+                                                    disabled={isDisabled}
+                                                />
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`iconify ${recipientType.icon} size-4 text-${recipientType.color}`}></span>
+                                                    <div className="text-sm text-base-content">
+                                                        {recipientType.label}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </label>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>

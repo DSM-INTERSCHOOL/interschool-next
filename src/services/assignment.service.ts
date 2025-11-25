@@ -39,7 +39,7 @@ export const create = async ({ schoolId, dto }: CreateArgs) => {
 
 export const getAll = async ({
   schoolId,
- skip = 0,
+  skip = 0,
   limit = 100,
   filters,
 }: ServiceArgs) => {

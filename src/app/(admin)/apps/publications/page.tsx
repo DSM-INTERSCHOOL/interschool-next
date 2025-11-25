@@ -8,17 +8,21 @@ import { FiltersModal } from "./components/FiltersModal";
 import { PublicationDetailModal } from "./components/PublicationDetailModal";
 import { RecipientsModal } from "./components/RecipientsModal";
 import { LikesModal } from "./components/LikesModal";
-import { getAll } from "@/services/announcement.service";
+import * as announcemntService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { useUserRole } from "./hooks/useUserRole";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function PublicationsPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const highlightId = searchParams.get('highlightId');
     const highlightType = searchParams.get('publicationType') as 'announcement' | 'assignment' | null;
+    const userRole = useUserRole();
+    const personId = useAuthStore((state) => state.personId);
 
     const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>(highlightType || 'announcement');
     const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
@@ -49,9 +53,17 @@ export default function PublicationsPage() {
             setLoading(true);
             setError(null);
             const { schoolId } = getOrgConfig();
+
+            const serviceArgs: any = { schoolId };
+
+            // Si es profesor, agregar filtro por publisher_person_id
+            if (userRole === 'teacher' && personId) {
+                serviceArgs.filters = `publisher_person_id::eq::${personId}`;
+            }
+
             const data = publicationType === 'assignment'
-                ? await assignmentService.getAll({ schoolId })
-                : await getAll({ schoolId });
+                ? await assignmentService.getAll(serviceArgs)
+                : await announcemntService.getAll(serviceArgs);
             setAnnouncements(data);
 
             // Si hay highlightId, buscar y destacar esa publicación
