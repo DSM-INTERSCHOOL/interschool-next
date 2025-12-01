@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useHydration } from "@/hooks/useHydration";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { orgsMap, PortalCode } from "@/lib/orgConfig";
+import { orgsMap, PortalCode, schoolMap } from "@/lib/orgConfig";
 
 // Tipos para el mapeo de organizaciones
 
@@ -16,9 +16,10 @@ function RootPageContent() {
     const searchParams = useSearchParams();
     const isHydrated = useHydration();
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+    const setSchoolInfo = useAuthStore((state) => state.setSchoolInfo);
     const [hasError, setHasError] = useState(false);
 
-    
+
 
     useEffect(() => {
         // Extraer y decodificar el query param 'org'
@@ -42,6 +43,12 @@ function RootPageContent() {
                 // Guardar en localStorage
                 localStorage.setItem('schoolId', schoolId);
                 localStorage.setItem('portalName', portalName);
+
+                // Obtener información de la escuela del schoolMap
+                const schoolInfo = schoolMap[schoolId];
+                if (schoolInfo) {
+                    setSchoolInfo(schoolInfo.school_name, schoolInfo.school_image);
+                }
 
                 // Continuar con la lógica de redirección solo si está hidratado
                 // y solo hacer el redirect una vez

@@ -52,6 +52,8 @@ interface AuthState {
   email: string | null;
   name: string | null;
   schoolId: number | null;
+  schoolName: string | null;
+  schoolImage: string | null;
 
   // Credenciales para legacy (encriptadas o hasheadas en producción)
   legacyPersonId: string | null;
@@ -97,6 +99,7 @@ interface AuthState {
   setStudentSelectionData: (data: StudentSelectionData) => void;
   clearStudentSelection: () => void;
   setSelectedStudentId: (studentId: string) => void;
+  setSchoolInfo: (schoolName: string, schoolImage: string) => void;
 
   // Utilidades
   isAuthenticated: () => boolean;
@@ -112,6 +115,8 @@ export const useAuthStore = create<AuthState>()(
       email: null,
       name: null,
       schoolId: null,
+      schoolName: null,
+      schoolImage: null,
       legacyPersonId: null,
       legacyPassword: null,
       personInternalId: null,
@@ -149,6 +154,8 @@ export const useAuthStore = create<AuthState>()(
         email: null,
         name: null,
         schoolId: null,
+        schoolName: null,
+        schoolImage: null,
         legacyPersonId: null,
         legacyPassword: null,
         personInternalId: null,
@@ -211,6 +218,11 @@ export const useAuthStore = create<AuthState>()(
 
       setSelectedStudentId: (studentId) => set({
         selectedStudentId: studentId
+      }),
+
+      setSchoolInfo: (schoolName, schoolImage) => set({
+        schoolName,
+        schoolImage
       }),
 
       // Utilidades
