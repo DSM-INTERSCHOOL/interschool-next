@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useHydration } from "@/hooks/useHydration";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { orgsMap, PortalCode } from "@/lib/orgConfig";
 
 // Tipos para el mapeo de organizaciones
-type PortalCode = "MT" | "ST" | "TC";
-type PortalMap = Record<PortalCode, string>;
-type OrgsMap = Record<string, PortalMap>;
+
+
 
 function RootPageContent() {
     const router = useRouter();
@@ -18,103 +18,7 @@ function RootPageContent() {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
     const [hasError, setHasError] = useState(false);
 
-    const orgsMap: OrgsMap = {
-        "1000": {
-            "MT": "https://meta.celta.idsm.xyz",
-            "ST": "https://alumno.celta.idsm.xyz",
-            "TC": "https://profesor.celta.idsm.xyz"
-        },
-        "1001": {
-            "MT": "https://meta.spongies.idsm.xyz",
-            "ST": "https://alumno.spongies.idsm.xyz",
-            "TC": "https://profesor.spongies.idsm.xyz"
-        },
-        "1002": {
-            "MT": "https://meta.helenkeller.idsm.xyz",
-            "ST": "https://alumno.helenkeller.idsm.xyz",
-            "TC": "https://profesor.helenkeller.idsm.xyz"
-        },
-        "1003": {
-            "MT": "https://meta.liceoannafreud.idsm.xyz",
-            "ST": "https://alumno.liceoannafreud.idsm.xyz",
-            "TC": "https://profesor.liceoannafreud.idsm.xyz"
-        },
-        "1004": {
-            "MT": "https://meta.cfe.idsm.xyz",
-            "ST": "https://alumno.cfe.idsm.xyz",
-            "TC": "https://profesor.cfe.idsm.xyz"
-        },
-        "1005": {
-            "MT": "https://meta.wch.idsm.xyz",
-            "ST": "https://alumno.wch.idsm.xyz",
-            "TC": "https://profesor.wch.idsm.xyz"
-        },
-        "1006": {
-            "MT": "https://meta.cf.idsm.xyz",
-            "ST": "https://alumno.cf.idsm.xyz",
-            "TC": "https://profesor.cf.idsm.xyz"
-        },
-        "1007": {
-            "MT": "https://meta.grupocudec.idsm.xyz",
-            "ST": "https://alumno.grupocudec.idsm.xyz",
-            "TC": "https://profesor.grupocudec.idsm.xyz"
-        },
-        "1008": {
-            "MT": "https://meta.ipia.idsm.xyz",
-            "ST": "https://alumno.ipia.idsm.xyz",
-            "TC": "https://profesor.ipia.idsm.xyz"
-        },
-        "1009": {
-            "MT": "https://meta.dali.idsm.xyz",
-            "ST": "https://alumno.dali.idsm.xyz",
-            "TC": "https://profesor.dali.idsm.xyz"
-        },
-        "1010": {
-            "MT": "https://meta.vizcaino.idsm.xyz",
-            "ST": "https://alumno.vizcaino.idsm.xyz",
-            "TC": "https://profesor.vizcaino.idsm.xyz"
-        },
-        "1011": {
-            "MT": "https://meta.chk-qro.idsm.xyz",
-            "ST": "https://alumno.chk-qro.idsm.xyz",
-            "TC": "https://profesor.chk-qro.idsm.xyz"
-        },
-        "1013": {
-            "MT": "https://meta.montessori-pachuca.idsm.xyz",
-            "ST": "https://alumno.montessori-pachuca.idsm.xyz",
-            "TC": "https://profesor.montessori-pachuca.idsm.xyz"
-        },
-        "1014": {
-            "MT": "https://meta.dicormo.idsm.xyz",
-            "ST": "https://alumno.dicormo.idsm.xyz",
-            "TC": "https://profesor.dicormo.idsm.xyz"
-        },
-        "1015": {
-            "MT": "https://meta.uc.idsm.xyz",
-            "ST": "https://alumno.uc.idsm.xyz",
-            "TC": "https://profesor.uc.idsm.xyz"
-        },
-        "1016": {
-            "MT": "https://meta.iamb.idsm.xyz",
-            "ST": "https://alumno.iamb.idsm.xyz",
-            "TC": "https://profesor.iamb.idsm.xyz"
-        },
-        "1017": {
-            "MT": "https://meta.ccolumbia.idsm.xyz",
-            "ST": "https://alumno.ccolumbia.idsm.xyz",
-            "TC": "https://profesor.ccolumbia.idsm.xyz"
-        },
-        "1018": {
-            "MT": "https://meta.plata.idsm.xyz",
-            "ST": "https://alumno.plata.idsm.xyz",
-            "TC": "https://profesor.plata.idsm.xyz"
-        },
-        "1019": {
-            "MT": "https://meta.nitamani.idsm.xyz",
-            "ST": "https://alumno.nitamani.idsm.xyz",
-            "TC": "https://profesor.nitamani.idsm.xyz"
-        }
-    }
+    
 
     useEffect(() => {
         // Extraer y decodificar el query param 'org'
