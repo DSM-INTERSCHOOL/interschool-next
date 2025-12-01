@@ -179,7 +179,7 @@ export const PublicationFormCard = ({
                                 apiKey="a8bvz8ljrja6c147qm0xdh4nplqv7pmodepk5gnc6pgnx0ci"
                                 init={{
                                     height: 600,
-                                    menubar: false,
+                                    menubar: true,
                                     plugins: [
                                         'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                                         'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',

@@ -31,7 +31,7 @@ export const usePublicationForm = (
         content: '',
         startDate: '',
         endDate: '',
-        acceptComments: true,
+        acceptComments: false,
         authorized: true,
         subjectId: '',
         subjectName: '',

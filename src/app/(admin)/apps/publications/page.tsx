@@ -86,6 +86,40 @@ export default function PublicationsPage() {
         console.log("Filtros aplicados:", filters);
     };
 
+    const handleToggleAuthorization = async (announcement: IAnnouncementRead) => {
+        try {
+            const { schoolId } = getOrgConfig();
+            const newAuthorizedValue = !announcement.authorized;
+
+            // Actualizar en el servidor
+            if (publicationType === 'assignment') {
+                await assignmentService.update({
+                    schoolId,
+                    assignmentId: announcement.id,
+                    dto: { authorized: newAuthorizedValue }
+                });
+            } else {
+                await announcemntService.update({
+                    schoolId,
+                    announcementId: announcement.id,
+                    dto: { authorized: newAuthorizedValue }
+                });
+            }
+
+            // Actualizar localmente
+            setAnnouncements(prev =>
+                prev.map(a =>
+                    a.id === announcement.id
+                        ? { ...a, authorized: newAuthorizedValue }
+                        : a
+                )
+            );
+        } catch (err: any) {
+            console.error("Error updating authorization:", err);
+            alert(`Error al actualizar la autorización: ${err.message || 'Error desconocido'}`);
+        }
+    };
+
     const handleCloseHighlight = () => {
         setHighlightedPublication(null);
         // Limpiar query parameters de la URL
@@ -268,6 +302,7 @@ export default function PublicationsPage() {
                                             <th className="bg-base-200">Fecha Inicio</th>
                                             <th className="bg-base-200">Fecha Fin</th>
                                             <th className="bg-base-200">Estado</th>
+                                            <th className="bg-base-200">Autorización</th>
                                             <th className="bg-base-200">Vistas</th>
                                             <th className="bg-base-200">Comentarios</th>
                                             <th className="bg-base-200">Likes</th>
@@ -312,6 +347,17 @@ export default function PublicationsPage() {
                                                 <td className="text-sm">{formatDate(announcement.start_date)}</td>
                                                 <td className="text-sm">{formatDate(announcement.end_date)}</td>
                                                 <td>{getStatusBadge(announcement.status)}</td>
+                                                <td>
+                                                    <div className="flex items-center justify-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="checkbox checkbox-primary cursor-pointer"
+                                                            checked={announcement.authorized || false}
+                                                            onChange={() => handleToggleAuthorization(announcement)}
+                                                            title={announcement.authorized ? "Autorizado - Click para desautorizar" : "No autorizado - Click para autorizar"}
+                                                        />
+                                                    </div>
+                                                </td>
                                                 <td>
                                                     <div className="flex items-center gap-1">
                                                         <span className="iconify lucide--eye size-4"></span>
