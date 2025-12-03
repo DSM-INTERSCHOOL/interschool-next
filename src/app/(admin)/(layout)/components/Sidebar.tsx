@@ -15,6 +15,7 @@ import { usePermisos } from "@/hooks/usePermisos";
 
 import { getActivatedItemParentKeys } from "../helpers";
 import { ISidebarMenuItem, SidebarMenuItem } from "./SidebarMenuItem";
+import { SchoolBadge } from "@/components/SchoolBadge";
 
 export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
     const pathname = usePathname();
@@ -74,7 +75,10 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                 }>
                 <div className="sidebar-logo-area">
                     <Link href="/home" className="flex items-center justify-center">
-                        {config.theme === "dark" ? <LogoLight /> : <Logo />}
+                    <div className="h-16">
+                    <SchoolBadge variant="mobile"  />
+                    </div>
+                        {/* {config.theme === "dark" ? <LogoLight /> : <Logo />} */}
                     </Link>
                 </div>
                 <div className="relative min-h-0 grow">

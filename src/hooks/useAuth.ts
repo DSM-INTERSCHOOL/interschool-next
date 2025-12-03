@@ -29,9 +29,7 @@ export const useAuth = () => {
     const login = async (personId: string, password: string) => {
         try {
             // Usar getPermisos que nos trae el token y los permisos en una sola llamada
-            console.log("en login");
             const authData = await getPermisos({ person_id: personId, password });
-            console.log({ authData });
 
             // Verificar si es un caso especial que requiere selección de alumno
             const requiresStudentSelection =

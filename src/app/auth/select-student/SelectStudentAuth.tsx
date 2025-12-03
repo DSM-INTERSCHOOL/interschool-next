@@ -66,8 +66,8 @@ const SelectStudentAuthContent = () => {
             // Esperar un momento para que Zustand persista el estado antes de redirigir
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Redirigir al home
-            router.push('/home');
+            // Redirigir a notificaciones
+            router.push('/notificaciones');
         } catch (err: any) {
             console.error("Error al obtener permisos del estudiante:", err);
             setError(err.message || 'Error al obtener permisos del estudiante');

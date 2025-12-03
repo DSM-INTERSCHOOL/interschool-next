@@ -23,7 +23,7 @@ const LoginRedirectHandler = () => {
     useEffect(() => {
         // Solo redirigir después de la hidratación
         if (isHydrated && isAuthenticated) {
-            const redirectTo = searchParams.get('redirectTo') || '/home';
+            const redirectTo = searchParams.get('redirectTo') || '/notificaciones';
             router.push(redirectTo);
         }
     }, [isHydrated, isAuthenticated, router, searchParams]);

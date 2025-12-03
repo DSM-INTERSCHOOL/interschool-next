@@ -55,7 +55,7 @@ function RootPageContent() {
                 // y solo hacer el redirect una vez
                 if (isHydrated) {
                     if (isAuthenticated) {
-                        router.replace('/home');
+                        router.replace('/notificaciones');
                     } else {
                         router.replace('/auth/login');
                     }

@@ -12,7 +12,7 @@ interface SchoolBadgeProps {
 
 const styles: Record<Variant, string> = {
   desktop: "absolute left-6 top-6 rounded-2xl bg-white/80 px-4 py-3 shadow-lg backdrop-blur dark:bg-slate-900/70",
-  mobile: "lg:hidden mt-4 flex items-center justify-center gap-3 rounded-2xl bg-base-100 px-4 py-3 shadow-sm ring-1 ring-slate-200/60",
+  mobile: " mt-4 flex items-center justify-center gap-3 rounded-2xl bg-base-100 px-4 py-3 shadow-sm ring-1 ring-slate-200/60",
 };
 
 export const SchoolBadge = ({ variant = "mobile" }: SchoolBadgeProps) => {
