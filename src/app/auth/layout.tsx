@@ -1,4 +1,7 @@
+"use client";
+
 import { type ReactNode } from "react";
+import { SchoolBadge } from "@/components/SchoolBadge";
 
 const AuthLayout = ({ children }: { children: ReactNode }) => {
     return (
@@ -7,9 +10,11 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
                 <div className="absolute inset-0 flex items-center justify-center">
                     <img src="/images/auth/auth-hero.png" className="object-cover" alt="Auth Image" />
                 </div>
-               
+                <SchoolBadge variant="desktop" />
             </div>
-            <div className="col-span-12 lg:col-span-5 xl:col-span-4 2xl:col-span-3">{children}</div>
+            <div className="col-span-12 lg:col-span-5 xl:col-span-4 2xl:col-span-3">
+                {children}
+            </div>
         </div>
     );
 };

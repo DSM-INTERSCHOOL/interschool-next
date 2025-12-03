@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSchoolStore } from "@/store/useSchoolStore";
 import { useHydration } from "@/hooks/useHydration";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { orgsMap, PortalCode, schoolMap } from "@/lib/orgConfig";
@@ -16,7 +17,7 @@ function RootPageContent() {
     const searchParams = useSearchParams();
     const isHydrated = useHydration();
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
-    const setSchoolInfo = useAuthStore((state) => state.setSchoolInfo);
+    const setSchoolInfo = useSchoolStore((state) => state.setSchoolInfo);
     const [hasError, setHasError] = useState(false);
 
 

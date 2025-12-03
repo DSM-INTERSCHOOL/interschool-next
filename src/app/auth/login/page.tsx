@@ -10,6 +10,7 @@ import { ThemeToggleDropdown } from "@/components/ThemeToggleDropdown";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuth } from '@/hooks/useAuth';
 import { useHydration } from '@/hooks/useHydration';
+import { SchoolBadge } from "@/components/SchoolBadge";
 
 import { LoginAuth } from "./LoginAuth";
 
@@ -47,8 +48,9 @@ const LoginPageContent = () => {
     return (
         <div className="flex min-h-screen flex-col justify-center px-6 py-12 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+                
                 <div className="flex items-center justify-center">
-                    <Logo />
+                    <SchoolBadge variant="mobile" />
                 </div>
                 <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-base-content">
                     Iniciar Sesión
