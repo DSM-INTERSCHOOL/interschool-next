@@ -11,6 +11,7 @@ export type ISidebarMenuItem = {
     isTitle?: boolean;
     url?: string;
     legacyUrl?: string;
+    isLegacy?: boolean;
     linkProp?: AnchorHTMLAttributes<HTMLAnchorElement>;
     children?: ISidebarMenuItem[];
 } & ISidebarMenuItemBadges;
@@ -25,10 +26,11 @@ export const SidebarMenuItem = ({
     linkProp,
     label,
     activated,
-    legacyUrl
+    legacyUrl,
+    isLegacy
 }: ISidebarMenuItem & { activated: Set<string> }) => {
     const selected = activated.has(id);
-        const setLegacyUrl = useAuthStore((state) => state.setLegacyUrl) as any;
+    const setLegacyUrl = useAuthStore((state) => state.setLegacyUrl) as any;
 
     if (isTitle) {
         return <p className="sidebar-menu-title">{label}</p>;
@@ -37,8 +39,11 @@ export const SidebarMenuItem = ({
     if (!children) {
         return (
             <Link href={url ?? ""} onClick={()=> {
-                console.log('legacyUrl', legacyUrl)
-                setLegacyUrl(legacyUrl!)
+                // Solo guardar legacyUrl si es un permiso legacy
+                if (isLegacy && legacyUrl) {
+                    console.log('legacyUrl', legacyUrl)
+                    setLegacyUrl(legacyUrl)
+                }
             }} className={`sidebar-menu-item ${selected && "active"}`} {...linkProp}>
                 {icon && <span className={`iconify ${icon} size-4`} />}
                 <span className="grow">{label}</span>

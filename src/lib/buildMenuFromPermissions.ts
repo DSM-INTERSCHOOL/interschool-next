@@ -12,6 +12,7 @@ type Permiso = {
   Contexto: string;
   Discriminator: string;
   OrdenMenu?: number;
+  Legacy?: number;
 };
 
 export function buildSidebarMenuFromPermisos(permisos: Permiso[]): ISidebarMenuItem[] {
@@ -47,11 +48,17 @@ export function buildSidebarMenuFromPermisos(permisos: Permiso[]): ISidebarMenuI
     }
 
     // Nivel 3: Opción de menú (permiso)
+    const isLegacy = permiso.Legacy === 1;
+    const legacyUrl = permiso.Accion.startsWith('https://')
+      ? permiso.Accion
+      : `/${permiso.Contexto}/${permiso.Namespace}/${permiso.Accion}`;
+
     grupo.children!.push({
       id: permisoId,
       label: permiso.Etiqueta,
-      url: `/legacy`,
-      legacyUrl: permiso.Accion.startsWith('https://')? permiso.Accion : `/${permiso.Contexto}/${permiso.Namespace}/${permiso.Accion}`,
+      url: isLegacy ? `/legacy` : permiso.Accion,
+      legacyUrl: isLegacy ? legacyUrl : undefined,
+      isLegacy,
     });
   }
   const menuItems: ISidebarMenuItem[] = [

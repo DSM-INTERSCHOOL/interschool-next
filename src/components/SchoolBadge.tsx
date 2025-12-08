@@ -46,9 +46,7 @@ export const SchoolBadge = ({ variant = "mobile" }: SchoolBadgeProps) => {
         </div>
       )}
       <div className="flex flex-col">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Escuela
-        </span>
+       
         <span
           className={clsx(
             "font-semibold text-slate-900 dark:text-slate-100",
