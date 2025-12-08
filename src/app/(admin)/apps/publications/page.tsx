@@ -8,6 +8,8 @@ import { FiltersModal } from "./components/FiltersModal";
 import { PublicationDetailModal } from "./components/PublicationDetailModal";
 import { RecipientsModal } from "./components/RecipientsModal";
 import { LikesModal } from "./components/LikesModal";
+import { CommentsModal } from "./components/CommentsModal";
+import { ViewsModal } from "./components/ViewsModal";
 import * as announcemntService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
@@ -39,6 +41,12 @@ export default function PublicationsPage() {
     const [selectedLikesPublicationId, setSelectedLikesPublicationId] = useState<string | null>(null);
     const [selectedLikesPublicationTitle, setSelectedLikesPublicationTitle] = useState<string | null>(null);
     const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+    const [selectedCommentsPublicationId, setSelectedCommentsPublicationId] = useState<string | null>(null);
+    const [selectedCommentsPublicationTitle, setSelectedCommentsPublicationTitle] = useState<string | null>(null);
+    const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+    const [selectedViewsPublicationId, setSelectedViewsPublicationId] = useState<string | null>(null);
+    const [selectedViewsPublicationTitle, setSelectedViewsPublicationTitle] = useState<string | null>(null);
+    const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
 
     useEffect(() => {
         loadPublications();
@@ -158,6 +166,30 @@ export default function PublicationsPage() {
         setIsLikesModalOpen(false);
         setSelectedLikesPublicationId(null);
         setSelectedLikesPublicationTitle(null);
+    };
+
+    const handleViewComments = (publicationId: string, publicationTitle: string | null | undefined) => {
+        setSelectedCommentsPublicationId(publicationId);
+        setSelectedCommentsPublicationTitle(publicationTitle || null);
+        setIsCommentsModalOpen(true);
+    };
+
+    const handleCloseCommentsModal = () => {
+        setIsCommentsModalOpen(false);
+        setSelectedCommentsPublicationId(null);
+        setSelectedCommentsPublicationTitle(null);
+    };
+
+    const handleViewViews = (publicationId: string, publicationTitle: string | null | undefined) => {
+        setSelectedViewsPublicationId(publicationId);
+        setSelectedViewsPublicationTitle(publicationTitle || null);
+        setIsViewsModalOpen(true);
+    };
+
+    const handleCloseViewsModal = () => {
+        setIsViewsModalOpen(false);
+        setSelectedViewsPublicationId(null);
+        setSelectedViewsPublicationTitle(null);
     };
 
     const formatDate = (dateString: string | null) => {
@@ -359,16 +391,22 @@ export default function PublicationsPage() {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div className="flex items-center gap-1">
+                                                    <button
+                                                        className="btn btn-ghost btn-xs text-success"
+                                                        onClick={() => handleViewViews(announcement.id, announcement.title)}
+                                                    >
                                                         <span className="iconify lucide--eye size-4"></span>
                                                         {announcement.views || 0}
-                                                    </div>
+                                                    </button>
                                                 </td>
                                                 <td>
-                                                    <div className="flex items-center gap-1">
+                                                    <button
+                                                        className="btn btn-ghost btn-xs text-info"
+                                                        onClick={() => handleViewComments(announcement.id, announcement.title)}
+                                                    >
                                                         <span className="iconify lucide--message-circle size-4"></span>
                                                         {announcement.comments || 0}
-                                                    </div>
+                                                    </button>
                                                 </td>
                                                 <td>
                                                     <button
@@ -447,6 +485,22 @@ export default function PublicationsPage() {
                 publicationType={publicationType}
                 isOpen={isLikesModalOpen}
                 onClose={handleCloseLikesModal}
+            />
+
+            <CommentsModal
+                publicationId={selectedCommentsPublicationId}
+                publicationTitle={selectedCommentsPublicationTitle}
+                publicationType={publicationType}
+                isOpen={isCommentsModalOpen}
+                onClose={handleCloseCommentsModal}
+            />
+
+            <ViewsModal
+                publicationId={selectedViewsPublicationId}
+                publicationTitle={selectedViewsPublicationTitle}
+                publicationType={publicationType}
+                isOpen={isViewsModalOpen}
+                onClose={handleCloseViewsModal}
             />
         </>
     );
