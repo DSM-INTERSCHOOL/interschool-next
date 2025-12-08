@@ -85,11 +85,11 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                     <SimpleBar ref={scrollRef} className="size-full">
                         <div id="sidebar-menu" className="pt-2">
                             {/* Sección hardcodeada de Apps */}
-                            {menuItems.map((item, index) => (
+                            {/* {menuItems.map((item, index) => (
                                 <SidebarMenuItem {...item} key={index} activated={activatedParents} />
-                            ))}
+                            ))} */}
 
-                            {/* Sección dinámica de Legacy (permisos) */}
+                            {/* Sección dinámica de Menu (permisos) */}
                             {isLoadingPermisos && (
                                 <div className="flex items-center justify-center p-4">
                                     <div className="loading loading-spinner loading-sm"></div>

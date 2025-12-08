@@ -62,11 +62,11 @@ export function buildSidebarMenuFromPermisos(permisos: Permiso[]): ISidebarMenuI
     });
   }
   const menuItems: ISidebarMenuItem[] = [
-    // 👇 Sección "Apps" como título antes de todo
+    // 👇 Sección "Menu" como título antes de todo
     {
-      id: "Legacy-label",
+      id: "Menu-label",
       isTitle: true,
-      label: "Legacy",
+      label: "Menu",
     },
     // 👇 Módulos dinámicos
     ...Array.from(modulosMap.values()),
