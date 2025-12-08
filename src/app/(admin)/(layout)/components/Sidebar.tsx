@@ -112,7 +112,7 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                     <div className="from-base-100/60 absolute start-0 end-0 bottom-0 h-7 bg-linear-to-t to-transparent"></div>
                 </div>
 
-                <div className="mb-2">
+                {/* <div className="mb-2">
                     <hr className="border-base-300" />
                     <ul className="menu w-full">
                         <li>
@@ -174,7 +174,7 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                             </li>
                         </ul>
                     </div>
-                </div>
+                </div> */}
             </div>
 
             <label htmlFor="layout-sidebar-toggle-trigger" id="layout-sidebar-backdrop"></label>
