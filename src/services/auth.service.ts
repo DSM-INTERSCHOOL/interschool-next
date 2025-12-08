@@ -226,8 +226,33 @@ export const getStudentPermissions = async (
   }
 };
 
+/**
+ * Elimina todas las cookies establecidas durante el login
+ */
+export const clearAuthCookies = (): void => {
+  // Obtener todas las cookies
+  const cookies = document.cookie.split(';');
+
+  console.log({ cookies })
+
+  // Eliminar cada cookie
+  for (let cookie of cookies) {
+    const eqPos = cookie.indexOf('=');
+    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+
+    // Eliminar la cookie estableciendo su fecha de expiración en el pasado
+    // Intentar con diferentes configuraciones de path y domain
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+  }
+
+  console.log('Cookies eliminadas');
+};
+
 export const logout = async (): Promise<void> => {
-  // Implementar logout en el backend si es necesario
+  // Limpiar cookies de autenticación
+  clearAuthCookies();
   console.log('Logout realizado');
 };
 

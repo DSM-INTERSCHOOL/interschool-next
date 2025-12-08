@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 
-import { getPermisos } from "@/services/auth.service";
+import { getPermisos, clearAuthCookies } from "@/services/auth.service";
 import { useAuthStore } from "@/store/useAuthStore";
 
 import { useHydration } from "./useHydration";
@@ -71,6 +71,9 @@ export const useAuth = () => {
     };
 
     const logout = () => {
+        // Limpiar cookies de autenticación
+        clearAuthCookies();
+        // Limpiar estado del store
         storeLogout();
         router.push("/auth/login");
     };
