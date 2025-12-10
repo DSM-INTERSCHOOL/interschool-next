@@ -144,9 +144,9 @@ export const schoolMap: Record<string, SchoolInfo> = {
             "TC": "https://profesor.grupocudec.idsm.xyz"
         },
         "1008": {
-            "MT": "https://meta.ipia.idsm.xyz",
-            "ST": "https://alumno.ipia.idsm.xyz",
-            "TC": "https://profesor.ipia.idsm.xyz"
+            "MT": "https://admin.ipia.interschool.mx",
+            "ST": "https://alumno.ipia.interschool.mx",
+            "TC": "https://profesor.ipia.interschool.mx"
         },
         "1009": {
             "MT": "https://meta.dali.idsm.xyz",
