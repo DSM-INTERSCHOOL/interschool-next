@@ -23,7 +23,7 @@ const LegacyPageHidden = () => {
 
     return (
         <>
-            <div style={{ width: "100%", height: "0vh" }}>
+            <div style={{ width: "100%", height: "5vh" }}>
                 <iframe src={completPath} title="Legacy" width="100%" height="100%" style={{ border: "none" }} />
             </div>
         </>
