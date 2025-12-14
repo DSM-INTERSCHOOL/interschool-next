@@ -135,6 +135,10 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
       for (let cookie of cookies) {
         document.cookie = cookie
       }
+
+      // Forzar que el navegador procese las cookies antes de continuar
+      // Esto asegura que estén disponibles para iframes legacy
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
 
@@ -206,6 +210,9 @@ export const getStudentPermissions = async (
       for (let cookie of responseCookies) {
         document.cookie = cookie
       }
+
+      // Forzar que el navegador procese las cookies antes de continuar
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     console.log('Permisos del estudiante obtenidos:', response.data);
