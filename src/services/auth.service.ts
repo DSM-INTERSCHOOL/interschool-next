@@ -230,24 +230,44 @@ export const getStudentPermissions = async (
  * Elimina todas las cookies establecidas durante el login
  */
 export const clearAuthCookies = (): void => {
-  // Obtener todas las cookies
-  const cookies = document.cookie.split(';');
+  console.log('[INFO] clearAuthCookies')
+  const hostname = window.location.hostname;
 
-  console.log({ cookies })
+  const getDomainVariants = (host: string): string[] => {
+    const parts = host.split('.');
+    const domains = new Set<string>();
 
-  // Eliminar cada cookie
+    domains.add(host);
+    domains.add(`.${host}`);
+
+    if (parts.length >= 2) {
+      const base2 = parts.slice(-2).join('.');
+      domains.add(base2);
+      domains.add(`.${base2}`);
+    }
+
+    if (parts.length >= 3) {
+      const base3 = parts.slice(-3).join('.');
+      domains.add(base3);
+      domains.add(`.${base3}`);
+    }
+
+    return Array.from(domains);
+  };
+
+  const domainVariants = getDomainVariants(hostname);
+
+  const cookies = document.cookie.split(';').filter(Boolean);
+
   for (let cookie of cookies) {
     const eqPos = cookie.indexOf('=');
     const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
 
-    // Eliminar la cookie estableciendo su fecha de expiración en el pasado
-    // Intentar con diferentes configuraciones de path y domain
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+    for (const domain of domainVariants) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
+    }
   }
-
-  console.log('Cookies eliminadas');
 };
 
 export const logout = async (): Promise<void> => {
@@ -258,3 +278,4 @@ export const logout = async (): Promise<void> => {
 
 // Exportar tipos para uso en otros archivos
 export type { PermisosResponse, Permiso, AlumnoInfo };
+
