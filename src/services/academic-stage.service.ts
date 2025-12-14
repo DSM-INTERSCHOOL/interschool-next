@@ -17,8 +17,13 @@ export const getAcademicStages = async (
 ): Promise<IAcademicStage[]> => {
   try {
     const { schoolId } = getOrgConfig();
-    const response = await api.get(`/${schoolId}/academic-stages`, { params });
-    
+    const response = await api.get(`/${schoolId}/academic-stages`, {
+      params: {
+        ...params,
+        filter_by_user_access_scope: true
+      }
+    });
+
     return response.data;
   } catch (error) {
     console.error("Error fetching academic stages:", error);
