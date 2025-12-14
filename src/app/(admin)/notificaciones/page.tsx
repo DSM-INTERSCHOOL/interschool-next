@@ -26,12 +26,12 @@ const LegacyPageHidden = () => {
     useEffect(()=> {
         setTimeout(() => {
             setLegacyUrl('/ISMeta/rol/showFindByQueryRol')
-        }, 3000);
+        }, 500);
     },[])
 
     return (
         <>
-            <div style={{ width: "100%", height: "35vh" }}>
+            <div style={{ width: "100%", height: "1vh" }}>
                 <iframe src={completPath} title="Legacy" width="100%" height="100%" style={{ border: "none" }} />
             </div>
         </>
