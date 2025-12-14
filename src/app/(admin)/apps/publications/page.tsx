@@ -32,6 +32,9 @@ export default function PublicationsPage() {
     const [announcements, setAnnouncements] = useState<IAnnouncementRead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
+    const [totalItems, setTotalItems] = useState(0);
     const [highlightedPublication, setHighlightedPublication] = useState<IAnnouncementRead | null>(null);
     const [selectedPublication, setSelectedPublication] = useState<IAnnouncementRead | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -49,8 +52,13 @@ export default function PublicationsPage() {
     const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
 
     useEffect(() => {
+        setCurrentPage(1); // Reset to page 1 when switching types
         loadPublications();
     }, [publicationType]);
+
+    useEffect(() => {
+        loadPublications();
+    }, [currentPage, itemsPerPage]);
 
     useEffect(() => {
         document.title = "Publicaciones - Interschool";
@@ -62,7 +70,12 @@ export default function PublicationsPage() {
             setError(null);
             const { schoolId } = getOrgConfig();
 
-            const serviceArgs: any = { schoolId };
+            const offset = (currentPage - 1) * itemsPerPage;
+            const serviceArgs: any = {
+                schoolId,
+                offset: offset,
+                limit: itemsPerPage
+            };
 
             // Si es profesor, agregar filtro por publisher_person_id
             if (userRole === 'teacher' && personId) {
@@ -73,6 +86,15 @@ export default function PublicationsPage() {
                 ? await assignmentService.getAll(serviceArgs)
                 : await announcemntService.getAll(serviceArgs);
             setAnnouncements(data);
+
+            // Actualizar el total de items (usamos la longitud del resultado para estimarlo)
+            // Si se devuelven menos items que el límite, significa que es la última página
+            if (data.length < itemsPerPage) {
+                setTotalItems(offset + data.length);
+            } else {
+                // Si hay más items, estimamos que hay al menos una página más
+                setTotalItems(offset + data.length + 1);
+            }
 
             // Si hay highlightId, buscar y destacar esa publicación
             if (highlightId) {
@@ -452,6 +474,65 @@ export default function PublicationsPage() {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* Pagination Controls */}
+                            {announcements.length > 0 && (
+                                <div className="flex flex-col md:flex-row justify-between items-center mt-6 gap-4">
+                                    {/* Items per page selector */}
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm">Mostrar:</label>
+                                        <select
+                                            className="select select-bordered select-sm"
+                                            value={itemsPerPage}
+                                            onChange={(e) => {
+                                                setItemsPerPage(Number(e.target.value));
+                                                setCurrentPage(1);
+                                            }}
+                                        >
+                                            <option value={10}>10</option>
+                                            <option value={25}>25</option>
+                                            <option value={50}>50</option>
+                                            <option value={100}>100</option>
+                                        </select>
+                                        <span className="text-sm text-base-content/60">
+                                            por página
+                                        </span>
+                                    </div>
+
+                                    {/* Page info */}
+                                    <div className="text-sm text-base-content/60">
+                                        Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems}
+                                    </div>
+
+                                    {/* Page navigation buttons */}
+                                    <div className="join">
+                                        <button
+                                            className="join-item btn btn-sm"
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(1)}
+                                        >
+                                            <span className="iconify lucide--chevrons-left size-4"></span>
+                                        </button>
+                                        <button
+                                            className="join-item btn btn-sm"
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(prev => prev - 1)}
+                                        >
+                                            <span className="iconify lucide--chevron-left size-4"></span>
+                                        </button>
+                                        <button className="join-item btn btn-sm btn-disabled">
+                                            Página {currentPage}
+                                        </button>
+                                        <button
+                                            className="join-item btn btn-sm"
+                                            disabled={announcements.length < itemsPerPage}
+                                            onClick={() => setCurrentPage(prev => prev + 1)}
+                                        >
+                                            <span className="iconify lucide--chevron-right size-4"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                             </>
                         )}
                     </div>

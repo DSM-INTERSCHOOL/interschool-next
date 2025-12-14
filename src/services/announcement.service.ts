@@ -10,7 +10,7 @@ import communicationApi from "./communicationApi";
 
 interface ServiceArgs {
   schoolId: string | number;
-  skip?: number;
+  offset?: number;
   limit?: number;
   filters?: string;
 }
@@ -53,12 +53,12 @@ export const create = async ({ schoolId, dto }: CreateArgs) => {
 
 export const getAll = async ({
   schoolId,
-  skip = 0,
+  offset = 0,
   limit = 100,
   filters,
 }: ServiceArgs) => {
   const params = new URLSearchParams({
-    skip: skip.toString(),
+    offset: offset.toString(),
     limit: limit.toString(),
   });
 
@@ -149,11 +149,11 @@ export const getLike = async ({ schoolId, announcementId, personId }: LikeArgs) 
 export const getLikes = async ({
   schoolId,
   announcementId,
-  skip = 0,
+  offset = 0,
   limit = 100,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    skip: skip.toString(),
+    offset: offset.toString(),
     limit: limit.toString(),
   });
 
@@ -186,15 +186,15 @@ export const addView = async ({
 export const getViews = async ({
   schoolId,
   announcementId,
-  skip = 0,
+  offset = 0,
   limit = 100,
   filters,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    skip: skip.toString(),
+    offset: offset.toString(),
     limit: limit.toString(),
   });
-  
+
   if (filters) {
     params.append("filters", filters);
   }
@@ -243,15 +243,15 @@ export const addComment = async ({
 export const getComments = async ({
   schoolId,
   announcementId,
-  skip = 0,
+  offset = 0,
   limit = 100,
   filters,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    skip: skip.toString(),
+    offset: offset.toString(),
     limit: limit.toString(),
   });
-  
+
   if (filters) {
     params.append("filters", filters);
   }

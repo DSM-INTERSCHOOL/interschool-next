@@ -8,7 +8,7 @@ import communicationApi from "./communicationApi";
 
 interface ServiceArgs {
   schoolId: string | number;
-  skip?: number;
+  offset?: number;
   limit?: number;
   filters?: string;
 }
@@ -39,12 +39,12 @@ export const create = async ({ schoolId, dto }: CreateArgs) => {
 
 export const getAll = async ({
   schoolId,
-  skip = 0,
+  offset = 0,
   limit = 100,
   filters,
 }: ServiceArgs) => {
   const params = new URLSearchParams({
-    skip: skip.toString(),
+    offset: offset.toString(),
     limit: limit.toString(),
   });
 
@@ -111,11 +111,11 @@ export const getLike = async ({ schoolId, assignmentId, personId }: LikeArgs) =>
 export const getLikes = async ({
   schoolId,
   assignmentId,
-  skip = 0,
+  offset = 0,
   limit = 100,
 }: AssignmentArgs) => {
   const params = new URLSearchParams({
-    skip: skip.toString(),
+    offset: offset.toString(),
     limit: limit.toString(),
   });
 
@@ -148,12 +148,12 @@ export const addView = async ({
 export const getViews = async ({
   schoolId,
   assignmentId,
-  skip = 0,
+  offset = 0,
   limit = 100,
   filters,
 }: AssignmentArgs) => {
   const params = new URLSearchParams({
-    skip: skip.toString(),
+    offset: offset.toString(),
     limit: limit.toString(),
   });
 

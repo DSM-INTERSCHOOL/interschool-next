@@ -9,20 +9,20 @@ import "simplebar-react/dist/simplebar.min.css";
 
 import { Logo } from "@/components/Logo";
 import { LogoLight } from "@/components/LogoLight";
+import { SchoolBadge } from "@/components/SchoolBadge";
 import { useConfig } from "@/contexts/config";
-import { buildSidebarMenuFromPermisos } from "@/lib/buildMenuFromPermissions";
 import { usePermisos } from "@/hooks/usePermisos";
+import { buildSidebarMenuFromPermisos } from "@/lib/buildMenuFromPermissions";
 
 import { getActivatedItemParentKeys } from "../helpers";
 import { ISidebarMenuItem, SidebarMenuItem } from "./SidebarMenuItem";
-import { SchoolBadge } from "@/components/SchoolBadge";
 
 export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
     const pathname = usePathname();
     const { config } = useConfig();
     const scrollRef = useRef<SimpleBarCore | null>(null);
     const hasMounted = useRef(false);
-    
+
     const { permisos, isLoading: isLoadingPermisos, error: permisosError } = usePermisos();
 
     const menuItems2 = buildSidebarMenuFromPermisos(permisos);
@@ -74,10 +74,10 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                     config.sidebarTheme == "dark" && ["light", "contrast"].includes(config.theme) ? "dark" : undefined
                 }>
                 <div className="sidebar-logo-area">
-                    <Link href="/home" className="flex items-center justify-center">
-                    <div className="h-16">
-                    <SchoolBadge variant="mobile"  />
-                    </div>
+                    <Link href="/notificaciones" className="flex items-center justify-center">
+                        <div className="min-h-8">
+                            <SchoolBadge variant="mobile" />
+                        </div>
                         {/* {config.theme === "dark" ? <LogoLight /> : <Logo />} */}
                     </Link>
                 </div>
@@ -98,15 +98,26 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                             )}
                             {permisosError && (
                                 <div className="alert alert-error mx-2 mb-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 shrink-0 stroke-current"
+                                        fill="none"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
                                     </svg>
                                     <span className="text-xs">Error al cargar permisos</span>
                                 </div>
                             )}
-                            {!isLoadingPermisos && !permisosError && menuItems2.map((item, index) => (
-                                <SidebarMenuItem {...item} key={`legacy-${index}`} activated={activatedParents} />
-                            ))}
+                            {!isLoadingPermisos &&
+                                !permisosError &&
+                                menuItems2.map((item, index) => (
+                                    <SidebarMenuItem {...item} key={`legacy-${index}`} activated={activatedParents} />
+                                ))}
                         </div>
                     </SimpleBar>
                     <div className="from-base-100/60 absolute start-0 end-0 bottom-0 h-7 bg-linear-to-t to-transparent"></div>
