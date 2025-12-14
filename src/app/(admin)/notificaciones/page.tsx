@@ -16,14 +16,22 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 const LegacyPageHidden = () => {
     const legacyUrl = useAuthStore((state) => state.legacyUrl) as string;
+    const setLegacyUrl = useAuthStore((state) => state.setLegacyUrl) as any;
+
     const { portalName } = getOrgConfig();
     const completPath = legacyUrl?.startsWith('https://')? legacyUrl : `${portalName}${legacyUrl}`;
 
     console.log({completPath, legacyUrl})
 
+    useEffect(()=> {
+        setTimeout(() => {
+            setLegacyUrl('/ISMeta/rol/showFindByQueryRol')
+        }, 3000);
+    },[])
+
     return (
         <>
-            <div style={{ width: "100%", height: "5vh" }}>
+            <div style={{ width: "100%", height: "35vh" }}>
                 <iframe src={completPath} title="Legacy" width="100%" height="100%" style={{ border: "none" }} />
             </div>
         </>
