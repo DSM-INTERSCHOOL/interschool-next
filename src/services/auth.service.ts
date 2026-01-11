@@ -263,6 +263,7 @@ export const clearAuthCookies = (): void => {
   };
 
   const domainVariants = getDomainVariants(hostname);
+  const paths = ['/', '/auth', '/auth/login'];
 
   const cookies = document.cookie.split(';').filter(Boolean);
 
@@ -270,17 +271,32 @@ export const clearAuthCookies = (): void => {
     const eqPos = cookie.indexOf('=');
     const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
 
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    console.log(`[INFO] Attempting to delete cookie: ${name}`);
+
+    // Intentar eliminar sin domain ni secure
+    for (const path of paths) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+    }
+
+    // Intentar con todas las combinaciones de domain, path y secure
     for (const domain of domainVariants) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
+      for (const path of paths) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain};`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; secure;`;
+      }
     }
   }
 };
 
 export const logout = async (): Promise<void> => {
   // Limpiar cookies de autenticación
+  try {
   clearAuthCookies();
-  console.log('Logout realizado');
+  console.log('Logout realizado');    
+  } catch (error) {
+    console.log('Error al logut', error)
+  }
+
 };
 
 // Exportar tipos para uso en otros archivos
