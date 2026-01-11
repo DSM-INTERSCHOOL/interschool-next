@@ -289,14 +289,25 @@ export const clearAuthCookies = (): void => {
 };
 
 export const logout = async (): Promise<void> => {
-  // Limpiar cookies de autenticación
   try {
-  clearAuthCookies();
-  console.log('Logout realizado');    
-  } catch (error) {
-    console.log('Error al logut', error)
-  }
+    // Llamar al endpoint de logout del backend para eliminar cookies HttpOnly
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/ISAlumno/logOutCore`,
+      {},
+      {
+        withCredentials: true // Importante para enviar cookies HttpOnly
+      }
+    ).catch((error) => {
+      console.warn('Error en logout del servidor:', error);
+      // Continuar incluso si falla el logout del servidor
+    });
 
+    // Limpiar cookies accesibles desde JavaScript
+    clearAuthCookies();
+    console.log('Logout realizado');
+  } catch (error) {
+    console.log('Error al logout', error);
+  }
 };
 
 // Exportar tipos para uso en otros archivos
