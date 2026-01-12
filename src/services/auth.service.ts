@@ -290,12 +290,20 @@ export const clearAuthCookies = (): void => {
 
 export const logOutCore = async (): Promise<void> => {
   try {
-    const { portalName } = getOrgConfig();
+    const { portalName, schoolId } = getOrgConfig();
 
     // Llamar al endpoint de logout del backend para eliminar cookies HttpOnly
     console.log('en logOutCore---')
-    await axios.get(
-      `${portalName}/ISAlumno/logOutCore`
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/web-logout`,
+      {},
+      {
+        headers: {
+          'x-device-id': getDeviceId(),
+          'x-url-origin': portalName
+        },
+        withCredentials: true // Importante para enviar cookies HttpOnly
+      }
     ).catch((error) => {
       console.warn('Error en logout del servidor:', error);
       // Continuar incluso si falla el logout del servidor
