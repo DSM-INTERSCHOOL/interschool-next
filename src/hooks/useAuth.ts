@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 
-import { getPermisos, clearAuthCookies } from "@/services/auth.service";
+import { getPermisos, clearAuthCookies, logOutCore } from "@/services/auth.service";
 import { useAuthStore } from "@/store/useAuthStore";
 
 import { useHydration } from "./useHydration";
@@ -72,6 +72,7 @@ export const useAuth = () => {
 
     const logout = () => {
         // Limpiar cookies de autenticación
+        logOutCore();
         clearAuthCookies();
         // Limpiar estado del store
         storeLogout();
