@@ -64,7 +64,7 @@ const LoginAuthContent = () => {
                     router.push('/auth/select-student');
                 } else {
                     // Redirigir a la página original o a notificaciones
-                    const redirectTo = searchParams.get('redirectTo') || '/notificaciones';
+                    const redirectTo = '/notificaciones';
                     router.push(redirectTo);
                 }
             } else {
