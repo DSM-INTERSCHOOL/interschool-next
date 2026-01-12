@@ -140,6 +140,9 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
             // Forzar que el navegador procese las cookies antes de continuar
             // Esto asegura que estén disponibles para iframes legacy
             await new Promise((resolve) => setTimeout(resolve, 100));
+
+            // Eliminar cookies duplicadas del dominio específico
+            removeDuplicateDomainCookies();
         }
 
         console.log("Respuesta completa de la API:", response.data);
@@ -209,6 +212,9 @@ export const getStudentPermissions = async (
 
             // Forzar que el navegador procese las cookies antes de continuar
             await new Promise((resolve) => setTimeout(resolve, 100));
+
+            // Eliminar cookies duplicadas del dominio específico
+            removeDuplicateDomainCookies();
         }
 
         console.log("Permisos del estudiante obtenidos:", response.data);
@@ -227,6 +233,23 @@ export const getStudentPermissions = async (
             throw new Error("Error al obtener permisos del estudiante");
         }
     }
+};
+
+/**
+ * Elimina cookies duplicadas del dominio específico, dejando solo las del dominio wildcard
+ */
+export const removeDuplicateDomainCookies = (): void => {
+  const hostname = window.location.hostname;
+  const cookies = document.cookie.split(';').filter(Boolean);
+
+  for (let cookie of cookies) {
+    const eqPos = cookie.indexOf('=');
+    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+
+    // Eliminar cookie del dominio específico (sin punto)
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname}; secure;`;
+  }
 };
 
 /**
