@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { getDeviceId } from "@/lib/deviceId";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface LoginRequest {
   person_id: string;
@@ -291,16 +292,18 @@ export const clearAuthCookies = (): void => {
 export const logOutCore = async (): Promise<void> => {
   try {
     const { portalName, schoolId } = getOrgConfig();
+    const token = useAuthStore.getState().token;
 
     // Llamar al endpoint de logout del backend para eliminar cookies HttpOnly
     console.log('en logOutCore---')
     await axios.post(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/web-logout`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-logout`,
       {},
       {
         headers: {
           'x-device-id': getDeviceId(),
-          'x-url-origin': portalName
+          'x-url-origin': portalName,
+          Authorization: `Bearer ${token}`,
         },
         withCredentials: true // Importante para enviar cookies HttpOnly
       }
