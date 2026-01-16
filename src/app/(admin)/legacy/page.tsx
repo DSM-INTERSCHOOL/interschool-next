@@ -7,6 +7,7 @@ import { removeDuplicateDomainCookies } from "@/services/auth.service";
 
 const LegacyPage = () => {
     const legacyUrl = useAuthStore((state) => state.legacyUrl) as string;
+    const token = useAuthStore((state) => state.token) as string;
     const { portalName } = getOrgConfig();
     const completPath = legacyUrl?.startsWith('https://')? legacyUrl : `${portalName}${legacyUrl}`;
 
@@ -32,8 +33,8 @@ const LegacyPage = () => {
             console.log('Cookies duplicadas eliminadas');
         }, 200);
     };
-
-    console.log({completPath, legacyUrl})
+    const pathWithToken = `${completPath}?token=${token}`
+    console.log({completPath, legacyUrl, pathWithToken})
 
     return (
         <>
@@ -41,7 +42,7 @@ const LegacyPage = () => {
                 {iframeReady ? (
                     <iframe
                         ref={iframeRef}
-                        src={completPath}
+                        src={pathWithToken}
                         title="Legacy"
                         width="100%"
                         height="100%"
