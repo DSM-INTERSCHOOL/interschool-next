@@ -33,7 +33,7 @@ const LegacyPage = () => {
             console.log('Cookies duplicadas eliminadas');
         }, 200);
     };
-    const pathWithToken = `${completPath}?token=${token}`
+    const pathWithToken = `${completPath}?bref=${token}`
     console.log({completPath, legacyUrl, pathWithToken})
 
     return (
