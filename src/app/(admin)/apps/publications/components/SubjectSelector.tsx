@@ -3,16 +3,18 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface SubjectSelectorProps {
     subjects: SubjectEnrollment[];
-    selectedSubject: string | null;
-    onSelect: (subjectId: string | null) => void;
+    selectedSubjects: Set<string>;
+    onToggle: (subjectId: string, isSelected: boolean) => void;
+    onSelectAll: (isSelected: boolean) => void;
     loading: boolean;
     error: string | null;
 }
 
 export const SubjectSelector = ({
     subjects,
-    selectedSubject,
-    onSelect,
+    selectedSubjects,
+    onToggle,
+    onSelectAll,
     loading,
     error
 }: SubjectSelectorProps) => {
@@ -30,17 +32,11 @@ export const SubjectSelector = ({
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="card-title text-lg">
                         <span className="iconify lucide--book-open size-5"></span>
-                        Selecciona la Materia
+                        Selecciona las Materias
                     </h3>
-                    {selectedSubject && (
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => onSelect(null)}
-                        >
-                            <span className="iconify lucide--x size-4"></span>
-                            Limpiar selección
-                        </button>
-                    )}
+                    <div className="text-sm text-base-content/70">
+                        {selectedSubjects.size} de {uniqueSubjects.length} seleccionadas
+                    </div>
                 </div>
 
                 {loading ? (
@@ -64,51 +60,72 @@ export const SubjectSelector = ({
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        
+                        {/* Checkbox para seleccionar todas */}
+                        <div className="flex items-center gap-3 p-3 border border-base-300 rounded-lg bg-base-200">
+                            <label className="label cursor-pointer flex items-center gap-3 p-0">
+                                <input
+                                    type="checkbox"
+                                    className="checkbox checkbox-primary"
+                                    checked={selectedSubjects.size === uniqueSubjects.length && uniqueSubjects.length > 0}
+                                    onChange={(e) => onSelectAll(e.target.checked)}
+                                />
+                                <span className="font-medium text-base-content">
+                                    Seleccionar todas las materias
+                                </span>
+                            </label>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {uniqueSubjects.map((subject) => (
-                                <div
-                                    key={subject.subject_id}
-                                    className={`card border-2 cursor-pointer transition-all duration-200 ${
-                                        selectedSubject === subject.subject_id
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-base-300 hover:border-base-400'
-                                    }`}
-                                    onClick={() => onSelect(subject.subject_id)}
-                                >
-                                    <div className="card-body p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                selectedSubject === subject.subject_id
-                                                    ? 'bg-primary text-primary-content'
-                                                    : 'bg-base-200'
-                                            }`}>
-                                                <span className="iconify lucide--book size-5"></span>
+                            {uniqueSubjects.map((subject) => {
+                                const isSelected = selectedSubjects.has(subject.subject_id);
+
+                                return (
+                                    <div
+                                        key={subject.subject_id}
+                                        className={`card border-2 transition-all duration-200 ${
+                                            isSelected
+                                                ? 'border-primary bg-primary/10'
+                                                : 'border-base-300 hover:border-base-400'
+                                        }`}
+                                    >
+                                        <div className="card-body p-4">
+                                            <div className="flex items-center gap-3">
+                                                <label className="cursor-pointer flex items-center gap-3 flex-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="checkbox checkbox-primary checkbox-sm"
+                                                        checked={isSelected}
+                                                        onChange={(e) => onToggle(subject.subject_id, e.target.checked)}
+                                                    />
+                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                        isSelected
+                                                            ? 'bg-primary text-primary-content'
+                                                            : 'bg-base-200'
+                                                    }`}>
+                                                        <span className="iconify lucide--book size-5"></span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="font-semibold text-sm truncate">
+                                                            {subject.subject_name || 'Sin nombre'}
+                                                        </h4>
+                                                        <p className="text-xs text-base-content/60">
+                                                            Código: {subject.subject_id}
+                                                        </p>
+                                                        {subject.academic_group_label && (
+                                                            <p className="text-xs text-base-content/60">
+                                                                Grupo: {subject.academic_group_label}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-xs text-base-content/60">
+                                                            {subject.program_year_description} - {subject.academic_program_description}
+                                                        </p>
+                                                    </div>
+                                                </label>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-semibold text-sm truncate">
-                                                    {subject.subject_name || 'Sin nombre'}
-                                                </h4>
-                                                <p className="text-xs text-base-content/60">
-                                                    Código: {subject.subject_id}
-                                                </p>
-                                                {subject.academic_group_label && (
-                                                    <p className="text-xs text-base-content/60">
-                                                        Grupo: {subject.academic_group_label}
-                                                    </p>
-                                                )}
-                                                <p className="text-xs text-base-content/60">
-                                                    {subject.program_year_description} - {subject.academic_program_description}
-                                                </p>
-                                            </div>
-                                            {selectedSubject === subject.subject_id && (
-                                                <span className="iconify lucide--check-circle size-5 text-primary flex-shrink-0"></span>
-                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

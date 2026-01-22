@@ -26,7 +26,7 @@ interface PublicationsAppProps {
 
 const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>(type || 'announcement');
-    const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+    const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
 
     // Custom hooks
     const userRole = useUserRole();
@@ -95,7 +95,8 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     }, [publicationForm.loadedAnnouncement, academicData.academicYears]);
 
     const handleLoadRecipients = () => {
-        const subjectIds = teacherSubjects.subjects.map(s => s.subject_id);
+        // Solo enviar las materias seleccionadas
+        const subjectIds = Array.from(selectedSubjects);
 
         recipientsData.loadRecipients(
             selections.selectedRecipientTypes,
@@ -117,8 +118,27 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                     : undefined,
             },
             userRole,
-            subjectIds
+            subjectIds.length > 0 ? subjectIds : undefined
         );
+    };
+
+    const handleSubjectToggle = (subjectId: string, isSelected: boolean) => {
+        const newSelection = new Set(selectedSubjects);
+        if (isSelected) {
+            newSelection.add(subjectId);
+        } else {
+            newSelection.delete(subjectId);
+        }
+        setSelectedSubjects(newSelection);
+    };
+
+    const handleSelectAllSubjects = (isSelected: boolean) => {
+        if (isSelected) {
+            const allSubjectIds = teacherSubjects.subjects.map(s => s.subject_id);
+            setSelectedSubjects(new Set(allSubjectIds));
+        } else {
+            setSelectedSubjects(new Set());
+        }
     };
 
     
@@ -227,12 +247,13 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                         />
                     )}
 
-                    {/* Selector de Materias - Solo para profesores creando tareas */}
+                    {/* Selector de Materias - Solo para profesores */}
                     {!announcementId && isTeacher && (
                         <SubjectSelector
                             subjects={teacherSubjects.subjects}
-                            selectedSubject={selectedSubject}
-                            onSelect={setSelectedSubject}
+                            selectedSubjects={selectedSubjects}
+                            onToggle={handleSubjectToggle}
+                            onSelectAll={handleSelectAllSubjects}
                             loading={teacherSubjects.loading}
                             error={teacherSubjects.error}
                         />
