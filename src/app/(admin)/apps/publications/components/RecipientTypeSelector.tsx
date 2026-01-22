@@ -48,7 +48,7 @@ export const RecipientTypeSelector = ({ selected, onToggle, onSelectAll, userRol
                     {/* Lista de tipos de destinatarios */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         {RECIPIENT_TYPES.map((recipientType) => {
-                            const isDisabled = isTeacher && recipientType.value !== 'STUDENT';
+                            const isDisabled = isTeacher && recipientType.value !== 'STUDENT' && recipientType.value !== 'RELATIVE';
 
                             return (
                                 <div

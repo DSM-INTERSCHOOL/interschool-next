@@ -124,6 +124,7 @@ export const getRecipientsWithAcademicFilters = async (
  * Get recipients with enrollment filters (new improved method)
  * @param personTypes - Array of person types
  * @param academicFilters - Academic year, stage, program, etc. filters
+ * @param subjectFilters - Optional subject enrollment filters for teacher role
  * @returns Promise<IRecipient[]> - Array of filtered recipients
  */
 export const getRecipientsWithEnrollmentFilters = async (
@@ -134,79 +135,112 @@ export const getRecipientsWithEnrollmentFilters = async (
     academic_programs?: number[];
     program_years?: number[];
     academic_groups?: number[];
+  },
+  subjectFilters?: {
+    subject_ids?: string[];
+    enrollment_types?: string[];
   }
 ): Promise<IRecipient[]> => {
   try {
-    if (personTypes.length === 0) {
+    if (personTypes.length === 0 && !subjectFilters) {
       return [];
     }
 
     // Build the request body
-    const includePersonTypes = personTypes.includes(PersonType.USER);
     const requestBody: any = {};
 
-    if (includePersonTypes){
-      requestBody.person_types = [PersonType.USER]
-    }
-
-    
-
-    // Build enrollment filters for different person types
-    const enrollmentFilters: IEnrollmentFilters = {
-      academic_years: academicFilters.academic_years,
-      academic_stages: academicFilters.academic_stages,
-      academic_programs: academicFilters.academic_programs,
-      program_years: academicFilters.program_years,
-      academic_groups: academicFilters.academic_groups,
-    };
-
-    // Add enrollment filters based on person types
-    if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
-      // Build enrollment_types array for group filters
-      const enrollment_types: string[] = [];
-
-      if (personTypes.includes(PersonType.STUDENT)) {
-        enrollment_types.push('STUDENT');
-      }
-
-      if (personTypes.includes(PersonType.TEACHER)) {
-        enrollment_types.push('TEACHER');
-      }
-
-      if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
-        enrollment_types.push('MONITOR');
-      }
-
-      // Add enrollment_types to the filters
-      const groupFiltersWithTypes = {
-        ...enrollmentFilters,
-        enrollment_types: enrollment_types.length > 0 ? enrollment_types : undefined
+    // Si hay filtros de materias (profesor), usar subject_enrollment_filters
+    if (subjectFilters && subjectFilters.subject_ids && subjectFilters.subject_ids.length > 0) {
+      const subjectEnrollmentFilters: any = {
+        academic_years: academicFilters.academic_years,
+        subject_ids: subjectFilters.subject_ids,
+        enrollment_types: subjectFilters.enrollment_types || ['STUDENT', 'MONITOR']
       };
 
       // Remove undefined values
-      const cleanGroupFilters: any = {};
-      Object.keys(groupFiltersWithTypes).forEach(key => {
-        if (groupFiltersWithTypes[key as keyof typeof groupFiltersWithTypes] !== undefined) {
-          cleanGroupFilters[key] = groupFiltersWithTypes[key as keyof typeof groupFiltersWithTypes];
+      const cleanSubjectFilters: any = {};
+      Object.keys(subjectEnrollmentFilters).forEach(key => {
+        if (subjectEnrollmentFilters[key] !== undefined) {
+          cleanSubjectFilters[key] = subjectEnrollmentFilters[key];
         }
       });
 
-      if (Object.keys(cleanGroupFilters).length > 0) {
-        requestBody.group_enrollment_filters = cleanGroupFilters;
+      if (Object.keys(cleanSubjectFilters).length > 0) {
+        // Si STUDENT está seleccionado, agregar subject_enrollment_filters
+        if (personTypes.includes(PersonType.STUDENT)) {
+          requestBody.subject_enrollment_filters = cleanSubjectFilters;
+        }
+
+        // Si RELATIVE está seleccionado, agregar relative_subject_enrollment_filters
+        if (personTypes.includes(PersonType.RELATIVE)) {
+          requestBody.relative_subject_enrollment_filters = cleanSubjectFilters;
+        }
       }
-    }
+    } else {
+      // Flujo normal para admin u otros roles
+      const includePersonTypes = personTypes.includes(PersonType.USER);
 
-    if (personTypes.includes(PersonType.RELATIVE)) {
-      // Remove undefined values from relative filters
-      const cleanRelativeFilters: any = {};
-      Object.keys(enrollmentFilters).forEach(key => {
-        if (enrollmentFilters[key as keyof typeof enrollmentFilters] !== undefined) {
-          cleanRelativeFilters[key] = enrollmentFilters[key as keyof typeof enrollmentFilters];
+      if (includePersonTypes){
+        requestBody.person_types = [PersonType.USER]
+      }
+
+      // Build enrollment filters for different person types
+      const enrollmentFilters: IEnrollmentFilters = {
+        academic_years: academicFilters.academic_years,
+        academic_stages: academicFilters.academic_stages,
+        academic_programs: academicFilters.academic_programs,
+        program_years: academicFilters.program_years,
+        academic_groups: academicFilters.academic_groups,
+      };
+
+      // Add enrollment filters based on person types
+      if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
+        // Build enrollment_types array for group filters
+        const enrollment_types: string[] = [];
+
+        if (personTypes.includes(PersonType.STUDENT)) {
+          enrollment_types.push('STUDENT');
         }
-      });
 
-      if (Object.keys(cleanRelativeFilters).length > 0) {
-        requestBody.relative_enrollment_filters = cleanRelativeFilters;
+        if (personTypes.includes(PersonType.TEACHER)) {
+          enrollment_types.push('TEACHER');
+        }
+
+        if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
+          enrollment_types.push('MONITOR');
+        }
+
+        // Add enrollment_types to the filters
+        const groupFiltersWithTypes = {
+          ...enrollmentFilters,
+          enrollment_types: enrollment_types.length > 0 ? enrollment_types : undefined
+        };
+
+        // Remove undefined values
+        const cleanGroupFilters: any = {};
+        Object.keys(groupFiltersWithTypes).forEach(key => {
+          if (groupFiltersWithTypes[key as keyof typeof groupFiltersWithTypes] !== undefined) {
+            cleanGroupFilters[key] = groupFiltersWithTypes[key as keyof typeof groupFiltersWithTypes];
+          }
+        });
+
+        if (Object.keys(cleanGroupFilters).length > 0) {
+          requestBody.group_enrollment_filters = cleanGroupFilters;
+        }
+      }
+
+      if (personTypes.includes(PersonType.RELATIVE)) {
+        // Remove undefined values from relative filters
+        const cleanRelativeFilters: any = {};
+        Object.keys(enrollmentFilters).forEach(key => {
+          if (enrollmentFilters[key as keyof typeof enrollmentFilters] !== undefined) {
+            cleanRelativeFilters[key] = enrollmentFilters[key as keyof typeof enrollmentFilters];
+          }
+        });
+
+        if (Object.keys(cleanRelativeFilters).length > 0) {
+          requestBody.relative_enrollment_filters = cleanRelativeFilters;
+        }
       }
     }
 
