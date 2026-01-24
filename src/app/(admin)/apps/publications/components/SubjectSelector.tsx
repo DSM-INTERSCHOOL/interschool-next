@@ -89,14 +89,14 @@ export const SubjectSelector = ({
                                         }`}
                                     >
                                         <div className="card-body p-4">
-                                            <div className="flex items-center gap-3">
-                                                <label className="cursor-pointer flex items-center gap-3 flex-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="checkbox checkbox-primary checkbox-sm"
-                                                        checked={isSelected}
-                                                        onChange={(e) => onToggle(subject.subject_id, e.target.checked)}
-                                                    />
+                                            <label className="cursor-pointer flex items-start gap-3 w-full">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkbox checkbox-primary checkbox-sm flex-shrink-0 mt-1"
+                                                    checked={isSelected}
+                                                    onChange={(e) => onToggle(subject.subject_id, e.target.checked)}
+                                                />
+                                                <div className="flex items-start gap-3 flex-1 min-w-0">
                                                     <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
                                                         isSelected
                                                             ? 'bg-primary text-primary-content'
@@ -105,23 +105,23 @@ export const SubjectSelector = ({
                                                         <span className="iconify lucide--book size-5"></span>
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <h4 className="font-semibold text-sm truncate">
+                                                        <h4 className="font-semibold text-sm break-words">
                                                             {subject.subject_name || 'Sin nombre'}
                                                         </h4>
-                                                        <p className="text-xs text-base-content/60">
+                                                        <p className="text-xs text-base-content/60 break-words">
                                                             Código: {subject.subject_id}
                                                         </p>
                                                         {subject.academic_group_label && (
-                                                            <p className="text-xs text-base-content/60">
+                                                            <p className="text-xs text-base-content/60 break-words">
                                                                 Grupo: {subject.academic_group_label}
                                                             </p>
                                                         )}
-                                                        <p className="text-xs text-base-content/60">
+                                                        <p className="text-xs text-base-content/60 break-words">
                                                             {subject.program_year_description} - {subject.academic_program_description}
                                                         </p>
                                                     </div>
-                                                </label>
-                                            </div>
+                                                </div>
+                                            </label>
                                         </div>
                                     </div>
                                 );

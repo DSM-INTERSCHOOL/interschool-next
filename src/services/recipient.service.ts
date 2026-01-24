@@ -153,6 +153,9 @@ export const getRecipientsWithEnrollmentFilters = async (
     if (subjectFilters && subjectFilters.subject_ids && subjectFilters.subject_ids.length > 0) {
       const subjectEnrollmentFilters: any = {
         academic_years: academicFilters.academic_years,
+        academic_stages: academicFilters.academic_stages,
+        program_years: academicFilters.program_years,
+        academic_groups: academicFilters.academic_groups,
         subject_ids: subjectFilters.subject_ids,
         enrollment_types: subjectFilters.enrollment_types || ['STUDENT', 'MONITOR']
       };
@@ -160,8 +163,15 @@ export const getRecipientsWithEnrollmentFilters = async (
       // Remove undefined values
       const cleanSubjectFilters: any = {};
       Object.keys(subjectEnrollmentFilters).forEach(key => {
-        if (subjectEnrollmentFilters[key] !== undefined) {
-          cleanSubjectFilters[key] = subjectEnrollmentFilters[key];
+        if (subjectEnrollmentFilters[key] !== undefined && subjectEnrollmentFilters[key] !== null) {
+          // Si es un array, solo incluirlo si tiene elementos
+          if (Array.isArray(subjectEnrollmentFilters[key])) {
+            if (subjectEnrollmentFilters[key].length > 0) {
+              cleanSubjectFilters[key] = subjectEnrollmentFilters[key];
+            }
+          } else {
+            cleanSubjectFilters[key] = subjectEnrollmentFilters[key];
+          }
         }
       });
 

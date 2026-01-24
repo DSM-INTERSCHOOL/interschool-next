@@ -95,8 +95,28 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     }, [publicationForm.loadedAnnouncement, academicData.academicYears]);
 
     const handleLoadRecipients = () => {
-        // Solo enviar las materias seleccionadas
-        const subjectIds = Array.from(selectedSubjects);
+        // Filtrar las materias seleccionadas con sus datos completos
+        const selectedSubjectObjects = teacherSubjects.subjects.filter(subject =>
+            selectedSubjects.has(subject.subject_id)
+        );
+
+        // Extraer los IDs únicos de los campos académicos de las materias seleccionadas
+        const subjectIds = Array.from(new Set(selectedSubjectObjects.map(s => s.subject_id)));
+        const academicStageIds = Array.from(new Set(
+            selectedSubjectObjects
+                .map(s => s.academic_stage_id)
+                .filter((id): id is number => id !== null && id !== undefined)
+        ));
+        const programYearIds = Array.from(new Set(
+            selectedSubjectObjects
+                .map(s => s.program_year_id)
+                .filter((id): id is number => id !== null && id !== undefined)
+        ));
+        const academicGroupIds = Array.from(new Set(
+            selectedSubjectObjects
+                .map(s => s.academic_group_id)
+                .filter((id): id is number => id !== null && id !== undefined)
+        ));
 
         recipientsData.loadRecipients(
             selections.selectedRecipientTypes,
@@ -104,18 +124,12 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                 academic_years: selections.selectedAcademicYears.size > 0
                     ? Array.from(selections.selectedAcademicYears)
                     : undefined,
-                academic_stages: selections.selectedAcademicStages.size > 0
-                    ? Array.from(selections.selectedAcademicStages)
-                    : undefined,
+                academic_stages: academicStageIds.length > 0 ? academicStageIds : undefined,
                 academic_programs: selections.selectedAcademicPrograms.size > 0
                     ? Array.from(selections.selectedAcademicPrograms)
                     : undefined,
-                program_years: selections.selectedProgramYears.size > 0
-                    ? Array.from(selections.selectedProgramYears)
-                    : undefined,
-                academic_groups: selections.selectedAcademicGroups.size > 0
-                    ? Array.from(selections.selectedAcademicGroups)
-                    : undefined,
+                program_years: programYearIds.length > 0 ? programYearIds : undefined,
+                academic_groups: academicGroupIds.length > 0 ? academicGroupIds : undefined,
             },
             userRole,
             subjectIds.length > 0 ? subjectIds : undefined
