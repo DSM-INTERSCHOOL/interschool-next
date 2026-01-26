@@ -18,13 +18,12 @@ export const SubjectSelector = ({
     loading,
     error
 }: SubjectSelectorProps) => {
-    // Agrupar materias únicas por subject_id
-    const uniqueSubjects = subjects.reduce((acc, enrollment) => {
-        if (!acc.find(s => s.subject_id === enrollment.subject_id)) {
-            acc.push(enrollment);
-        }
-        return acc;
-    }, [] as SubjectEnrollment[]);
+    // Usar todas las materias sin agrupar (cada combinación materia-grupo es independiente)
+    // Crear un ID único combinando subject_id y academic_group_id para cada enrollment
+    const subjectsWithUniqueIds = subjects.map(subject => ({
+        ...subject,
+        uniqueId: `${subject.subject_id}_${subject.academic_group_id || 'no-group'}_${subject.program_year_id}`
+    }));
 
     return (
         <div className="card card-border bg-base-100 shadow-lg">
@@ -35,7 +34,7 @@ export const SubjectSelector = ({
                         Selecciona las Materias
                     </h3>
                     <div className="text-sm text-base-content/70">
-                        {selectedSubjects.size} de {uniqueSubjects.length} seleccionadas
+                        {selectedSubjects.size} de {subjectsWithUniqueIds.length} seleccionadas
                     </div>
                 </div>
 
@@ -51,7 +50,7 @@ export const SubjectSelector = ({
                             <div className="text-sm">{error}</div>
                         </div>
                     </div>
-                ) : uniqueSubjects.length === 0 ? (
+                ) : subjectsWithUniqueIds.length === 0 ? (
                     <div className="text-center py-8">
                         <span className="iconify lucide--book-open size-16 text-base-content/30 mb-4"></span>
                         <p className="text-base-content/70">
@@ -66,7 +65,7 @@ export const SubjectSelector = ({
                                 <input
                                     type="checkbox"
                                     className="checkbox checkbox-primary"
-                                    checked={selectedSubjects.size === uniqueSubjects.length && uniqueSubjects.length > 0}
+                                    checked={selectedSubjects.size === subjectsWithUniqueIds.length && subjectsWithUniqueIds.length > 0}
                                     onChange={(e) => onSelectAll(e.target.checked)}
                                 />
                                 <span className="font-medium text-base-content">
@@ -76,12 +75,12 @@ export const SubjectSelector = ({
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {uniqueSubjects.map((subject) => {
-                                const isSelected = selectedSubjects.has(subject.subject_id);
+                            {subjectsWithUniqueIds.map((subject) => {
+                                const isSelected = selectedSubjects.has(subject.uniqueId);
 
                                 return (
                                     <div
-                                        key={subject.subject_id}
+                                        key={subject.uniqueId}
                                         className={`card border-2 transition-all duration-200 ${
                                             isSelected
                                                 ? 'border-primary bg-primary/10'
@@ -94,7 +93,7 @@ export const SubjectSelector = ({
                                                     type="checkbox"
                                                     className="checkbox checkbox-primary checkbox-sm flex-shrink-0 mt-1"
                                                     checked={isSelected}
-                                                    onChange={(e) => onToggle(subject.subject_id, e.target.checked)}
+                                                    onChange={(e) => onToggle(subject.uniqueId, e.target.checked)}
                                                 />
                                                 <div className="flex items-start gap-3 flex-1 min-w-0">
                                                     <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${

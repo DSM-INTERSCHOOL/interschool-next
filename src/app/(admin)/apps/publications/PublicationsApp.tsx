@@ -95,45 +95,77 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     }, [publicationForm.loadedAnnouncement, academicData.academicYears]);
 
     const handleLoadRecipients = () => {
-        // Filtrar las materias seleccionadas con sus datos completos
-        const selectedSubjectObjects = teacherSubjects.subjects.filter(subject =>
-            selectedSubjects.has(subject.subject_id)
-        );
+        // Para profesores: extraer datos de las materias seleccionadas
+        if (isTeacher) {
+            // Crear mapa de materias con uniqueId
+            const subjectsMap = new Map();
+            teacherSubjects.subjects.forEach(subject => {
+                const uniqueId = `${subject.subject_id}_${subject.academic_group_id || 'no-group'}_${subject.program_year_id}`;
+                subjectsMap.set(uniqueId, subject);
+            });
 
-        // Extraer los IDs únicos de los campos académicos de las materias seleccionadas
-        const subjectIds = Array.from(new Set(selectedSubjectObjects.map(s => s.subject_id)));
-        const academicStageIds = Array.from(new Set(
-            selectedSubjectObjects
-                .map(s => s.academic_stage_id)
-                .filter((id): id is number => id !== null && id !== undefined)
-        ));
-        const programYearIds = Array.from(new Set(
-            selectedSubjectObjects
-                .map(s => s.program_year_id)
-                .filter((id): id is number => id !== null && id !== undefined)
-        ));
-        const academicGroupIds = Array.from(new Set(
-            selectedSubjectObjects
-                .map(s => s.academic_group_id)
-                .filter((id): id is number => id !== null && id !== undefined)
-        ));
+            // Obtener solo las materias seleccionadas
+            const selectedSubjectObjects = Array.from(selectedSubjects)
+                .map(uniqueId => subjectsMap.get(uniqueId))
+                .filter(Boolean);
 
-        recipientsData.loadRecipients(
-            selections.selectedRecipientTypes,
-            {
-                academic_years: selections.selectedAcademicYears.size > 0
-                    ? Array.from(selections.selectedAcademicYears)
-                    : undefined,
-                academic_stages: academicStageIds.length > 0 ? academicStageIds : undefined,
-                academic_programs: selections.selectedAcademicPrograms.size > 0
-                    ? Array.from(selections.selectedAcademicPrograms)
-                    : undefined,
-                program_years: programYearIds.length > 0 ? programYearIds : undefined,
-                academic_groups: academicGroupIds.length > 0 ? academicGroupIds : undefined,
-            },
-            userRole,
-            subjectIds.length > 0 ? subjectIds : undefined
-        );
+            // Extraer IDs únicos de los campos académicos
+            const subjectIds = Array.from(new Set(
+                selectedSubjectObjects.map(s => s.subject_id)
+            ));
+            const academicStageIds = Array.from(new Set(
+                selectedSubjectObjects
+                    .map(s => s.academic_stage_id)
+                    .filter((id): id is number => id !== null && id !== undefined)
+            ));
+            const programYearIds = Array.from(new Set(
+                selectedSubjectObjects
+                    .map(s => s.program_year_id)
+                    .filter((id): id is number => id !== null && id !== undefined)
+            ));
+            const academicGroupIds = Array.from(new Set(
+                selectedSubjectObjects
+                    .map(s => s.academic_group_id)
+                    .filter((id): id is number => id !== null && id !== undefined)
+            ));
+
+            recipientsData.loadRecipients(
+                selections.selectedRecipientTypes,
+                {
+                    academic_years: selections.selectedAcademicYears.size > 0
+                        ? Array.from(selections.selectedAcademicYears)
+                        : undefined,
+                    academic_stages: academicStageIds.length > 0 ? academicStageIds : undefined,
+                    program_years: programYearIds.length > 0 ? programYearIds : undefined,
+                    academic_groups: academicGroupIds.length > 0 ? academicGroupIds : undefined,
+                },
+                userRole,
+                subjectIds.length > 0 ? subjectIds : undefined
+            );
+        } else {
+            // Para admin: usar los filtros académicos seleccionados
+            recipientsData.loadRecipients(
+                selections.selectedRecipientTypes,
+                {
+                    academic_years: selections.selectedAcademicYears.size > 0
+                        ? Array.from(selections.selectedAcademicYears)
+                        : undefined,
+                    academic_stages: selections.selectedAcademicStages.size > 0
+                        ? Array.from(selections.selectedAcademicStages)
+                        : undefined,
+                    academic_programs: selections.selectedAcademicPrograms.size > 0
+                        ? Array.from(selections.selectedAcademicPrograms)
+                        : undefined,
+                    program_years: selections.selectedProgramYears.size > 0
+                        ? Array.from(selections.selectedProgramYears)
+                        : undefined,
+                    academic_groups: selections.selectedAcademicGroups.size > 0
+                        ? Array.from(selections.selectedAcademicGroups)
+                        : undefined,
+                },
+                userRole
+            );
+        }
     };
 
     const handleSubjectToggle = (subjectId: string, isSelected: boolean) => {
@@ -148,8 +180,11 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
 
     const handleSelectAllSubjects = (isSelected: boolean) => {
         if (isSelected) {
-            const allSubjectIds = teacherSubjects.subjects.map(s => s.subject_id);
-            setSelectedSubjects(new Set(allSubjectIds));
+            // Crear uniqueIds para todas las materias
+            const allUniqueIds = teacherSubjects.subjects.map(subject =>
+                `${subject.subject_id}_${subject.academic_group_id || 'no-group'}_${subject.program_year_id}`
+            );
+            setSelectedSubjects(new Set(allUniqueIds));
         } else {
             setSelectedSubjects(new Set());
         }
