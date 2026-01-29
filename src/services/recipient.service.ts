@@ -183,7 +183,9 @@ export const getRecipientsWithEnrollmentFilters = async (
 
         // Si RELATIVE está seleccionado, agregar relative_subject_enrollment_filters
         if (personTypes.includes(PersonType.RELATIVE)) {
-          requestBody.relative_subject_enrollment_filters = cleanSubjectFilters;
+          requestBody.relative_subject_enrollment_filters = {...cleanSubjectFilters,  
+            relative_types: ['PADRE', 'MADRE']
+          };
         }
       }
     } else {
@@ -203,10 +205,7 @@ export const getRecipientsWithEnrollmentFilters = async (
         academic_groups: academicFilters.academic_groups,
       };
 
-      // Add enrollment filters based on person types
-      if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
-        // Build enrollment_types array for group filters
-        const enrollment_types: string[] = [];
+       const enrollment_types: string[] = [];
 
         if (personTypes.includes(PersonType.STUDENT)) {
           enrollment_types.push('STUDENT');
@@ -219,6 +218,11 @@ export const getRecipientsWithEnrollmentFilters = async (
         if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
           enrollment_types.push('MONITOR');
         }
+
+      // Add enrollment filters based on person types
+      if (personTypes.includes(PersonType.STUDENT) || personTypes.includes(PersonType.TEACHER)) {
+        // Build enrollment_types array for group filters
+       
 
         // Add enrollment_types to the filters
         const groupFiltersWithTypes = {
@@ -249,7 +253,7 @@ export const getRecipientsWithEnrollmentFilters = async (
         });
 
         if (Object.keys(cleanRelativeFilters).length > 0) {
-          requestBody.relative_enrollment_filters = cleanRelativeFilters;
+          requestBody.relative_enrollment_filters = {...cleanRelativeFilters, enrollment_types,  relative_types: ['PADRE', 'MADRE']};
         }
       }
     }

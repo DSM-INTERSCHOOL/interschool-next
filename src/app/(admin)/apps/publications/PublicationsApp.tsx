@@ -341,7 +341,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                                     isSelected
                                 )
                             }
-                            renderLabel={(year) => year.description}
+                            renderLabel={(year) => `${year.description} (${year.academic_stage.academic_stage_key})`}
                             emptyMessage="No se encontraron años de programa para la combinación seleccionada"
                         />
                     )}
@@ -360,7 +360,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                                     isSelected
                                 )
                             }
-                            renderLabel={(group) => group.label}
+                            renderLabel={(group) => `${group.label} (${group.academic_stage.academic_stage_key})`}
                             emptyMessage="No se encontraron grupos académicos para los años de programa seleccionados"
                         />
                     )}

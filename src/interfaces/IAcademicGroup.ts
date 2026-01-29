@@ -1,3 +1,16 @@
+import { IAcademicStage } from './IProgramYear';
+
+export interface IProgramYearSimple {
+  school_id: number;
+  program_year_key: string;
+  description: string;
+  created_by: string;
+  last_modified_by: string;
+  academic_stage_id: number;
+  academic_program_id: number;
+  academic_modality_id: number | null;
+}
+
 export interface IAcademicGroup {
   school_id: number;
   label: string; // e.g., "BA1A", "BA1B", "BA2A", "BA2B"
@@ -8,6 +21,8 @@ export interface IAcademicGroup {
   id: number;
   created: string; // ISO datetime string
   modified: string; // ISO datetime string
+  academic_stage: IAcademicStage;
+  program_year: IProgramYearSimple;
 }
 
 export interface IAcademicGroupResponse {
@@ -40,7 +55,7 @@ export interface IAcademicGroupDisplay {
 }
 
 // Interface for academic group with relations
-export interface IAcademicGroupWithRelations extends IAcademicGroup {
+export interface IAcademicGroupWithRelations extends Omit<IAcademicGroup, 'academic_stage' | 'program_year'> {
   program_year?: {
     id: number;
     program_year_key: string;
