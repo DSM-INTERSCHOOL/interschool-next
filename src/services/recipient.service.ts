@@ -253,7 +253,8 @@ export const getRecipientsWithEnrollmentFilters = async (
         });
 
         if (Object.keys(cleanRelativeFilters).length > 0) {
-          requestBody.relative_enrollment_filters = {...cleanRelativeFilters, enrollment_types,  relative_types: ['PADRE', 'MADRE']};
+          const relativeEnrollmentTypes = enrollment_types.length > 0 ? enrollment_types : ['STUDENT', 'MONITOR'];
+          requestBody.relative_enrollment_filters = {...cleanRelativeFilters, enrollment_types: relativeEnrollmentTypes,  relative_types: ['PADRE', 'MADRE']};
         }
       }
     }
