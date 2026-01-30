@@ -157,7 +157,7 @@ export const getRecipientsWithEnrollmentFilters = async (
         program_years: academicFilters.program_years,
         academic_groups: academicFilters.academic_groups,
         subject_ids: subjectFilters.subject_ids,
-        enrollment_types: subjectFilters.enrollment_types || ['STUDENT', 'MONITOR']
+        enrollment_types: subjectFilters.enrollment_types || ['MONITOR']
       };
 
       // Remove undefined values
@@ -253,7 +253,7 @@ export const getRecipientsWithEnrollmentFilters = async (
         });
 
         if (Object.keys(cleanRelativeFilters).length > 0) {
-          const relativeEnrollmentTypes = enrollment_types.length > 0 ? enrollment_types : ['STUDENT', 'MONITOR'];
+          const relativeEnrollmentTypes = enrollment_types.length > 0 ? enrollment_types : ['MONITOR'];
           requestBody.relative_enrollment_filters = {...cleanRelativeFilters, enrollment_types: relativeEnrollmentTypes,  relative_types: ['PADRE', 'MADRE']};
         }
       }
