@@ -47,7 +47,7 @@ export const useRecipients = () => {
                     academicFilters,
                     {
                         subject_ids: teacherSubjects,
-                        enrollment_types: ['STUDENT', 'MONITOR']
+                        enrollment_types: [ 'MONITOR']
                     }
                 );
                 setRecipients(recipientsData);
