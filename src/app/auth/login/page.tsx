@@ -51,7 +51,7 @@ const LoginPageContent = () => {
             return 'Portal Profesor';
         }
 
-        return config.portalName;
+        return config.portalName || 'Portal';
     };
 
     const portalName = getPortalName();

@@ -30,7 +30,7 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
 
         return {
             image: '/images/auth/auth-hero.png',
-            name: config.portalName
+            name: config.portalName || 'Portal'
         };
     };
 
