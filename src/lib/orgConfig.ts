@@ -24,6 +24,10 @@ export interface SchoolInfo {
 }
 
 export const schoolMap: Record<string, SchoolInfo> = {
+    "10": {
+        school_name: "COLEGIO INTERNACIONAL",
+        school_image: "https://s3.us-east-2.amazonaws.com/app.content.interschool.mx/app_content/CNH/1659028648192_logocelta.png"
+    },
     "1000": {
         school_name: "COLEGIO CELTA",
         school_image: "https://s3.us-east-2.amazonaws.com/app.content.interschool.mx/app_content/CNH/1659028648192_logocelta.png"
@@ -103,8 +107,13 @@ export const schoolMap: Record<string, SchoolInfo> = {
 };
 
  export const orgsMap: OrgsMap = {
+       "10": {
+            "MT": "https://mt.demo.idsm.xyz",
+            "ST": "https://al.demo.idsm.xyz",
+            "TC": "https://pr.demo.idsm.xyz"
+        },
         "1000": {
-            "MT": "https://meta.celta.idsm.xyz",
+            "MT": "https://mt.celta.interschool.mx",
             "ST": "https://alumno.celta.idsm.xyz",
             "TC": "https://profesor.celta.idsm.xyz"
         },
