@@ -1,12 +1,24 @@
 /**
  * Obtiene la configuración de la organización desde localStorage
+ * Seguro para SSR - retorna valores por defecto si no está disponible
  */
 export const getOrgConfig = () => {
+  // Verificar si estamos en el cliente
+  if (typeof window === 'undefined') {
+    return {
+      schoolId: null,
+      portalName: null
+    };
+  }
+
   const schoolId = localStorage.getItem('schoolId');
   const portalName = localStorage.getItem('portalName');
 
   if (!schoolId || !portalName) {
-    throw new Error('Configuración de organización no encontrada. Por favor, accede con un parámetro org válido.');
+    return {
+      schoolId: null,
+      portalName: null
+    };
   }
 
   return {
