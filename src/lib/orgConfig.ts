@@ -125,7 +125,7 @@ export const schoolMap: Record<string, SchoolInfo> = {
             "TC": "https://pr.demo.idsm.xyz"
         },
         "1000": {
-            "MT": "https://mt.celta.interschool.mx",
+            "MT": "https://meta.celta.idsm.xyz",
             "ST": "https://alumno.celta.idsm.xyz",
             "TC": "https://profesor.celta.idsm.xyz"
         },
