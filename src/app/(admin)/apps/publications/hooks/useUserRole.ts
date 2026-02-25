@@ -15,7 +15,7 @@ export const useUserRole = (): UserRole => {
             if (portalName.toLowerCase().includes('teacher') || portalName.toLowerCase().includes('profesor') || portalName.toLowerCase().includes('pr')) {
                 return 'teacher';
             }
-             if (portalName.toLowerCase().includes('student') || portalName.toLowerCase().includes('alumno') || portalName.toLowerCase().includes('al')) { {
+             if (portalName.toLowerCase().includes('student') || portalName.toLowerCase().includes('alumno') || portalName.toLowerCase().includes('al')) {
                 return 'alumno';
             }
 
