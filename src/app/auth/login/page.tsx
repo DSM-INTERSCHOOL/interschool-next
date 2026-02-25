@@ -43,11 +43,11 @@ const LoginPageContent = () => {
     const getPortalName = () => {
         const portalName = config.portalName?.toLowerCase() || '';
 
-        if (portalName.includes('meta')) {
+        if (portalName.includes('meta') || portalName.includes('mt')) {
             return 'Portal Administración';
-        } else if (portalName.includes('alumno')) {
+        } else if (portalName.includes('alumno') || portalName.includes('al')) {
             return 'Portal Alumno';
-        } else if (portalName.includes('profesor')) {
+        } else if (portalName.includes('profesor') || portalName.includes('pr')) {
             return 'Portal Profesor';
         }
 

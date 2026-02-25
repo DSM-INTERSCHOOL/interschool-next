@@ -11,17 +11,17 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
     const getPortalConfig = () => {
         const portalName = config.portalName?.toLowerCase() || '';
 
-        if (portalName.includes('meta')) {
+        if (portalName.includes('meta') || portalName.includes('mt')) {
             return {
                 image: '/images/auth/auth-hero-admin.png',
                 name: 'Portal Administración'
             };
-        } else if (portalName.includes('alumno')) {
+        } else if (portalName.includes('alumno') || portalName.includes('al')) {
             return {
                 image: '/images/auth/auth-hero-student.png',
                 name: 'Portal Alumno'
             };
-        } else if (portalName.includes('profesor')) {
+        } else if (portalName.includes('profesor') || portalName.includes('pr')) {
             return {
                 image: '/images/auth/auth-hero-teacher.png',
                 name: 'Portal Profesor'

@@ -8,14 +8,14 @@ export const useUserRole = (): UserRole => {
         try {
             const { portalName } = getOrgConfig();
 
-            if (portalName.toLowerCase().includes('meta')) {
+            if (portalName.toLowerCase().includes('meta') || portalName.toLowerCase().includes('mt')) {
                 return 'admin';
             }
 
-            if (portalName.toLowerCase().includes('teacher') || portalName.toLowerCase().includes('profesor')) {
+            if (portalName.toLowerCase().includes('teacher') || portalName.toLowerCase().includes('profesor') || portalName.toLowerCase().includes('pr')) {
                 return 'teacher';
             }
-             if (portalName.toLowerCase().includes('alumno') || portalName.toLowerCase().includes('profesor')) {
+             if (portalName.toLowerCase().includes('student') || portalName.toLowerCase().includes('alumno') || portalName.toLowerCase().includes('al')) { {
                 return 'alumno';
             }
 
