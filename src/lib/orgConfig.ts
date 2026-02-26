@@ -120,9 +120,9 @@ export const schoolMap: Record<string, SchoolInfo> = {
 
  export const orgsMap: OrgsMap = {
        "10": {
-            "MT": "https://mt.demo.idsm.xyz",
-            "ST": "https://al.demo.idsm.xyz",
-            "TC": "https://pr.demo.idsm.xyz"
+            "MT": "https://mt.demo.interschool.mx",
+            "ST": "https://al.demo.interschool.mx",
+            "TC": "https://pr.demo.interschool.mx"
         },
         "1000": {
             "MT": "https://mt.celta.interschool.mx",
@@ -130,94 +130,94 @@ export const schoolMap: Record<string, SchoolInfo> = {
             "TC": "https://pr.celta.interschool.mx"
         },
         "1001": {
-            "MT": "https://meta.spongies.idsm.xyz",
-            "ST": "https://alumno.spongies.idsm.xyz",
-            "TC": "https://profesor.spongies.idsm.xyz"
+            "MT": "https://mt.spongies.interschool.mx",
+            "ST": "https://al.spongies.interschool.mx",
+            "TC": "https://pr.spongies.interschool.mx"
         },
         "1002": {
-            "MT": "https://meta.helenkeller.idsm.xyz",
-            "ST": "https://alumno.helenkeller.idsm.xyz",
-            "TC": "https://profesor.helenkeller.idsm.xyz"
+            "MT": "https://mt.helenkeller.interschool.mx",
+            "ST": "https://al.helenkeller.interschool.mx",
+            "TC": "https://pr.helenkeller.interschool.mx"
         },
         "1003": {
-            "MT": "https://meta.liceoannafreud.idsm.xyz",
-            "ST": "https://alumno.liceoannafreud.idsm.xyz",
-            "TC": "https://profesor.liceoannafreud.idsm.xyz"
+            "MT": "https://mt.liceoannafreud.interschool.mx",
+            "ST": "https://al.liceoannafreud.interschool.mx",
+            "TC": "https://pr.liceoannafreud.interschool.mx"
         },
         "1004": {
-            "MT": "https://meta.cfe.idsm.xyz",
-            "ST": "https://alumno.cfe.idsm.xyz",
-            "TC": "https://profesor.cfe.idsm.xyz"
+            "MT": "https://mt.cfe.interschool.mx",
+            "ST": "https://al.cfe.interschool.mx",
+            "TC": "https://pr.cfe.interschool.mx"
         },
         "1005": {
-            "MT": "https://meta.wch.idsm.xyz",
-            "ST": "https://alumno.wch.idsm.xyz",
-            "TC": "https://profesor.wch.idsm.xyz"
+            "MT": "https://mt.wch.interschool.mx",
+            "ST": "https://al.wch.interschool.mx",
+            "TC": "https://pr.wch.interschool.mx"
         },
         "1006": {
-            "MT": "https://meta.cf.idsm.xyz",
-            "ST": "https://alumno.cf.idsm.xyz",
-            "TC": "https://profesor.cf.idsm.xyz"
+            "MT": "https://mt.cf.interschool.mx",
+            "ST": "https://al.cf.interschool.mx",
+            "TC": "https://pr.cf.interschool.mx"
         },
         "1007": {
-            "MT": "https://meta.grupocudec.idsm.xyz",
-            "ST": "https://alumno.grupocudec.idsm.xyz",
-            "TC": "https://profesor.grupocudec.idsm.xyz"
+            "MT": "https://mt.grupocudec.interschool.mx",
+            "ST": "https://al.grupocudec.interschool.mx",
+            "TC": "https://pr.grupocudec.interschool.mx"
         },
         "1008": {
-            "MT": "https://meta.ipia.idsm.xyz",
-            "ST": "https://alumno.ipia.idsm.xyz",
-            "TC": "https://profesor.ipia.idsm.xyz"
+            "MT": "https://mt.ipia.interschool.mx",
+            "ST": "https://al.ipia.interschool.mx",
+            "TC": "https://pr.ipia.interschool.mx"
         },
         "1009": {
-            "MT": "https://meta.dali.idsm.xyz",
-            "ST": "https://alumno.dali.idsm.xyz",
-            "TC": "https://profesor.dali.idsm.xyz"
+            "MT": "https://mt.dali.interschool.mx",
+            "ST": "https://al.dali.interschool.mx",
+            "TC": "https://pr.dali.interschool.mx"
         },
         "1010": {
-            "MT": "https://meta.vizcaino.idsm.xyz",
-            "ST": "https://alumno.vizcaino.idsm.xyz",
-            "TC": "https://profesor.vizcaino.idsm.xyz"
+            "MT": "https://mt.vizcaino.interschool.mx",
+            "ST": "https://al.vizcaino.interschool.mx",
+            "TC": "https://pr.vizcaino.interschool.mx"
         },
         "1011": {
-            "MT": "https://meta.chk-qro.idsm.xyz",
-            "ST": "https://alumno.chk-qro.idsm.xyz",
-            "TC": "https://profesor.chk-qro.idsm.xyz"
+            "MT": "https://mt.chk-qro.interschool.mx",
+            "ST": "https://al.chk-qro.interschool.mx",
+            "TC": "https://pr.chk-qro.interschool.mx"
         },
         "1013": {
-            "MT": "https://meta.montessori-pachuca.idsm.xyz",
-            "ST": "https://alumno.montessori-pachuca.idsm.xyz",
-            "TC": "https://profesor.montessori-pachuca.idsm.xyz"
+            "MT": "https://mt.montessori-pachuca.interschool.mx",
+            "ST": "https://al.montessori-pachuca.interschool.mx",
+            "TC": "https://pr.montessori-pachuca.interschool.mx"
         },
         "1014": {
-            "MT": "https://meta.dicormo.idsm.xyz",
-            "ST": "https://alumno.dicormo.idsm.xyz",
-            "TC": "https://profesor.dicormo.idsm.xyz"
+            "MT": "https://mt.dicormo.interschool.mx",
+            "ST": "https://al.dicormo.interschool.mx",
+            "TC": "https://pr.dicormo.interschool.mx"
         },
         "1015": {
-            "MT": "https://meta.uc.idsm.xyz",
-            "ST": "https://alumno.uc.idsm.xyz",
-            "TC": "https://profesor.uc.idsm.xyz"
+            "MT": "https://mt.uc.interschool.mx",
+            "ST": "https://al.uc.interschool.mx",
+            "TC": "https://pr.uc.interschool.mx"
         },
         "1016": {
-            "MT": "https://meta.iamb.idsm.xyz",
-            "ST": "https://alumno.iamb.idsm.xyz",
-            "TC": "https://profesor.iamb.idsm.xyz"
+            "MT": "https://mt.iamb.interschool.mx",
+            "ST": "https://al.iamb.interschool.mx",
+            "TC": "https://pr.iamb.interschool.mx"
         },
         "1017": {
-            "MT": "https://meta.ccolumbia.idsm.xyz",
-            "ST": "https://alumno.ccolumbia.idsm.xyz",
-            "TC": "https://profesor.ccolumbia.idsm.xyz"
+            "MT": "https://mt.ccolumbia.interschool.mx",
+            "ST": "https://al.ccolumbia.interschool.mx",
+            "TC": "https://pr.ccolumbia.interschool.mx"
         },
         "1018": {
-            "MT": "https://meta.plata.idsm.xyz",
-            "ST": "https://alumno.plata.idsm.xyz",
-            "TC": "https://profesor.plata.idsm.xyz"
+            "MT": "https://mt.plata.interschool.mx",
+            "ST": "https://al.plata.interschool.mx",
+            "TC": "https://pr.plata.interschool.mx"
         },
         "1019": {
-            "MT": "https://meta.nitamani.idsm.xyz",
-            "ST": "https://alumno.nitamani.idsm.xyz",
-            "TC": "https://profesor.nitamani.idsm.xyz"
+            "MT": "https://mt.nitamani.interschool.mx",
+            "ST": "https://al.nitamani.interschool.mx",
+            "TC": "https://pr.nitamani.interschool.mx"
         }
     }
 
