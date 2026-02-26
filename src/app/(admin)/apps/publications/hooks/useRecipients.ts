@@ -40,8 +40,14 @@ export const useRecipients = () => {
 
             const personTypes = Array.from(selectedRecipientTypes) as PersonType[];
 
+            console.log('in loadRecipients with userRole ',userRole)
             // Si es profesor y tiene materias, pasar filtros de materias al servicio unificado
-            if (userRole === 'teacher' && teacherSubjects && teacherSubjects.length > 0) {
+            if (userRole === 'teacher'  ) {
+                if (!teacherSubjects || teacherSubjects.length === 0) {
+                    setError("Debe seleccionar al menos una materia para cargar destinatarios");
+                    setRecipients([]);
+                    return;
+                }
                 const recipientsData = await getRecipientsWithEnrollmentFilters(
                     personTypes,
                     academicFilters,
