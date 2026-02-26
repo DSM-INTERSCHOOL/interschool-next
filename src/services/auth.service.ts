@@ -145,7 +145,7 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
             removeDuplicateDomainCookies();
         }
 
-        console.log("Respuesta completa de la API:", response.data);
+        //console.log("Respuesta completa de la API:", response.data);
 
         // Verificar que la respuesta sea exitosa
         const permisos = response.data.meta_data?.permisos;
