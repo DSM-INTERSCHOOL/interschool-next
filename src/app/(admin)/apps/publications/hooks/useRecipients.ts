@@ -48,12 +48,20 @@ export const useRecipients = () => {
                     setRecipients([]);
                     return;
                 }
+
+                
+
+                const enrollmentTypes: string[] = ['MONITOR'];
+                if (personTypes.includes('STUDENT' as PersonType)) {
+                    enrollmentTypes.push('STUDENT');
+                }
+
                 const recipientsData = await getRecipientsWithEnrollmentFilters(
                     personTypes,
                     academicFilters,
                     {
                         subject_ids: teacherSubjects,
-                        enrollment_types: [ 'MONITOR']
+                        enrollment_types: enrollmentTypes
                     }
                 );
                 setRecipients(recipientsData);
