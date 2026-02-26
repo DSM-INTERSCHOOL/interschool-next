@@ -39,8 +39,7 @@ export const useRecipients = () => {
             setLoading(true);
 
             const personTypes = Array.from(selectedRecipientTypes) as PersonType[];
-
-            console.log('in loadRecipients with userRole ',userRole)
+            
             // Si es profesor y tiene materias, pasar filtros de materias al servicio unificado
             if (userRole === 'teacher'  ) {
                 if (!teacherSubjects || teacherSubjects.length === 0) {
@@ -48,9 +47,6 @@ export const useRecipients = () => {
                     setRecipients([]);
                     return;
                 }
-
-                
-
                 const enrollmentTypes: string[] = ['MONITOR'];
                 if (personTypes.includes('STUDENT' as PersonType)) {
                     enrollmentTypes.push('STUDENT');

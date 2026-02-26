@@ -35,16 +35,13 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     const recipientsData = useRecipients();
     const publicationForm = usePublicationForm(announcementId, publicationType);
     const teacherSubjects = useTeacherSubjects(selections.selectedAcademicYears);
-
-    console.log('publicacionapp userRole', userRole);
+   
 
     const isTeacher = userRole === 'teacher';
     const isAdmin = userRole === 'admin';
     const isAssignment = publicationType === 'assignment';
 
-    console.log('isTeacher', isTeacher);
-    console.log('isAdmin', isAdmin);
-
+    
     // Seleccionar STUDENT por defecto para profesores
     useEffect(() => {
         if (isTeacher && !announcementId && selections.selectedRecipientTypes.size === 0) {
@@ -101,7 +98,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
 
     const handleLoadRecipients = () => {
         // Para profesores: extraer datos de las materias seleccionadas
-        console.log('in handleLoadRecipients isTeacher', isTeacher  );
+        
         if (isTeacher) {
             // Crear mapa de materias con uniqueId
             const subjectsMap = new Map();
