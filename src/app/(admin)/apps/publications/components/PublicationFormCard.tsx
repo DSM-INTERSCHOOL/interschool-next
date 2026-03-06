@@ -110,7 +110,7 @@ export const PublicationFormCard = ({
                                     <span className="iconify lucide--hash size-4"></span>
                                     MateriaId
                                 </legend>
-                                <label className={`input input-secondary ${isTeacher ? 'input-disabled' : ''}`}>
+                                <label className="input input-secondary">
                                     <span className="iconify lucide--key text-base-content/60 size-5"></span>
                                     <input
                                         className="grow"
@@ -118,8 +118,6 @@ export const PublicationFormCard = ({
                                         placeholder="Ej: MAT101, SCI202..."
                                         value={formData.subjectId}
                                         onChange={(e) => onFieldChange('subjectId', e.target.value)}
-                                        disabled={isTeacher}
-                                        readOnly={isTeacher}
                                     />
                                 </label>
                                 <p className="fieldset-label">
@@ -132,7 +130,7 @@ export const PublicationFormCard = ({
                                     <span className="iconify lucide--book-open size-4"></span>
                                     Materia
                                 </legend>
-                                <label className={`input input-secondary ${isTeacher ? 'input-disabled' : ''}`}>
+                                <label className="input input-secondary">
                                     <span className="iconify lucide--bookmark text-base-content/60 size-5"></span>
                                     <input
                                         className="grow"
@@ -140,8 +138,6 @@ export const PublicationFormCard = ({
                                         placeholder="Ej: Matemáticas, Ciencias..."
                                         value={formData.subjectName}
                                         onChange={(e) => onFieldChange('subjectName', e.target.value)}
-                                        disabled={isTeacher}
-                                        readOnly={isTeacher}
                                     />
                                 </label>
                                 <p className="fieldset-label">

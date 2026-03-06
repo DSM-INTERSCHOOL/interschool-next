@@ -193,6 +193,35 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
         }
     };
 
+    // Actualizar subjectId y subjectName cuando el profesor selecciona materias
+    useEffect(() => {
+        if (isTeacher && isAssignment && selectedSubjects.size > 0) {
+            // Crear mapa de materias con uniqueId
+            const subjectsMap = new Map();
+            teacherSubjects.subjects.forEach(subject => {
+                const uniqueId = `${subject.subject_id}_${subject.academic_group_id || 'no-group'}_${subject.program_year_id}`;
+                subjectsMap.set(uniqueId, subject);
+            });
+
+            // Obtener solo las materias seleccionadas
+            const selectedSubjectObjects = Array.from(selectedSubjects)
+                .map(uniqueId => subjectsMap.get(uniqueId))
+                .filter(Boolean);
+
+            if (selectedSubjectObjects.length > 0) {
+                // Mostrar solo la última materia seleccionada
+                const lastSubject = selectedSubjectObjects[selectedSubjectObjects.length - 1];
+
+                publicationForm.updateFormField('subjectId', lastSubject.subject_id);
+                publicationForm.updateFormField('subjectName', lastSubject.subject_name);
+            }
+        } else if (isTeacher && isAssignment && selectedSubjects.size === 0) {
+            // Limpiar los campos si no hay materias seleccionadas
+            publicationForm.updateFormField('subjectId', '');
+            publicationForm.updateFormField('subjectName', '');
+        }
+    }, [selectedSubjects, isTeacher, isAssignment]);
+
     
 
     const handlePublish = () => {
