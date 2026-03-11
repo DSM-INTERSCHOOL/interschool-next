@@ -73,7 +73,8 @@ interface PermisosResponse {
         nombreUsuario?: string;
         permisos?: Permiso[];
         alumnos?: AlumnoInfo[];
-        status?: string; // 'seleccion_alumno' indica que debe elegir alumno
+        status?: string; // 'seleccion_alumno' indica que debe elegir alumno, 'error' indica error en el login
+        error?: string; // Mensaje de error cuando status === 'error'
         baseUrl?: string;
     };
     // Campos adicionales que podrían estar presentes
@@ -131,6 +132,11 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
             },
         );
 
+        // Verificar si hay un error en meta_data a pesar del 200
+        if (response.data.meta_data?.status === "error" && response.data.meta_data?.error) {
+            throw new Error(response.data.meta_data.error);
+        }
+
         const cookies = response.data.cookies;
         if (cookies && Array.isArray(cookies)) {
             for (let cookie of cookies) {
@@ -153,6 +159,11 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
         return response.data;
     } catch (error: any) {
         console.error("Error fetching permisos:", error);
+
+        // Si el error ya es un Error que lanzamos (como el de meta_data), preservarlo
+        if (error instanceof Error && !error.response) {
+            throw error;
+        }
 
         if (error.response?.data?.message) {
             throw new Error(error.response.data.message);
