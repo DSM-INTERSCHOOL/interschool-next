@@ -70,6 +70,7 @@ interface AuthState {
   // Datos legacy
   permisos: Permiso[];
   legacyUrl: string;
+  legacyUrlTimestamp: number; // Para forzar recarga del iframe incluso con la misma URL
 
   // Caso especial: selección de alumno
   studentSelectionData: StudentSelectionData | null;
@@ -127,6 +128,7 @@ export const useAuthStore = create<AuthState>()(
       lastLogin: null,
       permisos: [],
       legacyUrl: 'ISMeta/rol/showEdicionRol',
+      legacyUrlTimestamp: Date.now(),
       studentSelectionData: null,
       selectedStudentId: null,
 
@@ -166,12 +168,13 @@ export const useAuthStore = create<AuthState>()(
         lastLogin: null,
         permisos: [],
         legacyUrl: 'ISMeta/rol/showEdicionRol',
+        legacyUrlTimestamp: Date.now(),
         studentSelectionData: null,
         selectedStudentId: null,
       }),
 
       setPermisos: (permisos) => set({ permisos }),
-      setLegacyUrl: (url) => set({ legacyUrl: url }),
+      setLegacyUrl: (url) => set({ legacyUrl: url, legacyUrlTimestamp: Date.now() }),
 
       setAuthData: (authData) => {
         // Mantener el token y datos básicos del padre si no vienen en la respuesta

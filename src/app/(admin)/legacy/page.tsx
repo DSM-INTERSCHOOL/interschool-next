@@ -7,6 +7,7 @@ import { removeDuplicateDomainCookies } from "@/services/auth.service";
 
 const LegacyPage = () => {
     const legacyUrl = useAuthStore((state) => state.legacyUrl) as string;
+    const legacyUrlTimestamp = useAuthStore((state) => state.legacyUrlTimestamp) as number;
     const token = useAuthStore((state) => state.token) as string;
     const { portalName } = getOrgConfig();
     const completPath = legacyUrl?.startsWith('https://')? legacyUrl : `${portalName}${legacyUrl}`;
@@ -29,7 +30,7 @@ const LegacyPage = () => {
         }, 150);
 
         return () => clearTimeout(timer);
-    }, [completPath, legacyUrl]);
+    }, [legacyUrlTimestamp]); // Ahora escuchamos el timestamp en lugar del completPath
 
     const handleIframeLoad = () => {
         console.log('Iframe cargado, limpiando cookies duplicadas...');
