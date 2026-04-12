@@ -11,7 +11,7 @@ export const findAll = async (
 ) => {
   const baseUrl = process.env.NEXT_PUBLIC_API_COURSE_URL?.replace('/schools', '') || '';
   const response = await axios.get<IPersonResponse>(
-    `${baseUrl}/schools/${schoolId}/persons?filters=person_type:eq:STUDENT&order_by=second_name`
+    `https://course-api.idsm.xyz/schools/${schoolId}/persons?filters=person_type:eq:STUDENT&order_by=second_name`
   );
   return response.data.data;
 };

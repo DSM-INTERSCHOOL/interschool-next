@@ -15,7 +15,8 @@
       "Bash(cp:*)",
       "Bash(ls:*)",
       "Bash(rm:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Read(//c/Users/alvar/dsm/medical_consultation/**)"
     ],
     "deny": [],
     "ask": []
