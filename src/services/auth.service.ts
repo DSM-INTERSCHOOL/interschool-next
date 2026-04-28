@@ -104,7 +104,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
         return response.data;
     } catch (error: any) {
         if (error.response?.status === 401) {
-            throw new Error("Credenciales inválidas");
+            throw new Error(error.response?.data?.detail ?? "Error de acceso");
         } else if (error.response?.status >= 500) {
             throw new Error("Hubo un problema. Intenta más tarde");
         } else {
