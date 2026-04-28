@@ -168,7 +168,7 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
         if (error.response?.data?.message) {
             throw new Error(error.response.data.message);
         } else if (error.response?.status === 401) {
-            throw new Error("Credenciales inválidas");
+            throw new Error(error.response?.data?.detail ?? "Error de acceso");
         } else if (error.response?.status >= 500) {
             throw new Error("Error del servidor al obtener permisos");
         } else if (error.code === "NETWORK_ERROR" || error.message?.includes("Network Error")) {
