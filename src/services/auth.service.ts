@@ -106,7 +106,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
         if (error.response?.status === 401) {
             throw new Error(error.response?.data?.detail ?? "Error de acceso");
         } else if (error.response?.status >= 500) {
-            throw new Error("Hubo un problema. Intenta más tarde");
+            throw new Error(error.response?.data?.detail ?? "Hubo un problema. Intenta más tarde");            
         } else {
             throw new Error("Error al iniciar sesión");
         }
@@ -170,7 +170,7 @@ export const getPermisos = async (credentials: LoginRequest): Promise<PermisosRe
         } else if (error.response?.status === 401) {
             throw new Error(error.response?.data?.detail ?? "Error de acceso");
         } else if (error.response?.status >= 500) {
-            throw new Error("Error del servidor al obtener permisos");
+            throw new Error(error.response?.data?.detail ?? "Error del servidor al obtener permisos");            
         } else if (error.code === "NETWORK_ERROR" || error.message?.includes("Network Error")) {
             throw new Error("Error de conexión. Verifica tu conexión a internet");
         } else if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
