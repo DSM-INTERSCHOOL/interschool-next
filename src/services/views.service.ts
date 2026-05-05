@@ -37,3 +37,12 @@ export async function getViewsForAssignment(assignmentId: string): Promise<View[
     const response = await communicationApi.get(`/v1/schools/${schoolId}/assignments/${assignmentId}/views`);
     return response.data;
 }
+
+/**
+ * Get all views for an event
+ */
+export async function getViewsForEvent(eventId: string): Promise<View[]> {
+    const { schoolId } = getOrgConfig();
+    const response = await communicationApi.get(`/v1/schools/${schoolId}/events/${eventId}/views`);
+    return response.data;
+}

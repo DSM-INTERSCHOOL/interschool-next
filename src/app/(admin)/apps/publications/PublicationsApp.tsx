@@ -10,6 +10,7 @@ import {
     PublicationFormCard,
     SubjectSelector
 } from "./components";
+import type { PublicationType } from "./components/PublicationTypeSelector";
 import {
     useAcademicData,
     useRecipients,
@@ -21,11 +22,11 @@ import {
 
 interface PublicationsAppProps {
     announcementId?: string;
-    type?: 'announcement' | 'assignment';
+    type?: PublicationType;
 }
 
 const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
-    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>(type || 'announcement');
+    const [publicationType, setPublicationType] = useState<PublicationType>(type || 'announcement');
     const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
 
     // Custom hooks
@@ -241,7 +242,8 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     const shouldShowAcademicSelectors = !isOnlyUser;
     const shouldShowForm = selections.selectedAcademicYears.size > 0 ||
                           selections.selectedAcademicStages.size > 0 ||
-                          isOnlyUser;
+                          isOnlyUser ||
+                          (!!announcementId && !!publicationForm.loadedAnnouncement);
 
     return (
         <div className="bg-base-100 rounded-lg shadow-sm">
@@ -437,7 +439,8 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                     )}
 
                     {/* Mensaje cuando no hay elementos seleccionados */}
-                    {!academicData.loading &&
+                    {!announcementId &&
+                     !academicData.loading &&
                      !academicData.error &&
                      academicData.academicYears.length > 0 &&
                      selections.selectedAcademicYears.size === 0 &&

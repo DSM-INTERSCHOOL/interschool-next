@@ -1,12 +1,13 @@
 "use client";
 
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
+import type { PublicationType } from "./PublicationTypeSelector";
 
 interface PublicationDetailModalProps {
     publication: IAnnouncementRead | null;
     isOpen: boolean;
     onClose: () => void;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
 }
 
 export const PublicationDetailModal = ({ publication, isOpen, onClose, publicationType }: PublicationDetailModalProps) => {
@@ -50,18 +51,18 @@ export const PublicationDetailModal = ({ publication, isOpen, onClose, publicati
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            publicationType === 'assignment' ? 'bg-secondary/10' : 'bg-primary/10'
+                            publicationType === 'assignment' ? 'bg-secondary/10' : publicationType === 'event' ? 'bg-accent/10' : 'bg-primary/10'
                         }`}>
                             <span className={`iconify size-6 ${
-                                publicationType === 'assignment'
-                                    ? 'lucide--clipboard-list text-secondary'
-                                    : 'lucide--megaphone text-primary'
+                                publicationType === 'assignment' ? 'lucide--clipboard-list text-secondary'
+                                : publicationType === 'event' ? 'lucide--calendar-days text-accent'
+                                : 'lucide--megaphone text-primary'
                             }`}></span>
                         </div>
                         <div>
                             <h3 className="font-bold text-2xl">{publication.title || "Sin título"}</h3>
                             <p className="text-sm text-base-content/70">
-                                {publicationType === 'assignment' ? 'Tarea' : 'Aviso'}
+                                {publicationType === 'assignment' ? 'Tarea' : publicationType === 'event' ? 'Evento' : 'Aviso'}
                             </p>
                         </div>
                     </div>
@@ -115,6 +116,110 @@ export const PublicationDetailModal = ({ publication, isOpen, onClose, publicati
                                         <h4 className="font-semibold text-sm">Fecha de Entrega</h4>
                                     </div>
                                     <p className="text-sm">{formatDate((publication as any).due_date)}</p>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Campos adicionales para eventos */}
+                    {publicationType === 'event' && (
+                        <>
+                            <div className="card bg-base-200">
+                                <div className="card-body p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="iconify lucide--clock size-4 text-accent"></span>
+                                        <h4 className="font-semibold text-sm">Inicio del Evento</h4>
+                                    </div>
+                                    <p className="text-sm">{formatDate((publication as any).event_start_time)}</p>
+                                </div>
+                            </div>
+
+                            <div className="card bg-base-200">
+                                <div className="card-body p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="iconify lucide--clock-x size-4 text-accent"></span>
+                                        <h4 className="font-semibold text-sm">Fin del Evento</h4>
+                                    </div>
+                                    <p className="text-sm">{formatDate((publication as any).event_end_time ?? publication.end_date)}</p>
+                                </div>
+                            </div>
+
+                            {(publication as any).event_location && (
+                                <div className="card bg-base-200">
+                                    <div className="card-body p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="iconify lucide--map-pin size-4 text-accent"></span>
+                                            <h4 className="font-semibold text-sm">Lugar</h4>
+                                        </div>
+                                        <p className="text-sm">{(publication as any).event_location}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {(publication as any).event_url && (
+                                <div className="card bg-base-200">
+                                    <div className="card-body p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="iconify lucide--link size-4 text-accent"></span>
+                                            <h4 className="font-semibold text-sm">URL del Evento</h4>
+                                        </div>
+                                        <a
+                                            href={(publication as any).event_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm text-primary hover:underline break-all"
+                                        >
+                                            {(publication as any).event_url}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {(publication as any).map_url && (
+                                <div className="card bg-base-200">
+                                    <div className="card-body p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="iconify lucide--map size-4 text-accent"></span>
+                                            <h4 className="font-semibold text-sm">URL del Mapa</h4>
+                                        </div>
+                                        <a
+                                            href={(publication as any).map_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm text-primary hover:underline break-all"
+                                        >
+                                            {(publication as any).map_url}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="card bg-base-200 md:col-span-2">
+                                <div className="card-body p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="iconify lucide--shield-check size-4 text-accent"></span>
+                                        <h4 className="font-semibold text-sm">Requisitos del Evento</h4>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-sm checkbox-accent"
+                                                checked={!!(publication as any).requires_confirmation}
+                                                disabled
+                                            />
+                                            <span className="text-sm">Requiere confirmación</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-sm checkbox-accent"
+                                                checked={!!(publication as any).requires_signature}
+                                                disabled
+                                            />
+                                            <span className="text-sm">Requiere firma</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </>

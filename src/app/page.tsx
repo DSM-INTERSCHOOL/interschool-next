@@ -45,6 +45,9 @@ function RootPageContent() {
                 localStorage.setItem('schoolId', schoolId);
                 localStorage.setItem('portalName', portalName);
 
+                console.log('schoolId', schoolId)
+                console.log('portalName', portalName)
+
                 // Obtener información de la escuela del schoolMap
                 const schoolInfo = schoolMap[schoolId];
                 if (schoolInfo) {

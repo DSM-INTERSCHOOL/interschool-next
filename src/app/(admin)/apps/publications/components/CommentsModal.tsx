@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { getCommentsForAnnouncement, getCommentsForAssignment } from "@/services/comments.service";
+import { getCommentsForAnnouncement, getCommentsForAssignment, getCommentsForEvent } from "@/services/comments.service";
+import type { PublicationType } from "./PublicationTypeSelector";
 
 interface CommentsModalProps {
     publicationId: string | null;
     publicationTitle: string | null;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -52,7 +53,9 @@ export function CommentsModal({ publicationId, publicationTitle, publicationType
 
             const data = publicationType === 'assignment'
                 ? await getCommentsForAssignment(publicationId)
-                : await getCommentsForAnnouncement(publicationId);
+                : publicationType === 'event'
+                    ? await getCommentsForEvent(publicationId)
+                    : await getCommentsForAnnouncement(publicationId);
 
             setComments(data);
         } catch (err: any) {

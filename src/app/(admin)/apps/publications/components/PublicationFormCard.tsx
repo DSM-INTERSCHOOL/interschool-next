@@ -1,6 +1,7 @@
 import { Editor } from "@tinymce/tinymce-react";
 import { AttachmentsManager } from "./AttachmentsManager";
 import { IAttachmentRead } from "@/interfaces/IAnnouncement";
+import { PublicationType } from "./PublicationTypeSelector";
 
 interface FormData {
     title: string;
@@ -12,11 +13,21 @@ interface FormData {
     subjectId: string;
     subjectName: string;
     dueDate: string;
+    requiresConfirmation: boolean;
+    requiresSignature: boolean;
+    signatureType: string;
+    confirmationLegend: string;
+    signatureLegend: string;
+    eventStartTime: string;
+    eventDuration: string;
+    eventLocation: string;
+    eventUrl: string;
+    mapUrl: string;
 }
 
 interface PublicationFormCardProps {
     announcementId?: string;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
     formData: FormData;
     onFieldChange: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
     attachments: File[];
@@ -52,19 +63,21 @@ export const PublicationFormCard = ({
             <div className="card-body">
                 <div className="flex items-center gap-3 mb-6">
                     <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-                        publicationType === 'assignment' ? 'bg-secondary/10' : 'bg-primary/10'
+                        publicationType === 'assignment' ? 'bg-secondary/10'
+                        : publicationType === 'event' ? 'bg-accent/10'
+                        : 'bg-primary/10'
                     }`}>
                         <span className={`iconify size-6 ${
-                            publicationType === 'assignment'
-                                ? 'lucide--clipboard-list text-secondary'
-                                : 'lucide--megaphone text-primary'
+                            publicationType === 'assignment' ? 'lucide--clipboard-list text-secondary'
+                            : publicationType === 'event' ? 'lucide--calendar-days text-accent'
+                            : 'lucide--megaphone text-primary'
                         }`}></span>
                     </div>
                     <div>
                         <h3 className="card-title text-xl text-base-content">
                             {announcementId
-                                ? `Edición de ${publicationType === 'assignment' ? 'Tarea' : 'Aviso'}`
-                                : `Crear Nueva ${publicationType === 'assignment' ? 'Tarea' : 'Aviso'}`
+                                ? `Edición de ${publicationType === 'assignment' ? 'Tarea' : publicationType === 'event' ? 'Evento' : 'Aviso'}`
+                                : `Crear ${publicationType === 'assignment' ? 'Nueva Tarea' : publicationType === 'event' ? 'Nuevo Evento' : 'Nuevo Aviso'}`
                             }
                         </h3>
                         <p className="text-sm text-base-content/60">
@@ -72,7 +85,9 @@ export const PublicationFormCard = ({
                                 ? 'Edita la información de tu publicación'
                                 : publicationType === 'assignment'
                                     ? 'Asigna tareas y actividades con fecha de entrega a los estudiantes'
-                                    : 'Publica información importante para la comunidad educativa'
+                                    : publicationType === 'event'
+                                        ? 'Publica eventos con opciones de confirmación y firma de asistencia'
+                                        : 'Publica información importante para la comunidad educativa'
                             }
                         </p>
                     </div>
@@ -212,7 +227,7 @@ export const PublicationFormCard = ({
                                     images_upload_url: '/api/upload',
                                     images_reuse_filename: true,
                                     file_picker_types: 'image',
-                                    file_picker_callback: (callback: any, value: any, meta: any) => {
+                                    file_picker_callback: (callback: any, _value: any, meta: any) => {
                                         if (meta.filetype === 'image') {
                                             const input = document.createElement('input');
                                             input.setAttribute('type', 'file');
@@ -245,7 +260,7 @@ export const PublicationFormCard = ({
                         <fieldset className="fieldset">
                             <legend className="fieldset-legend flex items-center gap-2">
                                 <span className="iconify lucide--calendar size-4"></span>
-                                Fecha y Hora de Inicio
+                                Fecha y Hora Inicio de Publicación
                             </legend>
                             <label className="input input-success">
                                 <span className="iconify lucide--calendar-days text-base-content/60 size-5"></span>
@@ -259,23 +274,241 @@ export const PublicationFormCard = ({
                             <p className="fieldset-label">Cuándo inicia la vigencia</p>
                         </fieldset>
 
-                        <fieldset className="fieldset">
-                            <legend className="fieldset-legend flex items-center gap-2">
-                                <span className="iconify lucide--calendar-x size-4"></span>
-                                Fecha y Hora de Fin
-                            </legend>
-                            <label className="input input-warning">
-                                <span className="iconify lucide--calendar-clock text-base-content/60 size-5"></span>
-                                <input
-                                    className="grow"
-                                    type="datetime-local"
-                                    value={formData.endDate}
-                                    onChange={(e) => onFieldChange('endDate', e.target.value)}
-                                />
-                            </label>
-                            <p className="fieldset-label">Cuándo expira {publicationType === 'assignment' ? 'la tarea' : 'el aviso'}</p>
-                        </fieldset>
+                        {publicationType !== 'event' && (
+                            <fieldset className="fieldset">
+                                <legend className="fieldset-legend flex items-center gap-2">
+                                    <span className="iconify lucide--calendar-x size-4"></span>
+                                    Fecha y Hora de Fin de Publicación
+                                </legend>
+                                <label className="input input-warning">
+                                    <span className="iconify lucide--calendar-clock text-base-content/60 size-5"></span>
+                                    <input
+                                        className="grow"
+                                        type="datetime-local"
+                                        value={formData.endDate}
+                                        onChange={(e) => onFieldChange('endDate', e.target.value)}
+                                    />
+                                </label>
+                                <p className="fieldset-label">Cuándo expira {publicationType === 'assignment' ? 'la tarea' : 'el aviso'}</p>
+                            </fieldset>
+                        )}
                     </div>
+
+                    {/* Hora del evento - Solo para eventos */}
+                    {publicationType === 'event' && (
+                        <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <fieldset className="fieldset">
+                                <legend className="fieldset-legend flex items-center gap-2">
+                                    <span className="iconify lucide--clock size-4"></span>
+                                    Inicio del Evento
+                                </legend>
+                                <label className="input input-accent">
+                                    <span className="iconify lucide--clock-3 text-base-content/60 size-5"></span>
+                                    <input
+                                        className="grow"
+                                        type="datetime-local"
+                                        value={formData.eventStartTime}
+                                        onChange={(e) => onFieldChange('eventStartTime', e.target.value)}
+                                    />
+                                </label>
+                                <p className="fieldset-label">Cuándo inicia el evento</p>
+                            </fieldset>
+
+                            <fieldset className="fieldset">
+                                <legend className="fieldset-legend flex items-center gap-2">
+                                    <span className="iconify lucide--timer size-4"></span>
+                                    Duración
+                                </legend>
+                                <select
+                                    className="select select-accent w-full"
+                                    value={formData.eventDuration}
+                                    onChange={(e) => onFieldChange('eventDuration', e.target.value)}
+                                >
+                                    {[30, 60, 90, 120, 150, 180, 210, 240].map(min => (
+                                        <option key={min} value={min.toString()}>
+                                            {min < 60
+                                                ? `${min} min`
+                                                : min % 60 === 0
+                                                    ? `${min / 60} hora${min / 60 > 1 ? 's' : ''}`
+                                                    : `${Math.floor(min / 60)} hora${Math.floor(min / 60) > 1 ? 's' : ''} 30 min`
+                                            }
+                                        </option>
+                                    ))}
+                                    <option value="allday">Todo el día</option>
+                                </select>
+                                <p className="fieldset-label">La vigencia expirará al día siguiente</p>
+                            </fieldset>
+                        </div>
+
+                        {/* Ubicación y enlaces */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <fieldset className="fieldset">
+                                <legend className="fieldset-legend flex items-center gap-2">
+                                    <span className="iconify lucide--map-pin size-4"></span>
+                                    Lugar
+                                </legend>
+                                <label className="input input-accent w-full">
+                                    <span className="iconify lucide--map-pin text-base-content/60 size-5"></span>
+                                    <input
+                                        className="grow"
+                                        type="text"
+                                        placeholder="Ej: Auditorio principal, Salón 3A..."
+                                        value={formData.eventLocation}
+                                        onChange={(e) => onFieldChange('eventLocation', e.target.value)}
+                                    />
+                                </label>
+                                <p className="fieldset-label">Dónde se realizará el evento</p>
+                            </fieldset>
+
+                            <fieldset className="fieldset">
+                                <legend className="fieldset-legend flex items-center gap-2">
+                                    <span className="iconify lucide--link size-4"></span>
+                                    URL del Evento
+                                </legend>
+                                <label className="input input-accent w-full">
+                                    <span className="iconify lucide--link text-base-content/60 size-5"></span>
+                                    <input
+                                        className="grow"
+                                        type="url"
+                                        placeholder="https://..."
+                                        value={formData.eventUrl}
+                                        onChange={(e) => onFieldChange('eventUrl', e.target.value)}
+                                    />
+                                </label>
+                                <p className="fieldset-label">Enlace al evento o transmisión</p>
+                            </fieldset>
+
+                            <fieldset className="fieldset">
+                                <legend className="fieldset-legend flex items-center gap-2">
+                                    <span className="iconify lucide--map size-4"></span>
+                                    URL del Mapa
+                                </legend>
+                                <label className="input input-accent w-full">
+                                    <span className="iconify lucide--navigation text-base-content/60 size-5"></span>
+                                    <input
+                                        className="grow"
+                                        type="url"
+                                        placeholder="https://maps.google.com/..."
+                                        value={formData.mapUrl}
+                                        onChange={(e) => onFieldChange('mapUrl', e.target.value)}
+                                    />
+                                </label>
+                                <p className="fieldset-label">Enlace a Google Maps u otro mapa</p>
+                            </fieldset>
+                        </div>
+                        </>
+                    )}
+
+                    {/* Configuración del Evento - Solo para eventos */}
+                    {publicationType === 'event' && (
+                        <div className="bg-accent/5 border border-accent/20 rounded-xl p-5 space-y-4">
+                            <h4 className="font-medium text-base-content flex items-center gap-2">
+                                <span className="iconify lucide--calendar-check size-4 text-accent"></span>
+                                Configuración del Evento
+                            </h4>
+
+                            {/* Requiere confirmación */}
+                            <div className="form-control bg-base-100 rounded-lg p-3">
+                                <label className="label cursor-pointer flex">
+                                    <div className="flex items-center gap-3">
+                                        <span className="iconify lucide--check-square size-5 text-accent"></span>
+                                        <div>
+                                            <span className="label-text font-medium">Requiere confirmación de asistencia</span>
+                                            <div className="text-xs text-base-content/60">
+                                                Los destinatarios deberán confirmar su asistencia al evento
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="checkbox checkbox-accent"
+                                        checked={formData.requiresConfirmation}
+                                        onChange={(e) => onFieldChange('requiresConfirmation', e.target.checked)}
+                                    />
+                                </label>
+                            </div>
+
+                            {formData.requiresConfirmation && (
+                                <fieldset className="fieldset">
+                                    <legend className="fieldset-legend flex items-center gap-2">
+                                        <span className="iconify lucide--message-square size-4"></span>
+                                        Leyenda de confirmación
+                                    </legend>
+                                    <label className="input input-accent w-full">
+                                        <span className="iconify lucide--text text-base-content/60 size-5"></span>
+                                        <input
+                                            className="grow"
+                                            type="text"
+                                            placeholder="Ej: Asistiré al evento"
+                                            value={formData.confirmationLegend}
+                                            onChange={(e) => onFieldChange('confirmationLegend', e.target.value)}
+                                        />
+                                    </label>
+                                    <p className="fieldset-label">Texto que verá el usuario al confirmar</p>
+                                </fieldset>
+                            )}
+
+                            {/* Requiere firma */}
+                            <div className="form-control bg-base-100 rounded-lg p-3">
+                                <label className="label cursor-pointer flex">
+                                    <div className="flex items-center gap-3">
+                                        <span className="iconify lucide--pen-line size-5 text-accent"></span>
+                                        <div>
+                                            <span className="label-text font-medium">Requiere firma</span>
+                                            <div className="text-xs text-base-content/60">
+                                                Los destinatarios deberán firmar digitalmente para confirmar
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="checkbox checkbox-accent"
+                                        checked={formData.requiresSignature}
+                                        onChange={(e) => onFieldChange('requiresSignature', e.target.checked)}
+                                    />
+                                </label>
+                            </div>
+
+                            {formData.requiresSignature && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <fieldset className="fieldset">
+                                        <legend className="fieldset-legend flex items-center gap-2">
+                                            <span className="iconify lucide--lock size-4"></span>
+                                            Tipo de firma
+                                        </legend>
+                                        <select
+                                            className="select select-accent w-full"
+                                            value={formData.signatureType}
+                                            onChange={(e) => onFieldChange('signatureType', e.target.value)}
+                                        >
+                                            <option value="PASSWORD">Contraseña</option>
+                                            <option value="PIN">PIN</option>
+                                        </select>
+                                        <p className="fieldset-label">Método de autenticación de la firma</p>
+                                    </fieldset>
+
+                                    <fieldset className="fieldset">
+                                        <legend className="fieldset-legend flex items-center gap-2">
+                                            <span className="iconify lucide--message-square size-4"></span>
+                                            Leyenda de firma
+                                        </legend>
+                                        <label className="input input-accent w-full">
+                                            <span className="iconify lucide--text text-base-content/60 size-5"></span>
+                                            <input
+                                                className="grow"
+                                                type="text"
+                                                placeholder="Ej: Estoy de acuerdo con los términos"
+                                                value={formData.signatureLegend}
+                                                onChange={(e) => onFieldChange('signatureLegend', e.target.value)}
+                                            />
+                                        </label>
+                                        <p className="fieldset-label">Texto que verá el usuario al firmar</p>
+                                    </fieldset>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Archivos Adjuntos */}
                     <AttachmentsManager

@@ -1,4 +1,5 @@
 import { IAttachmentRead } from "@/interfaces/IAnnouncement";
+import { PublicationType } from "./PublicationTypeSelector";
 
 interface AttachmentsManagerProps {
     attachments: File[];
@@ -6,7 +7,7 @@ interface AttachmentsManagerProps {
     onAdd: (file: File) => void;
     onRemove: (index: number) => void;
     onRemoveExisting: (index: number) => void;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
 }
 
 export const AttachmentsManager = ({

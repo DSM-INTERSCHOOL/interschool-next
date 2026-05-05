@@ -38,3 +38,12 @@ export async function getCommentsForAssignment(assignmentId: string): Promise<Co
     const response = await communicationApi.get(`/v1/schools/${schoolId}/assignments/${assignmentId}/comments`);
     return response.data;
 }
+
+/**
+ * Get all comments for an event
+ */
+export async function getCommentsForEvent(eventId: string): Promise<Comment[]> {
+    const { schoolId } = getOrgConfig();
+    const response = await communicationApi.get(`/v1/schools/${schoolId}/events/${eventId}/comments`);
+    return response.data;
+}

@@ -115,7 +115,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 
 export const getPermisos = async (credentials: LoginRequest): Promise<PermisosResponse> => {
     try {
-        const { portalName } = getOrgConfig();
+        const { portalName } = getOrgConfig();        
 
         const response = await axios.post<PermisosResponse>(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,

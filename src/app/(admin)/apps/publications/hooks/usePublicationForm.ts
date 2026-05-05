@@ -3,9 +3,11 @@ import { useRouter } from "next/navigation";
 import { IAnnouncementRead, IAttachmentRead, IAttachmentCreate } from "@/interfaces/IAnnouncement";
 import { getById, create, update } from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
+import * as eventService from "@/services/event.service";
 import { communicationService } from "@/services/communication.service";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { useAuthStore } from "@/store/useAuthStore";
+import { PublicationType } from "@/app/(admin)/apps/publications/components/PublicationTypeSelector";
 
 interface PublicationFormData {
     title: string;
@@ -17,11 +19,21 @@ interface PublicationFormData {
     subjectId: string;
     subjectName: string;
     dueDate: string;
+    requiresConfirmation: boolean;
+    requiresSignature: boolean;
+    signatureType: string;
+    confirmationLegend: string;
+    signatureLegend: string;
+    eventStartTime: string;
+    eventDuration: string;
+    eventLocation: string;
+    eventUrl: string;
+    mapUrl: string;
 }
 
 export const usePublicationForm = (
     announcementId?: string,
-    publicationType: 'announcement' | 'assignment' = 'announcement'
+    publicationType: PublicationType = 'announcement'
 ) => {
     const router = useRouter();
     const { personId } = useAuthStore();
@@ -35,8 +47,29 @@ export const usePublicationForm = (
         authorized: true,
         subjectId: '',
         subjectName: '',
-        dueDate: ''
+        dueDate: '',
+        requiresConfirmation: false,
+        requiresSignature: false,
+        signatureType: 'PASSWORD',
+        confirmationLegend: '',
+        signatureLegend: '',
+        eventStartTime: '',
+        eventDuration: '60',
+        eventLocation: '',
+        eventUrl: '',
+        mapUrl: '',
     });
+
+    // Initialize startDate to now for new events
+    useEffect(() => {
+        if (publicationType === 'event' && !announcementId) {
+            const now = new Date();
+            const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+                .toISOString()
+                .slice(0, 16);
+            setFormData(prev => ({ ...prev, startDate: local }));
+        }
+    }, [publicationType, announcementId]);
 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [existingAttachments, setExistingAttachments] = useState<IAttachmentRead[]>([]);
@@ -58,6 +91,8 @@ export const usePublicationForm = (
 
                 if (publicationType === 'assignment') {
                     publication = await assignmentService.getById({ schoolId, assignmentId: announcementId });
+                } else if (publicationType === 'event') {
+                    publication = await eventService.getById({ schoolId, eventId: announcementId });
                 } else {
                     publication = await getById({ schoolId, announcementId });
                 }
@@ -81,7 +116,24 @@ export const usePublicationForm = (
                     authorized: publication.authorized ?? true,
                     subjectId: (publication as any).subject_id || '',
                     subjectName: (publication as any).subject_name || '',
-                    dueDate: (publication as any).due_date ? toLocalDateTimeString((publication as any).due_date) : ''
+                    dueDate: (publication as any).due_date ? toLocalDateTimeString((publication as any).due_date) : '',
+                    requiresConfirmation: (publication as any).requires_confirmation ?? false,
+                    requiresSignature: (publication as any).requires_signature ?? false,
+                    signatureType: (publication as any).signature_type || 'PASSWORD',
+                    confirmationLegend: (publication as any).confirmation_legend || '',
+                    signatureLegend: (publication as any).signature_legend || '',
+                    eventStartTime: (publication as any).event_start_time ? toLocalDateTimeString((publication as any).event_start_time) : '',
+                    eventLocation: (publication as any).event_location || '',
+                    eventUrl: (publication as any).event_url || '',
+                    mapUrl: (publication as any).map_url || '',
+                    eventDuration: (() => {
+                        const s = (publication as any).event_start_time;
+                        const e = (publication as any).event_end_time;
+                        if (!s || !e) return '60';
+                        const diff = Math.round((new Date(e).getTime() - new Date(s).getTime()) / 60000);
+                        if (diff > 0 && diff <= 240 && diff % 30 === 0) return diff.toString();
+                        return 'allday';
+                    })(),
                 });
 
                 if (publication.attachments && publication.attachments.length > 0) {
@@ -144,7 +196,12 @@ export const usePublicationForm = (
             return false;
         }
 
-        if (!formData.endDate) {
+        if (publicationType === 'event') {
+            if (!formData.eventStartTime) {
+                setPublishError("La hora de inicio del evento es requerida");
+                return false;
+            }
+        } else if (!formData.endDate) {
             setPublishError("La fecha de fin es requerida");
             return false;
         }
@@ -211,9 +268,21 @@ export const usePublicationForm = (
                 }
             }
 
+            const computeEventEndTime = (startStr: string, duration: string): Date => {
+                const start = new Date(startStr);
+                if (duration === 'allday') {
+                    const end = new Date(start);
+                    end.setHours(23, 59, 59, 0);
+                    return end;
+                }
+                return new Date(start.getTime() + parseInt(duration, 10) * 60000);
+            };
+
             // Convert dates to UTC
             const startDateUTC = new Date(formData.startDate).toISOString();
-            const endDateUTC = new Date(formData.endDate).toISOString();
+            const endDateUTC = publicationType === 'event' && formData.eventStartTime
+                ? (() => { const d = computeEventEndTime(formData.eventStartTime, formData.eventDuration); d.setDate(d.getDate() + 1); return d.toISOString(); })()
+                : new Date(formData.endDate).toISOString();
 
             const baseData = {
                 publisher_person_id: personId!.toString(),
@@ -253,6 +322,20 @@ export const usePublicationForm = (
                     subject_name: formData.subjectName.trim(),
                     due_date: dueDateUTC
                 };
+            } else if (publicationType === 'event') {
+                announcementData = {
+                    ...baseData,
+                    requires_confirmation: formData.requiresConfirmation,
+                    requires_signature: formData.requiresSignature,
+                    signature_type: formData.requiresSignature ? formData.signatureType : null,
+                    confirmation_legend: formData.requiresConfirmation ? formData.confirmationLegend.trim() : null,
+                    signature_legend: formData.requiresSignature ? formData.signatureLegend.trim() : null,
+                    event_start_time: formData.eventStartTime ? new Date(formData.eventStartTime).toISOString() : null,
+                    event_end_time: formData.eventStartTime ? computeEventEndTime(formData.eventStartTime, formData.eventDuration).toISOString() : null,
+                    event_location: formData.eventLocation.trim() || null,
+                    event_url: formData.eventUrl.trim() || null,
+                    map_url: formData.mapUrl.trim() || null,
+                };
             }
 
             let result;
@@ -272,12 +355,26 @@ export const usePublicationForm = (
                     updateDto.subject_id = formData.subjectId.trim();
                     updateDto.subject_name = formData.subjectName.trim();
                     updateDto.due_date = new Date(formData.dueDate).toISOString();
+                } else if (publicationType === 'event') {
+                    updateDto.requires_confirmation = formData.requiresConfirmation;
+                    updateDto.requires_signature = formData.requiresSignature;
+                    updateDto.signature_type = formData.requiresSignature ? formData.signatureType : null;
+                    updateDto.confirmation_legend = formData.requiresConfirmation ? formData.confirmationLegend.trim() : null;
+                    updateDto.signature_legend = formData.requiresSignature ? formData.signatureLegend.trim() : null;
+                    updateDto.event_start_time = formData.eventStartTime ? new Date(formData.eventStartTime).toISOString() : null;
+                    updateDto.event_end_time = formData.eventEndTime ? new Date(formData.eventEndTime).toISOString() : null;
                 }
 
                 if (publicationType === 'assignment') {
                     result = await assignmentService.update({
                         schoolId,
                         assignmentId: announcementId,
+                        dto: updateDto
+                    });
+                } else if (publicationType === 'event') {
+                    result = await eventService.update({
+                        schoolId,
+                        eventId: announcementId,
                         dto: updateDto
                     });
                 } else {
@@ -293,6 +390,11 @@ export const usePublicationForm = (
             } else {
                 if (publicationType === 'assignment') {
                     result = await assignmentService.create({
+                        schoolId,
+                        dto: announcementData
+                    });
+                } else if (publicationType === 'event') {
+                    result = await eventService.create({
                         schoolId,
                         dto: announcementData
                     });

@@ -12,7 +12,9 @@ import { CommentsModal } from "./components/CommentsModal";
 import { ViewsModal } from "./components/ViewsModal";
 import * as announcemntService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
+import * as eventService from "@/services/event.service";
 import { IAnnouncementRead } from "@/interfaces/IAnnouncement";
+import type { PublicationType } from "./components/PublicationTypeSelector";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { useUserRole } from "./hooks/useUserRole";
@@ -22,11 +24,11 @@ export default function PublicationsPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const highlightId = searchParams.get('highlightId');
-    const highlightType = searchParams.get('publicationType') as 'announcement' | 'assignment' | null;
+    const highlightType = searchParams.get('publicationType') as PublicationType | null;
     const userRole = useUserRole();
     const personId = useAuthStore((state) => state.personId);
 
-    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>(highlightType || 'announcement');
+    const [publicationType, setPublicationType] = useState<PublicationType>(highlightType || 'announcement');
     const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState<any>(null);
     const [announcements, setAnnouncements] = useState<IAnnouncementRead[]>([]);
@@ -84,7 +86,9 @@ export default function PublicationsPage() {
 
             const data = publicationType === 'assignment'
                 ? await assignmentService.getAll(serviceArgs)
-                : await announcemntService.getAll(serviceArgs);
+                : publicationType === 'event'
+                    ? await eventService.getAll(serviceArgs)
+                    : await announcemntService.getAll(serviceArgs);
             setAnnouncements(data);
 
             // Actualizar el total de items (usamos la longitud del resultado para estimarlo)
@@ -104,7 +108,7 @@ export default function PublicationsPage() {
                 }
             }
         } catch (err: any) {
-            setError(err.message || `Error al cargar ${publicationType === 'assignment' ? 'las tareas' : 'los avisos'}`);
+            setError(err.message || `Error al cargar ${publicationType === 'assignment' ? 'las tareas' : publicationType === 'event' ? 'los eventos' : 'los avisos'}`);
             console.error("Error loading publications:", err);
         } finally {
             setLoading(false);
@@ -124,13 +128,19 @@ export default function PublicationsPage() {
             // Actualizar en el servidor
             if (publicationType === 'assignment') {
                 await assignmentService.update({
-                    schoolId,
+                    schoolId: schoolId!,
                     assignmentId: announcement.id,
+                    dto: { authorized: newAuthorizedValue }
+                });
+            } else if (publicationType === 'event') {
+                await eventService.update({
+                    schoolId: schoolId!,
+                    eventId: announcement.id,
                     dto: { authorized: newAuthorizedValue }
                 });
             } else {
                 await announcemntService.update({
-                    schoolId,
+                    schoolId: schoolId!,
                     announcementId: announcement.id,
                     dto: { authorized: newAuthorizedValue }
                 });
@@ -268,15 +278,24 @@ export default function PublicationsPage() {
                                     <span className="iconify lucide--clipboard-list size-5"></span>
                                     Tareas
                                 </button>
+                                <button
+                                    className={`join-item btn ${publicationType === 'event' ? 'btn-accent' : 'btn-outline'}`}
+                                    onClick={() => setPublicationType('event')}
+                                >
+                                    <span className="iconify lucide--calendar-days size-5"></span>
+                                    Eventos
+                                </button>
                             </div>
                         </div>
 
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="card-title text-2xl">
                                 <span className={`iconify size-6 ${
-                                    publicationType === 'assignment' ? 'lucide--clipboard-list' : 'lucide--megaphone'
+                                    publicationType === 'assignment' ? 'lucide--clipboard-list'
+                                    : publicationType === 'event' ? 'lucide--calendar-days'
+                                    : 'lucide--megaphone'
                                 }`}></span>
-                                Lista de {publicationType === 'assignment' ? 'Tareas' : 'Avisos'}
+                                Lista de {publicationType === 'assignment' ? 'Tareas' : publicationType === 'event' ? 'Eventos' : 'Avisos'}
                             </h2>
                             <div className="flex gap-2">
                                 <button
@@ -295,7 +314,7 @@ export default function PublicationsPage() {
 
                         {loading ? (
                             <div className="flex justify-center py-16">
-                                <LoadingSpinner message={`Cargando ${publicationType === 'assignment' ? 'tareas' : 'avisos'}...`} />
+                                <LoadingSpinner message={`Cargando ${publicationType === 'assignment' ? 'tareas' : publicationType === 'event' ? 'eventos' : 'avisos'}...`} />
                             </div>
                         ) : error ? (
                             <div className="alert alert-error">
@@ -308,13 +327,13 @@ export default function PublicationsPage() {
                         ) : announcements.length === 0 ? (
                             <div className="text-center py-16">
                                 <span className={`iconify size-24 text-base-content/20 mb-4 ${
-                                    publicationType === 'assignment' ? 'lucide--clipboard-list' : 'lucide--inbox'
+                                    publicationType === 'assignment' ? 'lucide--clipboard-list' : publicationType === 'event' ? 'lucide--calendar-days' : 'lucide--inbox'
                                 }`}></span>
                                 <h3 className="text-xl font-medium text-base-content mb-2">
-                                    No hay {publicationType === 'assignment' ? 'tareas' : 'avisos'}
+                                    No hay {publicationType === 'assignment' ? 'tareas' : publicationType === 'event' ? 'eventos' : 'avisos'}
                                 </h3>
                                 <p className="text-base-content/60 mb-6">
-                                    No se encontraron {publicationType === 'assignment' ? 'tareas' : 'avisos'} publicados
+                                    No se encontraron {publicationType === 'assignment' ? 'tareas' : publicationType === 'event' ? 'eventos' : 'avisos'} publicados
                                 </p>
                                 {/* <Link href="/apps/publications/create" className="btn btn-primary btn-sm">
                                     <span className="iconify lucide--plus size-4"></span>
@@ -329,7 +348,7 @@ export default function PublicationsPage() {
                                         <span className="iconify lucide--check-circle size-6"></span>
                                         <div className="flex-1">
                                             <h3 className="font-bold">
-                                                {publicationType === 'assignment' ? 'Tarea' : 'Aviso'} {highlightId === highlightedPublication.id ? 'guardado' : 'cargado'} exitosamente
+                                                {publicationType === 'assignment' ? 'Tarea' : publicationType === 'event' ? 'Evento' : 'Aviso'} {highlightId === highlightedPublication.id ? 'guardado' : 'cargado'} exitosamente
                                             </h3>
                                             <div className="text-sm">
                                                 <strong>{highlightedPublication.title}</strong>

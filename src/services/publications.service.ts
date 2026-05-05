@@ -2,7 +2,7 @@ import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { getDeviceId } from "@/lib/deviceId";
 
-const BASE_URL = "https://stage.communication.idsm.xyz/v1";
+
 
 interface PublicationParams {
     personId?: string;

@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { getViewsForAnnouncement, getViewsForAssignment } from "@/services/views.service";
+import { getViewsForAnnouncement, getViewsForAssignment, getViewsForEvent } from "@/services/views.service";
+import type { PublicationType } from "./PublicationTypeSelector";
 
 interface ViewsModalProps {
     publicationId: string | null;
     publicationTitle: string | null;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -51,7 +52,9 @@ export function ViewsModal({ publicationId, publicationTitle, publicationType, i
 
             const data = publicationType === 'assignment'
                 ? await getViewsForAssignment(publicationId)
-                : await getViewsForAnnouncement(publicationId);
+                : publicationType === 'event'
+                    ? await getViewsForEvent(publicationId)
+                    : await getViewsForAnnouncement(publicationId);
 
             setViews(data);
         } catch (err: any) {

@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { IAnnouncementRecipient } from "@/interfaces/IAnnouncement";
 import { getPersons as getAnnouncementPersons } from "@/services/announcement.service";
 import { getPersons as getAssignmentPersons } from "@/services/assignment.service";
+import { getPersons as getEventPersons } from "@/services/event.service";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { getOrgConfig } from "@/lib/orgConfig";
+import type { PublicationType } from "./PublicationTypeSelector";
 
 interface RecipientsModalProps {
     announcementId: string | null;
     announcementTitle?: string | null;
     isOpen: boolean;
     onClose: () => void;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
 }
 
 export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onClose, publicationType }: RecipientsModalProps) => {
@@ -35,14 +37,10 @@ export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onC
             const { schoolId } = getOrgConfig();
 
             const data = publicationType === 'assignment'
-                ? await getAssignmentPersons({
-                    schoolId,
-                    assignmentId: announcementId,
-                })
-                : await getAnnouncementPersons({
-                    schoolId,
-                    announcementId,
-                });
+                ? await getAssignmentPersons({ schoolId, assignmentId: announcementId })
+                : publicationType === 'event'
+                    ? await getEventPersons({ schoolId, eventId: announcementId })
+                    : await getAnnouncementPersons({ schoolId, announcementId });
 
             setRecipients(data);
         } catch (err: any) {
@@ -68,16 +66,16 @@ export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onC
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            publicationType === 'assignment' ? 'bg-secondary/10' : 'bg-primary/10'
+                            publicationType === 'assignment' ? 'bg-secondary/10' : publicationType === 'event' ? 'bg-accent/10' : 'bg-primary/10'
                         }`}>
                             <span className={`iconify size-6 lucide--users ${
-                                publicationType === 'assignment' ? 'text-secondary' : 'text-primary'
+                                publicationType === 'assignment' ? 'text-secondary' : publicationType === 'event' ? 'text-accent' : 'text-primary'
                             }`}></span>
                         </div>
                         <div>
                             <h3 className="font-bold text-2xl">Destinatarios</h3>
                             <p className="text-sm text-base-content/70">
-                                {announcementTitle || `${publicationType === 'assignment' ? 'Tarea' : 'Aviso'} sin título`}
+                                {announcementTitle || `${publicationType === 'assignment' ? 'Tarea' : publicationType === 'event' ? 'Evento' : 'Aviso'} sin título`}
                             </p>
                         </div>
                     </div>
