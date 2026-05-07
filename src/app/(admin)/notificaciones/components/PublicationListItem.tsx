@@ -1,14 +1,15 @@
 "use client";
 
-import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
+import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
 
 interface PublicationListItemProps {
-    publication: IAnnouncement | IAssignment;
+    publication: IAnnouncement | IAssignment | IEvent;
     isActive: boolean;
     onClick: () => void;
+    type?: "announcement" | "assignment" | "event";
 }
 
-export const PublicationListItem = ({ publication, isActive, onClick }: PublicationListItemProps) => {
+export const PublicationListItem = ({ publication, isActive, onClick, type }: PublicationListItemProps) => {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -119,6 +120,12 @@ export const PublicationListItem = ({ publication, isActive, onClick }: Publicat
 
                 {/* Badges adicionales */}
                 <div className="flex items-center gap-2 mt-2">
+                    {type === 'event' && (
+                        <span className="badge badge-xs badge-accent">
+                            <span className="iconify lucide--calendar-days size-3 mr-1" />
+                            Evento
+                        </span>
+                    )}
                     {publication.attachments.length > 0 && (
                         <span className="badge badge-xs badge-ghost">
                             <span className="iconify lucide--paperclip size-3 mr-1" />

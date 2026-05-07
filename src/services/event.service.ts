@@ -95,6 +95,98 @@ export const remove = async ({ schoolId, eventId }: EventArgs) => {
 };
 
 // Gestión de personas en eventos
+export interface IEventConfirmation {
+  event_id: string;
+  given_name: string;
+  paternal_surname: string;
+  maternal_surname: string;
+  type: string;
+  confirmed: boolean;
+  confirmed_at: string | null;
+  signed: boolean;
+  signed_at: string | null;
+  modified_at: string;
+}
+
+export interface IEventStat {
+  row_level: number;
+  type: string;
+  person_id: string | null;
+  total: string;
+}
+
+export const getConfirmationStats = async ({
+  schoolId,
+  eventId,
+}: {
+  schoolId: string | number | null;
+  eventId: string;
+}): Promise<IEventStat[]> => {
+  const response = await communicationApi.get(
+    `/v1/schools/${schoolId}/events/${eventId}/confirmations/stats`
+  );
+  return response.data;
+};
+
+export const getSignatureStats = async ({
+  schoolId,
+  eventId,
+}: {
+  schoolId: string | number | null;
+  eventId: string;
+}): Promise<IEventStat[]> => {
+  const response = await communicationApi.get(
+    `/v1/schools/${schoolId}/events/${eventId}/signatures/stats`
+  );
+  return response.data;
+};
+
+export const getEventConfirmations = async ({
+  schoolId,
+  eventId,
+}: {
+  schoolId: string | number | null;
+  eventId: string;
+}): Promise<IEventConfirmation[]> => {
+  const response = await communicationApi.get(
+    `/v1/schools/${schoolId}/events/${eventId}/confirmations`
+  );
+  return response.data;
+};
+
+export const getPersonInEvent = async ({
+  schoolId,
+  eventId,
+  personId,
+}: {
+  schoolId: string | number | null;
+  eventId: string;
+  personId: string;
+}) => {
+  const response = await communicationApi.get(
+    `/v1/schools/${schoolId}/events/${eventId}/persons/${personId}`
+  );
+  return response.data as { confirmed: boolean; signed: boolean; [key: string]: any };
+};
+
+export const updatePerson = async ({
+  schoolId,
+  eventId,
+  personId,
+  dto,
+}: {
+  schoolId: string | number | null;
+  eventId: string;
+  personId: string;
+  dto: { confirmed?: boolean; signed?: boolean };
+}) => {
+  const response = await communicationApi.put(
+    `/v1/schools/${schoolId}/events/${eventId}/persons/${personId}`,
+    dto
+  );
+  return response.data;
+};
+
 export const addPersons = async ({ schoolId, eventId, dto }: PersonArgs) => {
   const response = await communicationApi.post<IEventRead>(
     `/v1/schools/${schoolId}/events/${eventId}/persons`,

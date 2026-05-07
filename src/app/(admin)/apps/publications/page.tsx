@@ -10,6 +10,7 @@ import { RecipientsModal } from "./components/RecipientsModal";
 import { LikesModal } from "./components/LikesModal";
 import { CommentsModal } from "./components/CommentsModal";
 import { ViewsModal } from "./components/ViewsModal";
+import { EventStatsModal, EventStatType } from "./components/EventStatsModal";
 import * as announcemntService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import * as eventService from "@/services/event.service";
@@ -42,6 +43,8 @@ export default function PublicationsPage() {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<string | null>(null);
     const [selectedAnnouncementTitle, setSelectedAnnouncementTitle] = useState<string | null>(null);
+    const [selectedRecipientsRequiresConfirmation, setSelectedRecipientsRequiresConfirmation] = useState(false);
+    const [selectedRecipientsRequiresSignature, setSelectedRecipientsRequiresSignature] = useState(false);
     const [isRecipientsModalOpen, setIsRecipientsModalOpen] = useState(false);
     const [selectedLikesPublicationId, setSelectedLikesPublicationId] = useState<string | null>(null);
     const [selectedLikesPublicationTitle, setSelectedLikesPublicationTitle] = useState<string | null>(null);
@@ -52,6 +55,10 @@ export default function PublicationsPage() {
     const [selectedViewsPublicationId, setSelectedViewsPublicationId] = useState<string | null>(null);
     const [selectedViewsPublicationTitle, setSelectedViewsPublicationTitle] = useState<string | null>(null);
     const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
+    const [selectedStatsEventId, setSelectedStatsEventId] = useState<string | null>(null);
+    const [selectedStatsEventTitle, setSelectedStatsEventTitle] = useState<string | null>(null);
+    const [statsType, setStatsType] = useState<EventStatType | null>(null);
+    const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
     useEffect(() => {
         setCurrentPage(1); // Reset to page 1 when switching types
@@ -176,9 +183,11 @@ export default function PublicationsPage() {
         setSelectedPublication(null);
     };
 
-    const handleViewRecipients = (announcementId: string, announcementTitle: string | null | undefined) => {
+    const handleViewRecipients = (announcementId: string, announcementTitle: string | null | undefined, requiresConfirmation = false, requiresSignature = false) => {
         setSelectedAnnouncementId(announcementId);
         setSelectedAnnouncementTitle(announcementTitle || null);
+        setSelectedRecipientsRequiresConfirmation(requiresConfirmation);
+        setSelectedRecipientsRequiresSignature(requiresSignature);
         setIsRecipientsModalOpen(true);
     };
 
@@ -186,6 +195,8 @@ export default function PublicationsPage() {
         setIsRecipientsModalOpen(false);
         setSelectedAnnouncementId(null);
         setSelectedAnnouncementTitle(null);
+        setSelectedRecipientsRequiresConfirmation(false);
+        setSelectedRecipientsRequiresSignature(false);
     };
 
     const handleViewLikes = (publicationId: string, publicationTitle: string | null | undefined) => {
@@ -222,6 +233,20 @@ export default function PublicationsPage() {
         setIsViewsModalOpen(false);
         setSelectedViewsPublicationId(null);
         setSelectedViewsPublicationTitle(null);
+    };
+
+    const handleViewStats = (type: EventStatType, eventId: string, eventTitle: string | null | undefined) => {
+        setSelectedStatsEventId(eventId);
+        setSelectedStatsEventTitle(eventTitle || null);
+        setStatsType(type);
+        setIsStatsModalOpen(true);
+    };
+
+    const handleCloseStatsModal = () => {
+        setIsStatsModalOpen(false);
+        setSelectedStatsEventId(null);
+        setSelectedStatsEventTitle(null);
+        setStatsType(null);
     };
 
     const formatDate = (dateString: string | null) => {
@@ -379,6 +404,12 @@ export default function PublicationsPage() {
                                             <th className="bg-base-200">Vistas</th>
                                             <th className="bg-base-200">Comentarios</th>
                                             <th className="bg-base-200">Likes</th>
+                                                            {announcements.some(a => (a as any).requires_confirmation) && (
+                                                <th className="bg-base-200 text-center">Confirmados</th>
+                                            )}
+                                            {announcements.some(a => (a as any).requires_signature) && (
+                                                <th className="bg-base-200 text-center">Firmados</th>
+                                            )}
                                             <th className="bg-base-200">Destinatarios</th>
                                             <th className="bg-base-200">Acciones</th>
                                         </tr>
@@ -458,10 +489,49 @@ export default function PublicationsPage() {
                                                         {announcement.likes || 0}
                                                     </button>
                                                 </td>
+                                                {announcements.some(a => (a as any).requires_confirmation) && (() => {
+                                                    const ev = announcement as any;
+                                                    return (
+                                                        <td className="text-center text-sm">
+                                                            {ev.requires_confirmation ? (
+                                                                <button
+                                                                    className="btn btn-ghost btn-xs text-success"
+                                                                    onClick={() => handleViewStats('confirmations', ev.id, ev.title)}
+                                                                >
+                                                                    <span className="iconify lucide--circle-check size-4"></span>
+                                                                    {ev.confirmed_persons ?? 0}/{ev.total_persons ?? 0}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-base-content/30">—</span>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })()}
+                                                {announcements.some(a => (a as any).requires_signature) && (() => {
+                                                    const ev = announcement as any;
+                                                    return (
+                                                        <td className="text-center text-sm">
+                                                            {ev.requires_signature ? (
+                                                                <button
+                                                                    className="btn btn-ghost btn-xs text-info"
+                                                                    onClick={() => handleViewStats('signatures', ev.id, ev.title)}
+                                                                >
+                                                                    <span className="iconify lucide--pen-line size-4"></span>
+                                                                    {ev.signed_persons ?? 0}/{ev.total_persons ?? 0}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-base-content/30">—</span>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })()}
                                                 <td>
                                                     <button
                                                         className="btn btn-ghost btn-xs text-primary"
-                                                        onClick={() => handleViewRecipients(announcement.id, announcement.title)}
+                                                        onClick={() => {
+                                                            const ev = announcement as any;
+                                                            handleViewRecipients(ev.id, ev.title, !!ev.requires_confirmation, !!ev.requires_signature);
+                                                        }}
                                                     >
                                                         <span className="iconify lucide--users size-4"></span>
                                                         Ver destinatarios
@@ -577,6 +647,8 @@ export default function PublicationsPage() {
                 isOpen={isRecipientsModalOpen}
                 onClose={handleCloseRecipientsModal}
                 publicationType={publicationType}
+                requiresConfirmation={selectedRecipientsRequiresConfirmation}
+                requiresSignature={selectedRecipientsRequiresSignature}
             />
 
             <LikesModal
@@ -601,6 +673,14 @@ export default function PublicationsPage() {
                 publicationType={publicationType}
                 isOpen={isViewsModalOpen}
                 onClose={handleCloseViewsModal}
+            />
+
+            <EventStatsModal
+                eventId={selectedStatsEventId}
+                eventTitle={selectedStatsEventTitle}
+                statType={statsType}
+                isOpen={isStatsModalOpen}
+                onClose={handleCloseStatsModal}
             />
         </>
     );

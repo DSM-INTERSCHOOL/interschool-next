@@ -113,6 +113,7 @@ export interface IEvent {
     signature_legend: string | null;
     event_start_time: string | null;
     event_end_time: string | null;
+    confirmation_deadline: string | null;
     event_location: string | null;
     event_url: string | null;
     map_url: string | null;
@@ -126,6 +127,8 @@ export interface IEvent {
     publisher: IPublisher;
     user_liked: boolean | null;
     user_viewed: boolean;
+    user_confirmed: boolean | null;
+    user_signed: boolean | null;
 }
 
 export interface IPublicationFilters {

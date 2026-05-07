@@ -20,6 +20,7 @@ interface FormData {
     signatureLegend: string;
     eventStartTime: string;
     eventDuration: string;
+    confirmationDeadline: string;
     eventLocation: string;
     eventUrl: string;
     mapUrl: string;
@@ -297,7 +298,7 @@ export const PublicationFormCard = ({
                     {/* Hora del evento - Solo para eventos */}
                     {publicationType === 'event' && (
                         <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <fieldset className="fieldset">
                                 <legend className="fieldset-legend flex items-center gap-2">
                                     <span className="iconify lucide--clock size-4"></span>
@@ -339,6 +340,24 @@ export const PublicationFormCard = ({
                                 </select>
                                 <p className="fieldset-label">La vigencia expirará al día siguiente</p>
                             </fieldset>
+
+                            <fieldset className="fieldset">
+                                <legend className="fieldset-legend flex items-center gap-2">
+                                    <span className="iconify lucide--calendar-clock size-4"></span>
+                                    Límite de confirmación
+                                </legend>
+                                <label className="input input-accent">
+                                    <span className="iconify lucide--hourglass text-base-content/60 size-5"></span>
+                                    <input
+                                        className="grow"
+                                        type="datetime-local"
+                                        value={formData.confirmationDeadline}
+                                        onChange={(e) => onFieldChange('confirmationDeadline', e.target.value)}
+                                    />
+                                </label>
+                                <p className="fieldset-label">Calculado como fin del evento − 1 día</p>
+                            </fieldset>
+
                         </div>
 
                         {/* Ubicación y enlaces */}

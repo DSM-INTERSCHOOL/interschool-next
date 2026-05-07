@@ -9,6 +9,19 @@ import { getOrgConfig } from "@/lib/orgConfig";
 import { useAuthStore } from "@/store/useAuthStore";
 import { PublicationType } from "@/app/(admin)/apps/publications/components/PublicationTypeSelector";
 
+const computeEventEndTime = (startStr: string, duration: string): Date => {
+    const start = new Date(startStr);
+    if (duration === 'allday') {
+        const end = new Date(start);
+        end.setHours(23, 59, 59, 0);
+        return end;
+    }
+    return new Date(start.getTime() + parseInt(duration, 10) * 60000);
+};
+
+const toLocalInput = (date: Date): string =>
+    new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
 interface PublicationFormData {
     title: string;
     content: string;
@@ -26,6 +39,7 @@ interface PublicationFormData {
     signatureLegend: string;
     eventStartTime: string;
     eventDuration: string;
+    confirmationDeadline: string;
     eventLocation: string;
     eventUrl: string;
     mapUrl: string;
@@ -55,6 +69,7 @@ export const usePublicationForm = (
         signatureLegend: '',
         eventStartTime: '',
         eventDuration: '60',
+        confirmationDeadline: '',
         eventLocation: '',
         eventUrl: '',
         mapUrl: '',
@@ -70,6 +85,15 @@ export const usePublicationForm = (
             setFormData(prev => ({ ...prev, startDate: local }));
         }
     }, [publicationType, announcementId]);
+
+    // Auto-compute confirmationDeadline = event_end_time - 1 day
+    useEffect(() => {
+        if (publicationType !== 'event' || !formData.eventStartTime) return;
+        const end = computeEventEndTime(formData.eventStartTime, formData.eventDuration);
+        const deadline = new Date(end);
+        deadline.setDate(deadline.getDate() - 1);
+        setFormData(prev => ({ ...prev, confirmationDeadline: toLocalInput(deadline) }));
+    }, [formData.eventStartTime, formData.eventDuration]);
 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [existingAttachments, setExistingAttachments] = useState<IAttachmentRead[]>([]);
@@ -123,6 +147,7 @@ export const usePublicationForm = (
                     confirmationLegend: (publication as any).confirmation_legend || '',
                     signatureLegend: (publication as any).signature_legend || '',
                     eventStartTime: (publication as any).event_start_time ? toLocalDateTimeString((publication as any).event_start_time) : '',
+                    confirmationDeadline: (publication as any).confirmation_deadline ? toLocalDateTimeString((publication as any).confirmation_deadline) : '',
                     eventLocation: (publication as any).event_location || '',
                     eventUrl: (publication as any).event_url || '',
                     mapUrl: (publication as any).map_url || '',
@@ -268,16 +293,6 @@ export const usePublicationForm = (
                 }
             }
 
-            const computeEventEndTime = (startStr: string, duration: string): Date => {
-                const start = new Date(startStr);
-                if (duration === 'allday') {
-                    const end = new Date(start);
-                    end.setHours(23, 59, 59, 0);
-                    return end;
-                }
-                return new Date(start.getTime() + parseInt(duration, 10) * 60000);
-            };
-
             // Convert dates to UTC
             const startDateUTC = new Date(formData.startDate).toISOString();
             const endDateUTC = publicationType === 'event' && formData.eventStartTime
@@ -332,6 +347,7 @@ export const usePublicationForm = (
                     signature_legend: formData.requiresSignature ? formData.signatureLegend.trim() : null,
                     event_start_time: formData.eventStartTime ? new Date(formData.eventStartTime).toISOString() : null,
                     event_end_time: formData.eventStartTime ? computeEventEndTime(formData.eventStartTime, formData.eventDuration).toISOString() : null,
+                    confirmation_deadline: formData.confirmationDeadline ? new Date(formData.confirmationDeadline).toISOString() : null,
                     event_location: formData.eventLocation.trim() || null,
                     event_url: formData.eventUrl.trim() || null,
                     map_url: formData.mapUrl.trim() || null,
@@ -362,7 +378,8 @@ export const usePublicationForm = (
                     updateDto.confirmation_legend = formData.requiresConfirmation ? formData.confirmationLegend.trim() : null;
                     updateDto.signature_legend = formData.requiresSignature ? formData.signatureLegend.trim() : null;
                     updateDto.event_start_time = formData.eventStartTime ? new Date(formData.eventStartTime).toISOString() : null;
-                    updateDto.event_end_time = formData.eventEndTime ? new Date(formData.eventEndTime).toISOString() : null;
+                    updateDto.event_end_time = formData.eventStartTime ? computeEventEndTime(formData.eventStartTime, formData.eventDuration).toISOString() : null;
+                    updateDto.confirmation_deadline = formData.confirmationDeadline ? new Date(formData.confirmationDeadline).toISOString() : null;
                 }
 
                 if (publicationType === 'assignment') {
