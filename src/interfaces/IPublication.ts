@@ -117,6 +117,10 @@ export interface IEvent {
     event_location: string | null;
     event_url: string | null;
     map_url: string | null;
+    option_list_1?: string[] | null;
+    option_list_2?: string[] | null;
+    label_option_1?: string | null;
+    label_option_2?: string | null;
     id: string;
     school_id: number;
     created_at: string;

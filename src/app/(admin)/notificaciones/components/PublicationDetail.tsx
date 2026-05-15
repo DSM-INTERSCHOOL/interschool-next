@@ -25,6 +25,12 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
     const [signLoading, setSignLoading] = useState(false);
     const [confirmError, setConfirmError] = useState<string | null>(null);
     const [signError, setSignError] = useState<string | null>(null);
+    const [selectedOption1, setSelectedOption1] = useState('');
+    const [selectedOption2, setSelectedOption2] = useState('');
+    const [savingOption1, setSavingOption1] = useState(false);
+    const [savingOption2, setSavingOption2] = useState(false);
+    const [optionError1, setOptionError1] = useState<string | null>(null);
+    const [optionError2, setOptionError2] = useState<string | null>(null);
 
     useEffect(() => {
         if (!publication || type !== 'event' || !personId) return;
@@ -34,6 +40,10 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
         setSignError(null);
         setConfirmed(false);
         setSigned(false);
+        setSelectedOption1('');
+        setSelectedOption2('');
+        setOptionError1(null);
+        setOptionError2(null);
 
         const { schoolId } = getOrgConfig();
 
@@ -44,8 +54,10 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
         }).then((data) => {
             setConfirmed(!!data.confirmed);
             setSigned(!!data.signed);
+            setSelectedOption1(data.option_value_1 ?? '');
+            setSelectedOption2(data.option_value_2 ?? '');
         }).catch(() => {
-            // person record not found or not a recipient — leave as false
+            // person record not found or not a recipient — leave as default
         });
     }, [publication?.id]);
 
@@ -109,6 +121,32 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
             setConfirmError(err.message || "Error al confirmar");
         } finally {
             setConfirmLoading(false);
+        }
+    };
+
+    const handleOptionChange = async (listNum: 1 | 2, value: string) => {
+        if (!personId || !publication) return;
+        const setter = listNum === 1 ? setSelectedOption1 : setSelectedOption2;
+        const setSaving = listNum === 1 ? setSavingOption1 : setSavingOption2;
+        const setError = listNum === 1 ? setOptionError1 : setOptionError2;
+        setter(value);
+        try {
+            setSaving(true);
+            setError(null);
+            const { schoolId } = getOrgConfig();
+            const dto = listNum === 1
+                ? { option_value_1: value || null }
+                : { option_value_2: value || null };
+            await eventService.updatePerson({
+                schoolId,
+                eventId: publication.id,
+                personId: personId.toString(),
+                dto,
+            });
+        } catch (err: any) {
+            setError(err.message || "Error al guardar");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -292,6 +330,59 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
                                                 Ver en mapa
                                             </a>
                                         </div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {/* Option lists */}
+                    {event && ((event.option_list_1?.length ?? 0) > 0 || (event.option_list_2?.length ?? 0) > 0) && (
+                        <>
+                            <div className="divider"></div>
+                            <div className="not-prose space-y-4 mb-6">
+                                {(event.option_list_1?.length ?? 0) > 0 && (
+                                    <div className="form-control gap-1">
+                                        <label className="label py-0">
+                                            <span className="label-text font-medium flex items-center gap-2">
+                                                {event.label_option_1 || 'Opciones 1'}
+                                                {savingOption1 && <span className="loading loading-spinner loading-xs text-accent" />}
+                                            </span>
+                                        </label>
+                                        <select
+                                            className="select select-accent w-full"
+                                            value={selectedOption1}
+                                            disabled={savingOption1}
+                                            onChange={(e) => handleOptionChange(1, e.target.value)}
+                                        >
+                                            <option value="">Selecciona una opción</option>
+                                            {event.option_list_1!.map((opt, i) => (
+                                                <option key={i} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                        {optionError1 && <p className="text-xs text-error mt-1">{optionError1}</p>}
+                                    </div>
+                                )}
+                                {(event.option_list_2?.length ?? 0) > 0 && (
+                                    <div className="form-control gap-1">
+                                        <label className="label py-0">
+                                            <span className="label-text font-medium flex items-center gap-2">
+                                                {event.label_option_2 || 'Opciones 2'}
+                                                {savingOption2 && <span className="loading loading-spinner loading-xs text-accent" />}
+                                            </span>
+                                        </label>
+                                        <select
+                                            className="select select-accent w-full"
+                                            value={selectedOption2}
+                                            disabled={savingOption2}
+                                            onChange={(e) => handleOptionChange(2, e.target.value)}
+                                        >
+                                            <option value="">Selecciona una opción</option>
+                                            {event.option_list_2!.map((opt, i) => (
+                                                <option key={i} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                        {optionError2 && <p className="text-xs text-error mt-1">{optionError2}</p>}
                                     </div>
                                 )}
                             </div>

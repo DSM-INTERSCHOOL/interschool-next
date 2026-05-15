@@ -5,14 +5,16 @@ import { useEffect, useState } from "react";
 import { PageTitle } from "@/components/PageTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
+import { PollRead } from "@/interfaces/IPoll";
 import { getAnnouncements, getAssignments, getEvents } from "@/services/publications.service";
+import { getPolls, addPollView } from "@/services/poll.service";
 import * as announcementService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
 import * as eventService from "@/services/event.service";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { useNotifications } from "@/contexts/NotificationsContext";
 
-import { PublicationDetail, PublicationListItem } from "./components";
+import { PublicationDetail, PublicationListItem, PollListItem, PollDetail } from "./components";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const LegacyPageHidden = () => {
@@ -39,7 +41,7 @@ const LegacyPageHidden = () => {
     );
 };
 
-type ActiveTab = "announcements" | "assignments" | "events";
+type ActiveTab = "announcements" | "assignments" | "events" | "polls";
 
 export default function PublicationsPage() {
     const [activeTab, setActiveTab] = useState<ActiveTab>("announcements");
@@ -47,6 +49,7 @@ export default function PublicationsPage() {
     const [announcements, setAnnouncements] = useState<IAnnouncement[]>([]);
     const [assignments, setAssignments] = useState<IAssignment[]>([]);
     const [events, setEvents] = useState<IEvent[]>([]);
+    const [polls, setPolls] = useState<PollRead[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -60,19 +63,23 @@ export default function PublicationsPage() {
             setLoading(true);
             setError(null);
             try {
+                const { schoolId } = getOrgConfig();
                 if (activeTab === "announcements") {
                     const data = await getAnnouncements({ personId: personId.toString(), token });
                     setAnnouncements(data);
                 } else if (activeTab === "assignments") {
                     const data = await getAssignments({ personId: personId.toString(), token });
                     setAssignments(data);
-                } else {
+                } else if (activeTab === "events") {
                     const data = await getEvents({ personId: personId.toString(), token });
                     setEvents(data);
+                } else {
+                    const data = await getPolls({ schoolId, personId: personId.toString() });
+                    setPolls(data);
                 }
             } catch (err) {
                 console.error("Error loading publications:", err);
-                setError("Error al cargar las publicaciones. Por favor, intenta de nuevo.");
+                setError("Error al cargar. Por favor, intenta de nuevo.");
             } finally {
                 setLoading(false);
             }
@@ -81,12 +88,23 @@ export default function PublicationsPage() {
         loadData();
     }, [activeTab, token, personId]);
 
+    const isPollTab = activeTab === "polls";
+
     const currentList: (IAnnouncement | IAssignment | IEvent)[] =
         activeTab === "announcements" ? announcements
         : activeTab === "assignments" ? assignments
-        : events;
+        : activeTab === "events" ? events
+        : [];
 
-    const selectedPublication = currentList.find((p) => p.id === selectedId) || null;
+    const selectedPublication = !isPollTab
+        ? (currentList.find((p) => p.id === selectedId) || null)
+        : null;
+
+    const selectedPoll = isPollTab
+        ? (polls.find((p) => p.id === selectedId) || null)
+        : null;
+
+    const listCount = isPollTab ? polls.length : currentList.length;
 
     const handlePublicationClick = async (id: string) => {
         if (!token || !personId) return;
@@ -103,7 +121,7 @@ export default function PublicationsPage() {
             setAnnouncements(markViewed(announcements));
         } else if (activeTab === "assignments") {
             setAssignments(markViewed(assignments));
-        } else {
+        } else if (activeTab === "events") {
             setEvents(markViewed(events));
         }
 
@@ -115,7 +133,7 @@ export default function PublicationsPage() {
                 await announcementService.addView({ schoolId: schoolId!, announcementId: id, personId: personId.toString() });
             } else if (activeTab === "assignments") {
                 await assignmentService.addView({ schoolId: schoolId!, assignmentId: id, personId: personId.toString() });
-            } else {
+            } else if (activeTab === "events") {
                 await eventService.addView({ schoolId: schoolId!, eventId: id, personId: personId.toString() });
             }
         } catch (err) {
@@ -164,13 +182,33 @@ export default function PublicationsPage() {
         }
     };
 
+    const handlePollClick = async (id: string) => {
+        setSelectedId(id);
+        if (!personId) return;
+        try {
+            const { schoolId } = getOrgConfig();
+            await addPollView({ schoolId, pollId: id, personId: personId.toString() });
+        } catch (err) {
+            console.error("Error registering poll view:", err);
+        }
+    };
+
     const handleConfirm = (id: string) => {
         setEvents((prev) =>
             prev.map((e) => e.id === id ? { ...e, user_confirmed: true } : e)
         );
     };
 
-    const tabLabel = activeTab === "announcements" ? "avisos" : activeTab === "assignments" ? "tareas" : "eventos";
+    const tabLabel =
+        activeTab === "announcements" ? "avisos"
+        : activeTab === "assignments" ? "tareas"
+        : activeTab === "events" ? "eventos"
+        : "encuestas";
+
+    const switchTab = (tab: ActiveTab) => {
+        setActiveTab(tab);
+        setSelectedId(null);
+    };
 
     if (!token || !personId) {
         return (
@@ -190,14 +228,14 @@ export default function PublicationsPage() {
         <>
             <PageTitle title="Notificaciones" />
 
-            <div className=" bg-base-100 shadow-lg mt-6 space-y-6">
+            <div className="bg-base-100 shadow-lg mt-6 space-y-6">
                 <div className="">
                     <div className="bg-base-200 mt-6 flex h-screen flex-col">
-                        {/* Header con tabs */}
+                        {/* Tabs */}
                         <header className="bg-base-100 border-base-300 border-b">
                             <div className="border-base-300 flex border-t">
                                 <button
-                                    onClick={() => { setActiveTab("announcements"); setSelectedId(null); }}
+                                    onClick={() => switchTab("announcements")}
                                     className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
                                         activeTab === "announcements"
                                             ? "border-primary text-primary"
@@ -207,7 +245,7 @@ export default function PublicationsPage() {
                                     Avisos
                                 </button>
                                 <button
-                                    onClick={() => { setActiveTab("assignments"); setSelectedId(null); }}
+                                    onClick={() => switchTab("assignments")}
                                     className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
                                         activeTab === "assignments"
                                             ? "border-primary text-primary"
@@ -217,7 +255,7 @@ export default function PublicationsPage() {
                                     Tareas
                                 </button>
                                 <button
-                                    onClick={() => { setActiveTab("events"); setSelectedId(null); }}
+                                    onClick={() => switchTab("events")}
                                     className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
                                         activeTab === "events"
                                             ? "border-accent text-accent"
@@ -226,12 +264,22 @@ export default function PublicationsPage() {
                                     <span className="iconify lucide--calendar-days size-4" />
                                     Eventos
                                 </button>
+                                <button
+                                    onClick={() => switchTab("polls")}
+                                    className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
+                                        activeTab === "polls"
+                                            ? "border-warning text-warning"
+                                            : "text-base-content/60 hover:text-base-content border-transparent"
+                                    }`}>
+                                    <span className="iconify lucide--bar-chart-2 size-4" />
+                                    Encuestas
+                                </button>
                             </div>
                         </header>
 
-                        {/* Layout de dos columnas */}
+                        {/* Two-column layout */}
                         <div className="flex flex-1 overflow-hidden">
-                            {/* Lista lateral */}
+                            {/* Left list panel */}
                             <div className="bg-base-100 border-base-300 w-80 flex-shrink-0 overflow-y-auto border-r">
                                 <div className="p-3">
                                     <div className="mb-3 px-3">
@@ -239,7 +287,7 @@ export default function PublicationsPage() {
                                             {loading ? (
                                                 <span className="loading loading-spinner loading-xs mr-2"></span>
                                             ) : (
-                                                `${currentList.length} ${tabLabel}`
+                                                `${listCount} ${tabLabel}`
                                             )}
                                         </p>
                                     </div>
@@ -257,38 +305,66 @@ export default function PublicationsPage() {
                                         </div>
                                     ) : (
                                         <div className="space-y-1">
-                                            {currentList.length === 0 ? (
-                                                <div className="py-8 text-center">
-                                                    <span className="iconify lucide--inbox text-base-content/20 mx-auto size-12" />
-                                                    <p className="text-base-content/60 mt-2 text-sm">
-                                                        No hay {tabLabel} disponibles
-                                                    </p>
-                                                </div>
+                                            {isPollTab ? (
+                                                polls.length === 0 ? (
+                                                    <div className="py-8 text-center">
+                                                        <span className="iconify lucide--bar-chart-2 text-base-content/20 mx-auto size-12" />
+                                                        <p className="text-base-content/60 mt-2 text-sm">
+                                                            No hay encuestas disponibles
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    polls.map((poll) => (
+                                                        <PollListItem
+                                                            key={poll.id}
+                                                            poll={poll}
+                                                            isActive={selectedId === poll.id}
+                                                            onClick={() => handlePollClick(poll.id)}
+                                                        />
+                                                    ))
+                                                )
                                             ) : (
-                                                currentList.map((publication) => (
-                                                    <PublicationListItem
-                                                        key={publication.id}
-                                                        publication={publication}
-                                                        isActive={selectedId === publication.id}
-                                                        onClick={() => handlePublicationClick(publication.id)}
-                                                        type={activeTab === "events" ? "event" : activeTab === "assignments" ? "assignment" : "announcement"}
-                                                    />
-                                                ))
+                                                currentList.length === 0 ? (
+                                                    <div className="py-8 text-center">
+                                                        <span className="iconify lucide--inbox text-base-content/20 mx-auto size-12" />
+                                                        <p className="text-base-content/60 mt-2 text-sm">
+                                                            No hay {tabLabel} disponibles
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    currentList.map((publication) => (
+                                                        <PublicationListItem
+                                                            key={publication.id}
+                                                            publication={publication}
+                                                            isActive={selectedId === publication.id}
+                                                            onClick={() => handlePublicationClick(publication.id)}
+                                                            type={activeTab === "events" ? "event" : activeTab === "assignments" ? "assignment" : "announcement"}
+                                                        />
+                                                    ))
+                                                )
                                             )}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Panel de detalle */}
-                            <div className="bg-base-100 flex-1">
-                                <PublicationDetail
-                                    key={selectedId}
-                                    publication={selectedPublication}
-                                    type={activeTab === "announcements" ? "announcement" : activeTab === "assignments" ? "assignment" : "event"}
-                                    onLike={handleLike}
-                                    onConfirm={handleConfirm}
-                                />
+                            {/* Right detail panel */}
+                            <div className="bg-base-100 flex-1 overflow-hidden">
+                                {isPollTab ? (
+                                    <PollDetail
+                                        key={selectedId}
+                                        poll={selectedPoll}
+                                        personId={personId.toString()}
+                                    />
+                                ) : (
+                                    <PublicationDetail
+                                        key={selectedId}
+                                        publication={selectedPublication}
+                                        type={activeTab === "announcements" ? "announcement" : activeTab === "assignments" ? "assignment" : "event"}
+                                        onLike={handleLike}
+                                        onConfirm={handleConfirm}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>

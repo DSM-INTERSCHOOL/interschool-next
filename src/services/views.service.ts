@@ -46,3 +46,12 @@ export async function getViewsForEvent(eventId: string): Promise<View[]> {
     const response = await communicationApi.get(`/v1/schools/${schoolId}/events/${eventId}/views`);
     return response.data;
 }
+
+/**
+ * Get all views for a poll
+ */
+export async function getViewsForPoll(pollId: string): Promise<View[]> {
+    const { schoolId } = getOrgConfig();
+    const response = await communicationApi.get(`/v1/schools/${schoolId}/polls/${pollId}/views`);
+    return response.data;
+}

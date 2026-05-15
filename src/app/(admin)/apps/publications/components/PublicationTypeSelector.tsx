@@ -1,4 +1,4 @@
-export type PublicationType = 'announcement' | 'assignment' | 'event';
+export type PublicationType = 'announcement' | 'assignment' | 'event' | 'poll';
 
 interface PublicationTypeSelectorProps {
     value: PublicationType;
@@ -16,7 +16,7 @@ export const PublicationTypeSelector = ({ value, onChange }: PublicationTypeSele
                     </h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     {/* Opción Aviso */}
                     <div
                         className={`card border-2 cursor-pointer transition-all duration-200 ${
@@ -99,6 +99,34 @@ export const PublicationTypeSelector = ({ value, onChange }: PublicationTypeSele
                                 </div>
                                 {value === 'event' && (
                                     <span className="iconify lucide--check-circle size-6 text-accent"></span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    {/* Opción Encuesta */}
+                    <div
+                        className={`card border-2 cursor-pointer transition-all duration-200 ${
+                            value === 'poll'
+                                ? 'border-warning bg-warning/10'
+                                : 'border-base-300 hover:border-base-400'
+                        }`}
+                        onClick={() => onChange('poll')}
+                    >
+                        <div className="card-body">
+                            <div className="flex items-center gap-4">
+                                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                                    value === 'poll' ? 'bg-warning text-warning-content' : 'bg-base-200'
+                                }`}>
+                                    <span className="iconify lucide--bar-chart-2 size-6"></span>
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-semibold text-base">Encuesta</h4>
+                                    <p className="text-sm text-base-content/70">
+                                        Recopilar respuestas con preguntas de distintos tipos
+                                    </p>
+                                </div>
+                                {value === 'poll' && (
+                                    <span className="iconify lucide--check-circle size-6 text-warning"></span>
                                 )}
                             </div>
                         </div>

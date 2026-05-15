@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { getViewsForAnnouncement, getViewsForAssignment, getViewsForEvent } from "@/services/views.service";
+import { getViewsForAnnouncement, getViewsForAssignment, getViewsForEvent, getViewsForPoll } from "@/services/views.service";
 import type { PublicationType } from "./PublicationTypeSelector";
 
 interface ViewsModalProps {
@@ -54,7 +54,9 @@ export function ViewsModal({ publicationId, publicationTitle, publicationType, i
                 ? await getViewsForAssignment(publicationId)
                 : publicationType === 'event'
                     ? await getViewsForEvent(publicationId)
-                    : await getViewsForAnnouncement(publicationId);
+                    : publicationType === 'poll'
+                        ? await getViewsForPoll(publicationId)
+                        : await getViewsForAnnouncement(publicationId);
 
             setViews(data);
         } catch (err: any) {

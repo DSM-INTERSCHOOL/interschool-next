@@ -5,6 +5,7 @@ import { IAnnouncementRecipient } from "@/interfaces/IAnnouncement";
 import { getPersons as getAnnouncementPersons } from "@/services/announcement.service";
 import { getPersons as getAssignmentPersons } from "@/services/assignment.service";
 import { getEventConfirmations, IEventConfirmation } from "@/services/event.service";
+import { getPollPersons } from "@/services/poll.service";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { getOrgConfig } from "@/lib/orgConfig";
 import type { PublicationType } from "./PublicationTypeSelector";
@@ -52,6 +53,9 @@ export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onC
             } else if (publicationType === 'assignment') {
                 const data = await getAssignmentPersons({ schoolId, assignmentId: announcementId });
                 setRecipients(data);
+            } else if (publicationType === 'poll') {
+                const data = await getPollPersons({ schoolId, pollId: announcementId });
+                setRecipients(data as any);
             } else {
                 const data = await getAnnouncementPersons({ schoolId, announcementId });
                 setRecipients(data);
@@ -74,9 +78,11 @@ export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onC
     if (!isOpen || !announcementId) return null;
 
     const isEvent = publicationType === 'event';
+    const isPoll = publicationType === 'poll';
     const totalCount = isEvent ? confirmations.length : recipients.length;
     const confirmedCount = isEvent ? confirmations.filter((c) => c.confirmed).length : 0;
     const signedCount = isEvent ? confirmations.filter((c) => c.signed).length : 0;
+    const respondedCount = isPoll ? recipients.filter((r) => (r as any).responded).length : 0;
 
     const typeColor = publicationType === 'assignment' ? 'bg-secondary/10' : publicationType === 'event' ? 'bg-accent/10' : 'bg-primary/10';
     const typeTextColor = publicationType === 'assignment' ? 'text-secondary' : publicationType === 'event' ? 'text-accent' : 'text-primary';
@@ -110,6 +116,12 @@ export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onC
                             <span className="iconify lucide--users size-4"></span>
                             {totalCount} {totalCount === 1 ? 'destinatario' : 'destinatarios'}
                         </div>
+                        {isPoll && (
+                            <div className="badge badge-lg badge-success gap-2">
+                                <span className="iconify lucide--check-circle size-4"></span>
+                                {respondedCount} respondido{respondedCount !== 1 ? 's' : ''}
+                            </div>
+                        )}
                         {isEvent && requiresConfirmation && (
                             <div className="badge badge-lg badge-success gap-2">
                                 <span className="iconify lucide--check size-4"></span>
@@ -218,11 +230,14 @@ export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onC
                                     <th className="bg-base-200">Foto</th>
                                     <th className="bg-base-200">Nombre</th>
                                     <th className="bg-base-200">Tipo</th>
+                                    {publicationType === 'poll' && <th className="bg-base-200 text-center">Respondido</th>}
                                 </tr>
                             </thead>
                             <tbody>
-                                {recipients.map((recipient) => (
-                                    <tr key={recipient.id}>
+                                {recipients.map((recipient, idx) => {
+                                    const r = recipient as any;
+                                    return (
+                                    <tr key={r.person_id ?? r.id ?? String(idx)}>
                                         <td>
                                             {recipient.profile_picture_url || recipient.official_picture_url ? (
                                                 <img
@@ -253,8 +268,23 @@ export const RecipientsModal = ({ announcementId, announcementTitle, isOpen, onC
                                                 {recipient.type || "Sin tipo"}
                                             </div>
                                         </td>
+                                        {publicationType === 'poll' && (
+                                            <td className="text-center">
+                                                {r.responded ? (
+                                                    <div className="flex flex-col items-center gap-0.5">
+                                                        <span className="iconify lucide--circle-check size-5 text-success"></span>
+                                                        {formatDateTime(r.responded_at) && (
+                                                            <span className="text-xs text-base-content/50">{formatDateTime(r.responded_at)}</span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="iconify lucide--circle size-5 text-base-content/20"></span>
+                                                )}
+                                            </td>
+                                        )}
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

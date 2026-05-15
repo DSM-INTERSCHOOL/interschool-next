@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import { AttachmentsManager } from "./AttachmentsManager";
 import { IAttachmentRead } from "@/interfaces/IAnnouncement";
@@ -24,6 +27,10 @@ interface FormData {
     eventLocation: string;
     eventUrl: string;
     mapUrl: string;
+    optionList1: string[];
+    optionList2: string[];
+    labelOption1: string;
+    labelOption2: string;
 }
 
 interface PublicationFormCardProps {
@@ -59,6 +66,43 @@ export const PublicationFormCard = ({
     publishError,
     isTeacher = false
 }: PublicationFormCardProps) => {
+    const [newItem1, setNewItem1] = useState('');
+    const [newItem2, setNewItem2] = useState('');
+    const [active1, setActive1] = useState(false);
+    const [active2, setActive2] = useState(false);
+
+    // When loading an existing event, activate sections that already have data
+    useEffect(() => {
+        if (formData.optionList1.length > 0 || !!formData.labelOption1) setActive1(true);
+    }, [formData.optionList1.length, formData.labelOption1]);
+
+    useEffect(() => {
+        if (formData.optionList2.length > 0 || !!formData.labelOption2) setActive2(true);
+    }, [formData.optionList2.length, formData.labelOption2]);
+
+    const addToList = (list: 'optionList1' | 'optionList2', value: string, setInput: (v: string) => void) => {
+        const trimmed = value.trim();
+        if (!trimmed) return;
+        onFieldChange(list, [...formData[list], trimmed]);
+        setInput('');
+    };
+
+    const removeFromList = (list: 'optionList1' | 'optionList2', index: number) => {
+        onFieldChange(list, formData[list].filter((_, i) => i !== index));
+    };
+
+    const deactivateList = (n: 1 | 2) => {
+        if (n === 1) {
+            setActive1(false);
+            onFieldChange('optionList1', []);
+            onFieldChange('labelOption1', '');
+        } else {
+            setActive2(false);
+            onFieldChange('optionList2', []);
+            onFieldChange('labelOption2', '');
+        }
+    };
+
     return (
         <div className="card card-border bg-base-100 shadow-xl">
             <div className="card-body">
@@ -415,6 +459,126 @@ export const PublicationFormCard = ({
                                 </label>
                                 <p className="fieldset-label">Enlace a Google Maps u otro mapa</p>
                             </fieldset>
+                        </div>
+
+                        {/* Lista de opciones 1 */}
+                        <div className="form-control bg-base-100 rounded-lg p-3 border border-base-300">
+                            <label className="label cursor-pointer flex">
+                                <div className="flex items-center gap-3">
+                                    <span className="iconify lucide--list size-5 text-accent"></span>
+                                    <div>
+                                        <span className="label-text font-medium">Activar lista de opciones 1</span>
+                                        <div className="text-xs text-base-content/60">Lista personalizada de valores para este evento</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" className="checkbox checkbox-accent" checked={active1}
+                                    onChange={(e) => { if (e.target.checked) setActive1(true); else deactivateList(1); }} />
+                            </label>
+                            {active1 && (
+                                <div className="mt-3 space-y-3 pt-3 border-t border-base-200">
+                                    <fieldset className="fieldset">
+                                        <legend className="fieldset-legend flex items-center gap-2">
+                                            <span className="iconify lucide--tag size-4"></span>
+                                            Etiqueta de la lista
+                                        </legend>
+                                        <label className="input input-accent w-full">
+                                            <span className="iconify lucide--text text-base-content/60 size-5"></span>
+                                            <input className="grow" type="text"
+                                                placeholder="Ej: Opciones de transporte, Tallas disponibles..."
+                                                value={formData.labelOption1}
+                                                onChange={(e) => onFieldChange('labelOption1', e.target.value)} />
+                                        </label>
+                                        <p className="fieldset-label">Nombre o descripción de la lista</p>
+                                    </fieldset>
+                                    <div className="flex gap-2">
+                                        <label className="input input-accent flex-1">
+                                            <span className="iconify lucide--plus text-base-content/60 size-5"></span>
+                                            <input className="grow" type="text" placeholder="Escribe un valor y presiona Agregar..."
+                                                value={newItem1} onChange={(e) => setNewItem1(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addToList('optionList1', newItem1, setNewItem1); } }} />
+                                        </label>
+                                        <button type="button" className="btn btn-accent btn-outline"
+                                            onClick={() => addToList('optionList1', newItem1, setNewItem1)}>
+                                            <span className="iconify lucide--plus size-4"></span>Agregar
+                                        </button>
+                                    </div>
+                                    {formData.optionList1.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {formData.optionList1.map((item, idx) => (
+                                                <span key={idx} className="badge badge-accent badge-outline gap-1 py-3 px-3 text-sm">
+                                                    {item}
+                                                    <button type="button" onClick={() => removeFromList('optionList1', idx)}
+                                                        className="ml-1 hover:text-error transition-colors">
+                                                        <span className="iconify lucide--x size-3"></span>
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-base-content/40 italic">Sin elementos aún — agrega el primero arriba.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Lista de opciones 2 */}
+                        <div className="form-control bg-base-100 rounded-lg p-3 border border-base-300">
+                            <label className="label cursor-pointer flex">
+                                <div className="flex items-center gap-3">
+                                    <span className="iconify lucide--list size-5 text-accent"></span>
+                                    <div>
+                                        <span className="label-text font-medium">Activar lista de opciones 2</span>
+                                        <div className="text-xs text-base-content/60">Lista personalizada de valores para este evento</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" className="checkbox checkbox-accent" checked={active2}
+                                    onChange={(e) => { if (e.target.checked) setActive2(true); else deactivateList(2); }} />
+                            </label>
+                            {active2 && (
+                                <div className="mt-3 space-y-3 pt-3 border-t border-base-200">
+                                    <fieldset className="fieldset">
+                                        <legend className="fieldset-legend flex items-center gap-2">
+                                            <span className="iconify lucide--tag size-4"></span>
+                                            Etiqueta de la lista
+                                        </legend>
+                                        <label className="input input-accent w-full">
+                                            <span className="iconify lucide--text text-base-content/60 size-5"></span>
+                                            <input className="grow" type="text"
+                                                placeholder="Ej: Opciones de transporte, Tallas disponibles..."
+                                                value={formData.labelOption2}
+                                                onChange={(e) => onFieldChange('labelOption2', e.target.value)} />
+                                        </label>
+                                        <p className="fieldset-label">Nombre o descripción de la lista</p>
+                                    </fieldset>
+                                    <div className="flex gap-2">
+                                        <label className="input input-accent flex-1">
+                                            <span className="iconify lucide--plus text-base-content/60 size-5"></span>
+                                            <input className="grow" type="text" placeholder="Escribe un valor y presiona Agregar..."
+                                                value={newItem2} onChange={(e) => setNewItem2(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addToList('optionList2', newItem2, setNewItem2); } }} />
+                                        </label>
+                                        <button type="button" className="btn btn-accent btn-outline"
+                                            onClick={() => addToList('optionList2', newItem2, setNewItem2)}>
+                                            <span className="iconify lucide--plus size-4"></span>Agregar
+                                        </button>
+                                    </div>
+                                    {formData.optionList2.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {formData.optionList2.map((item, idx) => (
+                                                <span key={idx} className="badge badge-accent badge-outline gap-1 py-3 px-3 text-sm">
+                                                    {item}
+                                                    <button type="button" onClick={() => removeFromList('optionList2', idx)}
+                                                        className="ml-1 hover:text-error transition-colors">
+                                                        <span className="iconify lucide--x size-3"></span>
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-base-content/40 italic">Sin elementos aún — agrega el primero arriba.</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         </>
                     )}

@@ -32,6 +32,10 @@ export interface IEventCreate {
   event_location?: string | null;
   event_url?: string | null;
   map_url?: string | null;
+  option_list_1?: string[] | null;
+  option_list_2?: string[] | null;
+  label_option_1?: string | null;
+  label_option_2?: string | null;
   publisher_person_id: string;
   persons: string[];
   attachments?: IAttachmentCreate[] | null;
@@ -64,6 +68,10 @@ export interface IEventUpdate {
   event_location?: string | null;
   event_url?: string | null;
   map_url?: string | null;
+  option_list_1?: string[] | null;
+  option_list_2?: string[] | null;
+  label_option_1?: string | null;
+  label_option_2?: string | null;
   persons?: string[];
   attachments?: IAttachmentCreate[] | null;
 }
@@ -98,6 +106,10 @@ export interface IEventRead {
   event_location?: string | null;
   event_url?: string | null;
   map_url?: string | null;
+  option_list_1?: string[] | null;
+  option_list_2?: string[] | null;
+  label_option_1?: string | null;
+  label_option_2?: string | null;
   id: string;
   school_id: number;
   created_at: string | null;

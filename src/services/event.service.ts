@@ -115,6 +115,44 @@ export interface IEventStat {
   total: string;
 }
 
+export interface IEventOptionStat {
+  label: string;
+  value: string;
+  total: string;
+}
+
+export interface IEventOptionDetail {
+  label: string;
+  full_name: string;
+  value: string | null;
+}
+
+export const getOptionStats = async ({
+  schoolId,
+  eventId,
+}: {
+  schoolId: string | number | null;
+  eventId: string;
+}): Promise<IEventOptionStat[]> => {
+  const response = await communicationApi.get(
+    `/v1/schools/${schoolId}/events/${eventId}/options/stats`
+  );
+  return response.data;
+};
+
+export const getOptionDetails = async ({
+  schoolId,
+  eventId,
+}: {
+  schoolId: string | number | null;
+  eventId: string;
+}): Promise<IEventOptionDetail[]> => {
+  const response = await communicationApi.get(
+    `/v1/schools/${schoolId}/events/${eventId}/options/details`
+  );
+  return response.data;
+};
+
 export const getConfirmationStats = async ({
   schoolId,
   eventId,
@@ -154,6 +192,14 @@ export const getEventConfirmations = async ({
   return response.data;
 };
 
+export interface IEventPersonRead {
+  confirmed: boolean;
+  signed: boolean;
+  option_value_1?: string | null;
+  option_value_2?: string | null;
+  [key: string]: any;
+}
+
 export const getPersonInEvent = async ({
   schoolId,
   eventId,
@@ -166,7 +212,7 @@ export const getPersonInEvent = async ({
   const response = await communicationApi.get(
     `/v1/schools/${schoolId}/events/${eventId}/persons/${personId}`
   );
-  return response.data as { confirmed: boolean; signed: boolean; [key: string]: any };
+  return response.data as IEventPersonRead;
 };
 
 export const updatePerson = async ({
@@ -178,7 +224,7 @@ export const updatePerson = async ({
   schoolId: string | number | null;
   eventId: string;
   personId: string;
-  dto: { confirmed?: boolean; signed?: boolean };
+  dto: { confirmed?: boolean; signed?: boolean; option_value_1?: string | null; option_value_2?: string | null };
 }) => {
   const response = await communicationApi.put(
     `/v1/schools/${schoolId}/events/${eventId}/persons/${personId}`,

@@ -43,6 +43,10 @@ interface PublicationFormData {
     eventLocation: string;
     eventUrl: string;
     mapUrl: string;
+    optionList1: string[];
+    optionList2: string[];
+    labelOption1: string;
+    labelOption2: string;
 }
 
 export const usePublicationForm = (
@@ -73,6 +77,10 @@ export const usePublicationForm = (
         eventLocation: '',
         eventUrl: '',
         mapUrl: '',
+        optionList1: [],
+        optionList2: [],
+        labelOption1: '',
+        labelOption2: '',
     });
 
     // Initialize startDate to now for new events
@@ -151,6 +159,10 @@ export const usePublicationForm = (
                     eventLocation: (publication as any).event_location || '',
                     eventUrl: (publication as any).event_url || '',
                     mapUrl: (publication as any).map_url || '',
+                    optionList1: (publication as any).option_list_1 ?? [],
+                    optionList2: (publication as any).option_list_2 ?? [],
+                    labelOption1: (publication as any).label_option_1 || '',
+                    labelOption2: (publication as any).label_option_2 || '',
                     eventDuration: (() => {
                         const s = (publication as any).event_start_time;
                         const e = (publication as any).event_end_time;
@@ -351,6 +363,10 @@ export const usePublicationForm = (
                     event_location: formData.eventLocation.trim() || null,
                     event_url: formData.eventUrl.trim() || null,
                     map_url: formData.mapUrl.trim() || null,
+                    option_list_1: formData.optionList1.length > 0 ? formData.optionList1 : null,
+                    option_list_2: formData.optionList2.length > 0 ? formData.optionList2 : null,
+                    label_option_1: formData.labelOption1.trim() || null,
+                    label_option_2: formData.labelOption2.trim() || null,
                 };
             }
 
@@ -380,6 +396,13 @@ export const usePublicationForm = (
                     updateDto.event_start_time = formData.eventStartTime ? new Date(formData.eventStartTime).toISOString() : null;
                     updateDto.event_end_time = formData.eventStartTime ? computeEventEndTime(formData.eventStartTime, formData.eventDuration).toISOString() : null;
                     updateDto.confirmation_deadline = formData.confirmationDeadline ? new Date(formData.confirmationDeadline).toISOString() : null;
+                    updateDto.event_location = formData.eventLocation.trim() || null;
+                    updateDto.event_url = formData.eventUrl.trim() || null;
+                    updateDto.map_url = formData.mapUrl.trim() || null;
+                    updateDto.option_list_1 = formData.optionList1.length > 0 ? formData.optionList1 : null;
+                    updateDto.option_list_2 = formData.optionList2.length > 0 ? formData.optionList2 : null;
+                    updateDto.label_option_1 = formData.labelOption1.trim() || null;
+                    updateDto.label_option_2 = formData.labelOption2.trim() || null;
                 }
 
                 if (publicationType === 'assignment') {
