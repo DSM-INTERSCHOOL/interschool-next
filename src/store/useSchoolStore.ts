@@ -1,12 +1,14 @@
 // store/useSchoolStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { ISchool } from '@/interfaces/ISchool';
 
 interface SchoolState {
+  school: ISchool | null;
   schoolName: string | null;
   schoolImage: string | null;
 
-  // Acciones
+  setSchool: (school: ISchool) => void;
   setSchoolInfo: (schoolName: string, schoolImage: string) => void;
   clearSchoolInfo: () => void;
 }
@@ -14,23 +16,29 @@ interface SchoolState {
 export const useSchoolStore = create<SchoolState>()(
   persist(
     (set) => ({
-      // Estado inicial
+      school: null,
       schoolName: null,
       schoolImage: null,
 
-      // Acciones
+      setSchool: (school) => set({
+        school,
+        schoolName: school.name,
+        schoolImage: school.logo_path,
+      }),
+
       setSchoolInfo: (schoolName, schoolImage) => set({
         schoolName,
-        schoolImage
+        schoolImage,
       }),
 
       clearSchoolInfo: () => set({
+        school: null,
         schoolName: null,
-        schoolImage: null
+        schoolImage: null,
       }),
     }),
     {
-      name: 'school-storage', // localStorage key separada
+      name: 'school-storage',
     }
   )
 );

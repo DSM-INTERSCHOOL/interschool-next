@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 import { TopbarNotificationButton } from "./TopbarNotificationButton";
 import { TopbarSearchButton } from "./TopbarSearchButton";
+import { TopbarAppointmentsButton } from "./TopbarAppointmentsButton";
 
 export const Topbar = () => {
     const { name, email, personInternalId, status, personType, logout } = useAuth();
@@ -36,6 +37,7 @@ export const Topbar = () => {
                 <label htmlFor="layout-rightbar-drawer" className="btn btn-circle btn-ghost btn-sm drawer-button">
                     <span className="iconify lucide--settings-2 size-4.5" />
                 </label>
+                <TopbarAppointmentsButton />
                 <TopbarNotificationButton />
 
                 <div className="dropdown dropdown-bottom dropdown-end">

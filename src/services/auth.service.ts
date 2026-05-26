@@ -3,6 +3,8 @@ import axios from "axios";
 import { getDeviceId } from "@/lib/deviceId";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { useAuthStore } from "@/store/useAuthStore";
+import { ISchool } from "@/interfaces/ISchool";
+import { IAppointmentRecipientsResponse } from "@/interfaces/IAppointment";
 
 interface LoginRequest {
     person_id: string;
@@ -367,6 +369,64 @@ export const logOutCore = async (): Promise<void> => {
     } catch (error) {
         console.log("Error al logout", error);
     }
+};
+
+export const getSchool = async (schoolId: string | number): Promise<ISchool> => {
+    const { portalName } = getOrgConfig();
+    const token = useAuthStore.getState().token;
+    const response = await axios.get<ISchool>(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "x-device-id": getDeviceId(),
+                "x-url-origin": portalName,
+                "Content-Type": "application/json",
+            },
+        }
+    );
+    return response.data;
+};
+
+export const getAppointmentRecipients = async ({
+  schoolId,
+  personId,
+  personType,
+  searchTerm,
+  targetPersonType,
+  skip = 0,
+  limit = 20,
+}: {
+  schoolId: string | number;
+  personId: string | number;
+  personType: string;
+  searchTerm?: string;
+  targetPersonType?: string | null;
+  skip?: number;
+  limit?: number;
+}): Promise<IAppointmentRecipientsResponse> => {
+  const { portalName } = getOrgConfig();
+  const token = useAuthStore.getState().token;
+  const params = new URLSearchParams({
+    person_id: String(personId),
+    person_type: personType,
+    skip: String(skip),
+    limit: String(limit),
+  });
+  if (searchTerm?.trim()) params.set("search_term", searchTerm.trim());
+  if (targetPersonType) params.set("target_person_type", targetPersonType);
+  const response = await axios.get<IAppointmentRecipientsResponse>(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/appointment-recipients?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-device-id": getDeviceId(),
+        "x-url-origin": portalName,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return response.data;
 };
 
 // Exportar tipos para uso en otros archivos
