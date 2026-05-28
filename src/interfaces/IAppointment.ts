@@ -193,6 +193,19 @@ export interface IAvailableSlot {
   end: string;
 }
 
+export interface IAvailableSlotDay {
+  date: string;
+  slots: IAvailableSlot[];
+}
+
+export interface IPersonSlotsResponse {
+  person_id: string;
+  from_date: string;
+  to_date: string;
+  duration_minutes: number;
+  days: IAvailableSlotDay[];
+}
+
 // ── Appointment recipients ────────────────────────────────────────────────────
 
 export interface IAppointmentRecipient {
@@ -226,7 +239,7 @@ export interface IAppointmentRecipientsResponse {
 
 export type AppointmentStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
 export type ParticipantRole = "ORGANIZER" | "ATTENDEE";
-export type ParticipantStatus = "PENDING" | "CONFIRMED" | "DECLINED";
+export type ParticipantStatus = "PENDING" | "CONFIRMED" | "DECLINED" | "CANCELLED";
 
 export interface IAppointmentParticipantPerson {
   id: string;
@@ -276,14 +289,26 @@ export interface IAppointmentRead {
   participants: IAppointmentParticipant[];
 }
 
+export interface IAppointmentUpdate {
+  title?: string | null;
+  description?: string | null;
+  without_time?: boolean;
+  scheduled_start?: string;
+  scheduled_end?: string;
+  duration_minutes?: number;
+  location?: string | null;
+  virtual_link?: string | null;
+  notes?: string | null;
+}
+
 export interface IAppointmentCreate {
   host_person_id: string;
   title: string | null;
   description: string | null;
   without_time: boolean;
-  scheduled_start: string;
-  scheduled_end: string;
-  duration_minutes: number;
+  scheduled_start?: string;
+  scheduled_end?: string;
+  duration_minutes?: number;
   location: string | null;
   virtual_link: string | null;
   notes: string | null;

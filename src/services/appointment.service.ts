@@ -18,7 +18,9 @@ import {
   IAvailabilityExceptionUpdate,
   IAvailabilityExceptionRead,
   IAvailableSlot,
+  IPersonSlotsResponse,
   IAppointmentRead,
+  IAppointmentUpdate,
   IAppointmentCreate,
   AppointmentStatus,
 } from "@/interfaces/IAppointment";
@@ -291,6 +293,61 @@ export const findFreeSlots = async ({
 };
 
 // ── Appointments ──────────────────────────────────────────────────────────────
+
+export const getPersonSlots = async ({
+  schoolId,
+  personId,
+  fromDate,
+  toDate,
+}: SchoolArgs & { personId: string; fromDate: string; toDate: string }): Promise<IPersonSlotsResponse> => {
+  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
+  const response = await communicationApi.get<IPersonSlotsResponse>(
+    `/v1/schools/${schoolId}/availability/${personId}/slots?${params.toString()}`
+  );
+  return response.data;
+};
+
+export const updateAppointment = async ({
+  schoolId,
+  appointmentId,
+  dto,
+}: SchoolArgs & { appointmentId: string; dto: IAppointmentUpdate }): Promise<IAppointmentRead> => {
+  const response = await communicationApi.put<IAppointmentRead>(
+    `/v1/schools/${schoolId}/appointments/${appointmentId}`,
+    dto
+  );
+  return response.data;
+};
+
+export const updateAppointmentStatus = async ({
+  schoolId,
+  appointmentId,
+  status,
+}: SchoolArgs & {
+  appointmentId: string;
+  status: "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
+}): Promise<void> => {
+  await communicationApi.put(
+    `/v1/schools/${schoolId}/appointments/${appointmentId}`,
+    { status }
+  );
+};
+
+export const updateParticipantStatus = async ({
+  schoolId,
+  appointmentId,
+  personId,
+  status,
+}: SchoolArgs & {
+  appointmentId: string;
+  personId: string;
+  status: "CONFIRMED" | "DECLINED" | "CANCELLED";
+}): Promise<void> => {
+  await communicationApi.put(
+    `/v1/schools/${schoolId}/appointments/${appointmentId}/participants/${personId}`,
+    { status }
+  );
+};
 
 export const createAppointment = async ({
   schoolId,

@@ -5,7 +5,8 @@ import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyAvailability, useMyAppointments } from "./hooks";
-import { AppointmentsList, NewAppointmentModal } from "./components";
+import { AppointmentsList, NewAppointmentModal, AppointmentDetailModal } from "./components";
+import { IAppointmentRead } from "@/interfaces/IAppointment";
 import {
   AvailabilitySettings,
   RulesPanel,
@@ -20,6 +21,7 @@ export const MyAppointmentsApp = () => {
 
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<IAppointmentRead | null>(null);
 
   const {
     appointments, loading: apptLoading, error: apptError,
@@ -75,6 +77,9 @@ export const MyAppointmentsApp = () => {
           onPrev={prevMonth}
           onNext={nextMonth}
           onAdd={() => setAddModalOpen(true)}
+          personId={pid}
+          onReload={reload}
+          onSelect={setSelectedAppointment}
         />
 
       </div>
@@ -84,6 +89,16 @@ export const MyAppointmentsApp = () => {
         <NewAppointmentModal
           onClose={() => setAddModalOpen(false)}
           onSuccess={() => { setAddModalOpen(false); reload(); }}
+        />
+      )}
+
+      {/* ── Appointment detail modal ─────────────────────────────────────── */}
+      {selectedAppointment && (
+        <AppointmentDetailModal
+          appointment={selectedAppointment}
+          personId={pid}
+          onClose={() => setSelectedAppointment(null)}
+          onUpdate={() => { reload(); setSelectedAppointment(null); }}
         />
       )}
 

@@ -1,6 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { IAppointmentRead, AppointmentStatus, IAppointmentParticipant } from "@/interfaces/IAppointment";
+import { updateParticipantStatus, updateAppointmentStatus } from "@/services/appointment.service";
+
+import { getOrgConfig } from "@/lib/orgConfig";
+
+type ParticipantUpdateStatus = "CONFIRMED" | "DECLINED" | "CANCELLED";
 
 const MONTH_NAMES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -36,13 +42,54 @@ interface Props {
   onPrev: () => void;
   onNext: () => void;
   onAdd: () => void;
+  personId: string | null;
+  onReload: () => void;
+  onSelect: (appt: IAppointmentRead) => void;
 }
 
 export const AppointmentsList = ({
   appointments, loading, error, viewYear, viewMonth, onPrev, onNext, onAdd,
+  personId, onReload, onSelect,
 }: Props) => {
   const now = new Date();
   const isCurrentMonth = viewYear === now.getUTCFullYear() && viewMonth === now.getUTCMonth();
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const isOrganizer = (appt: IAppointmentRead) =>
+    !!personId && String(appt.host_person_id) === String(personId);
+
+  const findMyParticipant = (appt: IAppointmentRead) => {
+    if (!personId) return null;
+    return appt.participants.find(
+      (p) => String(p.person_id) === String(personId) && !p.removed_at && p.role === "ATTENDEE"
+    ) ?? null;
+  };
+
+  const handleStatusUpdate = async (appointmentId: string, status: ParticipantUpdateStatus) => {
+    if (!personId) return;
+    const { schoolId } = getOrgConfig();
+    if (!schoolId) return;
+    setConfirmingId(appointmentId);
+    try {
+      await updateParticipantStatus({ schoolId, appointmentId, personId, status });
+      onReload();
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId: string) => {
+    const { schoolId } = getOrgConfig();
+    if (!schoolId) return;
+    setCancellingId(appointmentId);
+    try {
+      await updateAppointmentStatus({ schoolId, appointmentId, status: "CANCELLED" });
+      onReload();
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   return (
     <div className="card bg-base-100 shadow-lg">
@@ -113,10 +160,22 @@ export const AppointmentsList = ({
               const start = new Date(appt.scheduled_start);
               const activeParticipants = appt.participants.filter((p) => !p.removed_at);
               const others = activeParticipants.filter((p) => p.role !== "ORGANIZER");
+              const myParticipant = findMyParticipant(appt);
+              const amOrganizer = isOrganizer(appt);
+              const isConfirming = confirmingId === appt.id;
+              const isCancelling = cancellingId === appt.id;
+              const needsAction = myParticipant?.status === "PENDING";
+              const canCancelAppt = amOrganizer &&
+                appt.status !== "CANCELLED" && appt.status !== "COMPLETED";
 
               return (
-                <div key={appt.id} className="flex items-start gap-3 p-3 rounded-lg bg-base-200">
-
+                <div
+                  key={appt.id}
+                  className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:brightness-95 transition-[filter] ${
+                    needsAction ? "bg-warning/10 border border-warning/30" : "bg-base-200"
+                  }`}
+                  onClick={() => onSelect(appt)}
+                >
                   {/* Date block */}
                   <div className="shrink-0 w-12 text-center bg-base-100 rounded-lg p-1.5">
                     <p className="text-lg font-bold leading-none">{start.getDate()}</p>
@@ -136,7 +195,7 @@ export const AppointmentsList = ({
 
                     {/* Time */}
                     {appt.without_time ? (
-                      <p className="text-sm text-base-content/70">Todo el día</p>
+                      <p className="text-sm text-base-content/70">Horario abierto</p>
                     ) : (
                       <p className="text-sm text-base-content/70">
                         <span className="iconify lucide--clock size-3.5 inline mr-1" />
@@ -161,11 +220,6 @@ export const AppointmentsList = ({
                       </p>
                     )}
 
-                    {/* Description */}
-                    {appt.description && (
-                      <p className="text-xs text-base-content/50 mt-0.5 truncate">{appt.description}</p>
-                    )}
-
                     {/* Participants */}
                     {others.length > 0 && (
                       <div className="flex items-center gap-1 mt-1.5 flex-wrap">
@@ -177,6 +231,118 @@ export const AppointmentsList = ({
                         ))}
                         {others.length > 3 && (
                           <span className="badge badge-ghost badge-xs">+{others.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── Organizer cancel row ───────────────────────────── */}
+                    {canCancelAppt && (
+                      <div className="mt-2 pt-2 border-t border-base-200 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-xs text-base-content/50 flex-1">
+                          <span className="iconify lucide--shield size-3.5 inline mr-1" />
+                          Organizador
+                        </span>
+                        <button
+                          className="btn btn-xs btn-outline btn-error"
+                          disabled={isCancelling}
+                          onClick={() => handleCancelAppointment(appt.id)}
+                        >
+                          {isCancelling
+                            ? <span className="loading loading-spinner loading-xs" />
+                            : <><span className="iconify lucide--x size-3" /> Cancelar cita</>
+                          }
+                        </button>
+                      </div>
+                    )}
+
+                    {/* ── Participant action row ──────────────────────────── */}
+                    {myParticipant && (
+                      <div className="mt-2 pt-2 border-t border-base-200 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                        {myParticipant.status === "PENDING" && (
+                          <>
+                            <span className="text-xs text-warning font-medium flex-1">
+                              <span className="iconify lucide--clock-alert size-3.5 inline mr-1" />
+                              Pendiente de confirmación
+                            </span>
+                            <button
+                              className="btn btn-xs btn-success"
+                              disabled={isConfirming}
+                              onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}
+                            >
+                              {isConfirming
+                                ? <span className="loading loading-spinner loading-xs" />
+                                : <><span className="iconify lucide--check size-3" /> Confirmar</>
+                              }
+                            </button>
+                            <button
+                              className="btn btn-xs btn-outline btn-error"
+                              disabled={isConfirming}
+                              onClick={() => handleStatusUpdate(appt.id, "DECLINED")}
+                            >
+                              Declinar
+                            </button>
+                          </>
+                        )}
+
+                        {myParticipant.status === "CONFIRMED" && (
+                          <>
+                            <span className="text-xs text-success font-medium flex-1">
+                              <span className="iconify lucide--check-circle size-3.5 inline mr-1" />
+                              Asistencia confirmada
+                            </span>
+                            <button
+                              className="btn btn-xs btn-ghost text-error"
+                              disabled={isConfirming}
+                              onClick={() => handleStatusUpdate(appt.id, "CANCELLED")}
+                            >
+                              {isConfirming
+                                ? <span className="loading loading-spinner loading-xs" />
+                                : "Cancelar asistencia"
+                              }
+                            </button>
+                          </>
+                        )}
+
+                        {myParticipant.status === "DECLINED" && (
+                          <>
+                            <span className="text-xs text-base-content/50 flex-1">
+                              <span className="iconify lucide--x-circle size-3.5 inline mr-1" />
+                              Asistencia declinada
+                            </span>
+                            {appt.status !== "CANCELLED" && (
+                              <button
+                                className="btn btn-xs btn-outline btn-success"
+                                disabled={isConfirming}
+                                onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}
+                              >
+                                {isConfirming
+                                  ? <span className="loading loading-spinner loading-xs" />
+                                  : "Reconsiderar"
+                                }
+                              </button>
+                            )}
+                          </>
+                        )}
+
+                        {myParticipant.status === "CANCELLED" && (
+                          <>
+                            <span className="text-xs text-base-content/40 flex-1">
+                              <span className="iconify lucide--ban size-3.5 inline mr-1" />
+                              Participación cancelada
+                            </span>
+                            {appt.status !== "CANCELLED" && (
+                              <button
+                                className="btn btn-xs btn-outline"
+                                disabled={isConfirming}
+                                onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}
+                              >
+                                {isConfirming
+                                  ? <span className="loading loading-spinner loading-xs" />
+                                  : "Reinscribirse"
+                                }
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
