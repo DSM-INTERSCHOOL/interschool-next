@@ -1,25 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { IAppointmentRead, AppointmentStatus, IAppointmentParticipant } from "@/interfaces/IAppointment";
 import { updateParticipantStatus, updateAppointmentStatus } from "@/services/appointment.service";
-
 import { getOrgConfig } from "@/lib/orgConfig";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 type ParticipantUpdateStatus = "CONFIRMED" | "DECLINED" | "CANCELLED";
+type FilterType = "all" | "pending" | "confirmed";
+type ViewType  = "list" | "calendar";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const MONTH_NAMES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-const STATUS_CONFIG: Record<AppointmentStatus, { label: string; cls: string }> = {
-  PENDING:   { label: "Pendiente",  cls: "badge-warning" },
-  CONFIRMED: { label: "Confirmada", cls: "badge-success" },
-  CANCELLED: { label: "Cancelada",  cls: "badge-error" },
-  COMPLETED: { label: "Completada", cls: "badge-neutral" },
-  NO_SHOW:   { label: "No asistió", cls: "badge-ghost" },
+const DAY_HEADERS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+const STATUS_CONFIG: Record<AppointmentStatus, { label: string; cls: string; calCls: string }> = {
+  PENDING:   { label: "Pendiente",  cls: "badge-warning",  calCls: "bg-warning/20 text-warning border border-warning/30" },
+  CONFIRMED: { label: "Confirmada", cls: "badge-success",  calCls: "bg-success/20 text-success border border-success/30" },
+  CANCELLED: { label: "Cancelada",  cls: "badge-error",    calCls: "bg-error/20 text-error border border-error/30" },
+  COMPLETED: { label: "Completada", cls: "badge-neutral",  calCls: "bg-base-300 text-base-content/60 border border-base-300" },
+  NO_SHOW:   { label: "No asistió", cls: "badge-ghost",    calCls: "bg-base-300 text-base-content/40 border border-base-300" },
 };
+
+const FILTERS: { key: FilterType; label: string }[] = [
+  { key: "all",       label: "Todas" },
+  { key: "pending",   label: "Pendientes" },
+  { key: "confirmed", label: "Confirmadas" },
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const personName = (p: IAppointmentParticipant["person"]) =>
   [p.given_name, p.paternal_surname].filter(Boolean).join(" ") || p.person_internal_id || p.id;
@@ -33,6 +48,19 @@ const formatDT = (iso: string) =>
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: true });
 
+/** Build a Monday-based calendar grid for the given year/month. */
+const buildCalendarGrid = (year: number, month: number): (number | null)[] => {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const startOffset = (firstDay + 6) % 7;             // convert to Mon-based
+  const cells: (number | null)[] = Array(startOffset).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+};
+
+// ── Props ─────────────────────────────────────────────────────────────────────
+
 interface Props {
   appointments: IAppointmentRead[];
   loading: boolean;
@@ -45,17 +73,50 @@ interface Props {
   personId: string | null;
   onReload: () => void;
   onSelect: (appt: IAppointmentRead) => void;
+  onAvailability: () => void;
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export const AppointmentsList = ({
   appointments, loading, error, viewYear, viewMonth, onPrev, onNext, onAdd,
-  personId, onReload, onSelect,
+  personId, onReload, onSelect, onAvailability,
 }: Props) => {
   const now = new Date();
-  const isCurrentMonth = viewYear === now.getUTCFullYear() && viewMonth === now.getUTCMonth();
+  const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
+
+  const [view,        setView]        = useState<ViewType>("list");
+  const [filter,      setFilter]      = useState<FilterType>("all");
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
+  // ── Filter counts ──────────────────────────────────────────────────────────
+  const countFor = (f: FilterType) => {
+    if (f === "pending")   return appointments.filter(a => a.status === "PENDING").length;
+    if (f === "confirmed") return appointments.filter(a => a.status === "CONFIRMED").length;
+    return appointments.length;
+  };
+
+  const filteredAppointments = useMemo(() => {
+    if (filter === "pending")   return appointments.filter(a => a.status === "PENDING");
+    if (filter === "confirmed") return appointments.filter(a => a.status === "CONFIRMED");
+    return appointments;
+  }, [appointments, filter]);
+
+  // ── Calendar ───────────────────────────────────────────────────────────────
+  const calendarCells = useMemo(() => buildCalendarGrid(viewYear, viewMonth), [viewYear, viewMonth]);
+
+  const appointmentsByDay = useMemo(() => {
+    const map: Record<number, IAppointmentRead[]> = {};
+    filteredAppointments.forEach(appt => {
+      const d = new Date(appt.scheduled_start).getDate();
+      if (!map[d]) map[d] = [];
+      map[d].push(appt);
+    });
+    return map;
+  }, [filteredAppointments]);
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const isOrganizer = (appt: IAppointmentRead) =>
     !!personId && String(appt.host_person_id) === String(personId);
 
@@ -91,18 +152,17 @@ export const AppointmentsList = ({
     }
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="card bg-base-100 shadow-lg">
       <div className="card-body">
 
-        {/* Header + month nav */}
-        <div className="flex items-center justify-between mb-4">
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Left: title + add */}
           <div className="flex items-center gap-2">
             <span className="iconify lucide--calendar-clock size-5 text-primary" />
             <h2 className="card-title text-xl">Mis Citas</h2>
-            {!loading && (
-              <span className="badge badge-primary badge-sm">{appointments.length}</span>
-            )}
             <button
               className="btn btn-primary btn-sm btn-circle ml-1"
               title="Nueva cita"
@@ -111,6 +171,59 @@ export const AppointmentsList = ({
               <span className="iconify lucide--plus size-4" />
             </button>
           </div>
+
+          {/* Right: Disponibilidad */}
+          <button
+            className="btn btn-sm btn-ghost gap-1.5 text-base-content/60 hover:text-base-content"
+            title="Configurar disponibilidad"
+            onClick={onAvailability}
+          >
+            <span className="iconify lucide--settings-2 size-4" />
+            <span className="hidden sm:inline text-sm">Disponibilidad</span>
+          </button>
+        </div>
+
+        {/* ── Filter tabs + view controls ──────────────────────────────────── */}
+        <div className="flex items-center gap-1.5 mb-4">
+          {FILTERS.map(({ key, label }) => {
+            const count = countFor(key);
+            return (
+              <button
+                key={key}
+                className={`btn btn-sm rounded-full gap-1.5 ${
+                  filter === key ? "btn-primary" : "btn-ghost bg-base-200"
+                }`}
+                onClick={() => setFilter(key)}
+              >
+                {label}
+                <span className={`badge badge-xs ${filter === key ? "badge-primary-content bg-white/20" : "badge-ghost"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+
+          <div className="flex-1" />
+
+          {/* View toggle */}
+          <div className="flex items-center bg-base-200 rounded-lg p-0.5 gap-0.5">
+            <button
+              className={`btn btn-xs btn-ghost ${view === "list" ? "btn-active" : ""}`}
+              title="Vista lista"
+              onClick={() => setView("list")}
+            >
+              <span className="iconify lucide--list size-4" />
+            </button>
+            <button
+              className={`btn btn-xs btn-ghost ${view === "calendar" ? "btn-active" : ""}`}
+              title="Vista calendario"
+              onClick={() => setView("calendar")}
+            >
+              <span className="iconify lucide--calendar-days size-4" />
+            </button>
+          </div>
+
+          {/* Month nav */}
           <div className="flex items-center gap-1">
             <button className="btn btn-ghost btn-sm btn-circle" onClick={onPrev} disabled={loading}>
               <span className="iconify lucide--chevron-left size-4" />
@@ -127,14 +240,14 @@ export const AppointmentsList = ({
           </div>
         </div>
 
-        {/* Loading */}
+        {/* ── Loading ─────────────────────────────────────────────────────── */}
         {loading && (
           <div className="flex justify-center py-10">
             <span className="loading loading-spinner loading-md text-primary" />
           </div>
         )}
 
-        {/* Error */}
+        {/* ── Error ───────────────────────────────────────────────────────── */}
         {!loading && error && (
           <div className="alert alert-error">
             <span className="iconify lucide--alert-circle size-5" />
@@ -142,215 +255,248 @@ export const AppointmentsList = ({
           </div>
         )}
 
-        {/* Empty */}
-        {!loading && !error && appointments.length === 0 && (
-          <div className="text-center py-14">
-            <span className="iconify lucide--calendar-x size-14 text-base-content/20 block mx-auto mb-3" />
-            <p className="text-base-content/50 text-sm">
-              Sin citas para {MONTH_NAMES[viewMonth]} {viewYear}.
-            </p>
-          </div>
-        )}
+        {!loading && !error && (
+          <>
+            {/* ── Empty state ─────────────────────────────────────────────── */}
+            {filteredAppointments.length === 0 && (
+              <div className="text-center py-14">
+                <span className="iconify lucide--calendar-x size-14 text-base-content/20 block mx-auto mb-3" />
+                <p className="text-base-content/50 text-sm">
+                  {appointments.length === 0
+                    ? `Sin citas para ${MONTH_NAMES[viewMonth]} ${viewYear}.`
+                    : "Sin citas que coincidan con el filtro."}
+                </p>
+              </div>
+            )}
 
-        {/* List */}
-        {!loading && !error && appointments.length > 0 && (
-          <div className="space-y-3">
-            {appointments.map((appt) => {
-              const status = STATUS_CONFIG[appt.status] ?? { label: appt.status, cls: "badge-ghost" };
-              const start = new Date(appt.scheduled_start);
-              const activeParticipants = appt.participants.filter((p) => !p.removed_at);
-              const others = activeParticipants.filter((p) => p.role !== "ORGANIZER");
-              const myParticipant = findMyParticipant(appt);
-              const amOrganizer = isOrganizer(appt);
-              const isConfirming = confirmingId === appt.id;
-              const isCancelling = cancellingId === appt.id;
-              const needsAction = myParticipant?.status === "PENDING";
-              const canCancelAppt = amOrganizer &&
-                appt.status !== "CANCELLED" && appt.status !== "COMPLETED";
+            {filteredAppointments.length > 0 && (
+              <>
+                {/* ──────────────── LIST VIEW ────────────────────────────── */}
+                {view === "list" && (
+                  <div className="space-y-3">
+                    {filteredAppointments.map((appt) => {
+                      const status = STATUS_CONFIG[appt.status] ?? { label: appt.status, cls: "badge-ghost" };
+                      const start = new Date(appt.scheduled_start);
+                      const activeParticipants = appt.participants.filter((p) => !p.removed_at);
+                      const others = activeParticipants.filter((p) => p.role !== "ORGANIZER");
+                      const myParticipant = findMyParticipant(appt);
+                      const amOrganizer = isOrganizer(appt);
+                      const isConfirming = confirmingId === appt.id;
+                      const isCancelling = cancellingId === appt.id;
+                      const needsAction = myParticipant?.status === "PENDING";
+                      const canCancelAppt = amOrganizer &&
+                        appt.status !== "CANCELLED" && appt.status !== "COMPLETED";
 
-              return (
-                <div
-                  key={appt.id}
-                  className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:brightness-95 transition-[filter] ${
-                    needsAction ? "bg-warning/10 border border-warning/30" : "bg-base-200"
-                  }`}
-                  onClick={() => onSelect(appt)}
-                >
-                  {/* Date block */}
-                  <div className="shrink-0 w-12 text-center bg-base-100 rounded-lg p-1.5">
-                    <p className="text-lg font-bold leading-none">{start.getDate()}</p>
-                    <p className="text-xs text-base-content/50 uppercase">
-                      {MONTH_NAMES[start.getMonth()].slice(0, 3)}
-                    </p>
+                      return (
+                        <div
+                          key={appt.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:brightness-95 transition-[filter] ${
+                            needsAction ? "bg-warning/10 border border-warning/30" : "bg-base-200"
+                          }`}
+                          onClick={() => onSelect(appt)}
+                        >
+                          {/* Date block */}
+                          <div className="shrink-0 w-12 text-center bg-base-100 rounded-lg p-1.5">
+                            <p className="text-lg font-bold leading-none">{start.getDate()}</p>
+                            <p className="text-xs text-base-content/50 uppercase">
+                              {MONTH_NAMES[start.getMonth()].slice(0, 3)}
+                            </p>
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className={`badge badge-sm ${status.cls}`}>{status.label}</span>
+                              {appt.title && (
+                                <span className="text-sm font-semibold truncate">{appt.title}</span>
+                              )}
+                            </div>
+
+                            {appt.without_time ? (
+                              <p className="text-sm text-base-content/70">Horario abierto</p>
+                            ) : (
+                              <p className="text-sm text-base-content/70">
+                                <span className="iconify lucide--clock size-3.5 inline mr-1" />
+                                {formatDT(appt.scheduled_start)}
+                                {" – "}
+                                {formatTime(appt.scheduled_end)}
+                                <span className="ml-1.5 text-base-content/40 text-xs">({appt.duration_minutes} min)</span>
+                              </p>
+                            )}
+
+                            {appt.location && (
+                              <p className="text-xs text-base-content/50 mt-0.5">
+                                <span className="iconify lucide--map-pin size-3.5 inline mr-1" />
+                                {appt.location}
+                              </p>
+                            )}
+                            {appt.virtual_link && (
+                              <p className="text-xs text-base-content/50 mt-0.5">
+                                <span className="iconify lucide--video size-3.5 inline mr-1" />
+                                Reunión virtual
+                              </p>
+                            )}
+
+                            {others.length > 0 && (
+                              <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                                <span className="iconify lucide--users size-3.5 text-base-content/40 shrink-0" />
+                                {others.slice(0, 3).map((p) => (
+                                  <span key={p.person_id} className="badge badge-ghost badge-xs">
+                                    {personName(p.person)}
+                                  </span>
+                                ))}
+                                {others.length > 3 && (
+                                  <span className="badge badge-ghost badge-xs">+{others.length - 3}</span>
+                                )}
+                              </div>
+                            )}
+
+                            {canCancelAppt && (
+                              <div className="mt-2 pt-2 border-t border-base-200 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                <span className="badge badge-sm badge-outline text-base-content/50">
+                                  <span className="iconify lucide--shield size-3.5 mr-0.5" />
+                                  Organizador
+                                </span>
+                                <span className="flex-1" />
+                                <button
+                                  className="btn btn-xs btn-outline btn-error"
+                                  disabled={isCancelling}
+                                  onClick={() => handleCancelAppointment(appt.id)}
+                                >
+                                  {isCancelling
+                                    ? <span className="loading loading-spinner loading-xs" />
+                                    : <><span className="iconify lucide--x size-3" /> Cancelar cita</>
+                                  }
+                                </button>
+                              </div>
+                            )}
+
+                            {myParticipant && (
+                              <div className="mt-2 pt-2 border-t border-base-200 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                                {myParticipant.status === "PENDING" && (
+                                  <>
+                                    <span className="text-xs text-warning font-medium flex-1">
+                                      <span className="iconify lucide--clock-alert size-3.5 inline mr-1" />
+                                      Pendiente de confirmación
+                                    </span>
+                                    <button className="btn btn-xs btn-success" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}>
+                                      {isConfirming ? <span className="loading loading-spinner loading-xs" /> : <><span className="iconify lucide--check size-3" /> Confirmar</>}
+                                    </button>
+                                    <button className="btn btn-xs btn-outline btn-error" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "DECLINED")}>
+                                      Declinar
+                                    </button>
+                                  </>
+                                )}
+                                {myParticipant.status === "CONFIRMED" && (
+                                  <>
+                                    <span className="text-xs text-success font-medium flex-1">
+                                      <span className="iconify lucide--check-circle size-3.5 inline mr-1" />
+                                      Asistencia confirmada
+                                    </span>
+                                    <button className="btn btn-xs btn-ghost text-error" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "CANCELLED")}>
+                                      {isConfirming ? <span className="loading loading-spinner loading-xs" /> : "Cancelar asistencia"}
+                                    </button>
+                                  </>
+                                )}
+                                {myParticipant.status === "DECLINED" && (
+                                  <>
+                                    <span className="text-xs text-base-content/50 flex-1">
+                                      <span className="iconify lucide--x-circle size-3.5 inline mr-1" />
+                                      Asistencia declinada
+                                    </span>
+                                    {appt.status !== "CANCELLED" && (
+                                      <button className="btn btn-xs btn-outline btn-success" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}>
+                                        {isConfirming ? <span className="loading loading-spinner loading-xs" /> : "Reconsiderar"}
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                                {myParticipant.status === "CANCELLED" && (
+                                  <>
+                                    <span className="text-xs text-base-content/40 flex-1">
+                                      <span className="iconify lucide--ban size-3.5 inline mr-1" />
+                                      Participación cancelada
+                                    </span>
+                                    {appt.status !== "CANCELLED" && (
+                                      <button className="btn btn-xs btn-outline" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}>
+                                        {isConfirming ? <span className="loading loading-spinner loading-xs" /> : "Reinscribirse"}
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+                )}
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`badge badge-sm ${status.cls}`}>{status.label}</span>
-                      {appt.title && (
-                        <span className="text-sm font-semibold truncate">{appt.title}</span>
-                      )}
+                {/* ──────────────── CALENDAR VIEW ────────────────────────── */}
+                {view === "calendar" && (
+                  <div>
+                    {/* Day headers */}
+                    <div className="grid grid-cols-7 mb-1">
+                      {DAY_HEADERS.map((d) => (
+                        <div key={d} className="text-center text-xs font-semibold text-base-content/40 py-1 uppercase tracking-wide">
+                          {d}
+                        </div>
+                      ))}
                     </div>
 
-                    {/* Time */}
-                    {appt.without_time ? (
-                      <p className="text-sm text-base-content/70">Horario abierto</p>
-                    ) : (
-                      <p className="text-sm text-base-content/70">
-                        <span className="iconify lucide--clock size-3.5 inline mr-1" />
-                        {formatDT(appt.scheduled_start)}
-                        {" – "}
-                        {formatTime(appt.scheduled_end)}
-                        <span className="ml-1.5 text-base-content/40 text-xs">({appt.duration_minutes} min)</span>
-                      </p>
-                    )}
+                    {/* Grid */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {calendarCells.map((day, i) => {
+                        if (!day) return <div key={i} className="rounded-lg" />;
+                        const dayAppts = appointmentsByDay[day] ?? [];
+                        const isToday = isCurrentMonth && day === now.getDate();
+                        return (
+                          <div
+                            key={i}
+                            className={`min-h-[5rem] p-1 rounded-lg border ${
+                              isToday
+                                ? "border-primary bg-primary/5"
+                                : "border-base-200 bg-base-100"
+                            }`}
+                          >
+                            {/* Day number */}
+                            <p className={`text-xs font-bold mb-1 leading-none ${
+                              isToday ? "text-primary" : "text-base-content/60"
+                            }`}>
+                              {day}
+                            </p>
 
-                    {/* Location / virtual */}
-                    {appt.location && (
-                      <p className="text-xs text-base-content/50 mt-0.5">
-                        <span className="iconify lucide--map-pin size-3.5 inline mr-1" />
-                        {appt.location}
-                      </p>
-                    )}
-                    {appt.virtual_link && (
-                      <p className="text-xs text-base-content/50 mt-0.5">
-                        <span className="iconify lucide--video size-3.5 inline mr-1" />
-                        Reunión virtual
-                      </p>
-                    )}
-
-                    {/* Participants */}
-                    {others.length > 0 && (
-                      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                        <span className="iconify lucide--users size-3.5 text-base-content/40 shrink-0" />
-                        {others.slice(0, 3).map((p) => (
-                          <span key={p.person_id} className="badge badge-ghost badge-xs">
-                            {personName(p.person)}
-                          </span>
-                        ))}
-                        {others.length > 3 && (
-                          <span className="badge badge-ghost badge-xs">+{others.length - 3}</span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ── Organizer cancel row ───────────────────────────── */}
-                    {canCancelAppt && (
-                      <div className="mt-2 pt-2 border-t border-base-200 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-base-content/50 flex-1">
-                          <span className="iconify lucide--shield size-3.5 inline mr-1" />
-                          Organizador
-                        </span>
-                        <button
-                          className="btn btn-xs btn-outline btn-error"
-                          disabled={isCancelling}
-                          onClick={() => handleCancelAppointment(appt.id)}
-                        >
-                          {isCancelling
-                            ? <span className="loading loading-spinner loading-xs" />
-                            : <><span className="iconify lucide--x size-3" /> Cancelar cita</>
-                          }
-                        </button>
-                      </div>
-                    )}
-
-                    {/* ── Participant action row ──────────────────────────── */}
-                    {myParticipant && (
-                      <div className="mt-2 pt-2 border-t border-base-200 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                        {myParticipant.status === "PENDING" && (
-                          <>
-                            <span className="text-xs text-warning font-medium flex-1">
-                              <span className="iconify lucide--clock-alert size-3.5 inline mr-1" />
-                              Pendiente de confirmación
-                            </span>
-                            <button
-                              className="btn btn-xs btn-success"
-                              disabled={isConfirming}
-                              onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}
-                            >
-                              {isConfirming
-                                ? <span className="loading loading-spinner loading-xs" />
-                                : <><span className="iconify lucide--check size-3" /> Confirmar</>
-                              }
-                            </button>
-                            <button
-                              className="btn btn-xs btn-outline btn-error"
-                              disabled={isConfirming}
-                              onClick={() => handleStatusUpdate(appt.id, "DECLINED")}
-                            >
-                              Declinar
-                            </button>
-                          </>
-                        )}
-
-                        {myParticipant.status === "CONFIRMED" && (
-                          <>
-                            <span className="text-xs text-success font-medium flex-1">
-                              <span className="iconify lucide--check-circle size-3.5 inline mr-1" />
-                              Asistencia confirmada
-                            </span>
-                            <button
-                              className="btn btn-xs btn-ghost text-error"
-                              disabled={isConfirming}
-                              onClick={() => handleStatusUpdate(appt.id, "CANCELLED")}
-                            >
-                              {isConfirming
-                                ? <span className="loading loading-spinner loading-xs" />
-                                : "Cancelar asistencia"
-                              }
-                            </button>
-                          </>
-                        )}
-
-                        {myParticipant.status === "DECLINED" && (
-                          <>
-                            <span className="text-xs text-base-content/50 flex-1">
-                              <span className="iconify lucide--x-circle size-3.5 inline mr-1" />
-                              Asistencia declinada
-                            </span>
-                            {appt.status !== "CANCELLED" && (
-                              <button
-                                className="btn btn-xs btn-outline btn-success"
-                                disabled={isConfirming}
-                                onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}
-                              >
-                                {isConfirming
-                                  ? <span className="loading loading-spinner loading-xs" />
-                                  : "Reconsiderar"
-                                }
-                              </button>
+                            {/* Appointment chips */}
+                            {dayAppts.slice(0, 3).map((appt) => {
+                              const calCls = STATUS_CONFIG[appt.status]?.calCls ?? "bg-base-200 text-base-content/60";
+                              return (
+                                <button
+                                  key={appt.id}
+                                  className={`w-full text-left text-[10px] leading-tight px-1 py-0.5 rounded mb-0.5 truncate block ${calCls}`}
+                                  onClick={() => onSelect(appt)}
+                                >
+                                  {appt.without_time
+                                    ? (appt.title ?? "Sin título")
+                                    : `${new Date(appt.scheduled_start).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: true })} ${appt.title ?? ""}`
+                                  }
+                                </button>
+                              );
+                            })}
+                            {dayAppts.length > 3 && (
+                              <p className="text-[10px] text-base-content/40 pl-1">
+                                +{dayAppts.length - 3} más
+                              </p>
                             )}
-                          </>
-                        )}
-
-                        {myParticipant.status === "CANCELLED" && (
-                          <>
-                            <span className="text-xs text-base-content/40 flex-1">
-                              <span className="iconify lucide--ban size-3.5 inline mr-1" />
-                              Participación cancelada
-                            </span>
-                            {appt.status !== "CANCELLED" && (
-                              <button
-                                className="btn btn-xs btn-outline"
-                                disabled={isConfirming}
-                                onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}
-                              >
-                                {isConfirming
-                                  ? <span className="loading loading-spinner loading-xs" />
-                                  : "Reinscribirse"
-                                }
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                )}
+              </>
+            )}
+          </>
         )}
 
       </div>

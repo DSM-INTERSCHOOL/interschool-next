@@ -17,12 +17,21 @@ const PAGE_LIMIT = 20;
 
 const STEP_LABELS = ["Detalles", "Destinatario", "Horario"];
 
-const TYPE_LABELS: Record<string, string> = {
-  USER:     "Usuario",
-  STUDENT:  "Alumno",
-  TEACHER:  "Maestro",
-  RELATIVE: "Familiar",
-  ACADEMIC: "Académico",
+const TYPE_CONFIG: Record<string, {
+  label: string;
+  icon: string;
+  /** Classes applied to the card when it is the active filter */
+  activeCard: string;
+  /** Classes for the avatar circle in the recipient list */
+  avatar: string;
+  /** Badge classes for the type chip */
+  badge: string;
+}> = {
+  USER:     { label: "Usuario",   icon: "lucide--user",           activeCard: "border-accent   bg-accent/10   text-accent",     avatar: "bg-accent/15   text-accent",     badge: "badge-accent"    },
+  STUDENT:  { label: "Alumno",    icon: "lucide--graduation-cap", activeCard: "border-primary  bg-primary/10  text-primary",    avatar: "bg-primary/15  text-primary",    badge: "badge-primary"   },
+  TEACHER:  { label: "Profesor",   icon: "lucide--user-check",     activeCard: "border-secondary bg-secondary/10 text-secondary", avatar: "bg-secondary/15 text-secondary", badge: "badge-secondary" },
+  RELATIVE: { label: "Familiar",  icon: "lucide--heart",          activeCard: "border-success  bg-success/10  text-success",    avatar: "bg-success/15  text-success",    badge: "badge-success"   },
+  ACADEMIC: { label: "Académico", icon: "lucide--book-open",      activeCard: "border-warning  bg-warning/10  text-warning",    avatar: "bg-warning/15  text-warning",    badge: "badge-warning"   },
 };
 
 const DURATION_OPTIONS = [
@@ -44,7 +53,6 @@ const addDays = (dateStr: string, n: number): string => {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-// Returns the date of the Sunday of the week containing dateStr (Sunday = end of week).
 const upcomingSunday = (dateStr: string): string => {
   const d = new Date(dateStr + "T12:00:00Z");
   const daysUntilSunday = d.getUTCDay() === 0 ? 0 : 7 - d.getUTCDay();
@@ -73,7 +81,7 @@ const recipientName = (r: IAppointmentRecipient) =>
   String(r.person_id);
 
 const recipientPosition = (r: IAppointmentRecipient) =>
-  r.job_position?.trim() || TYPE_LABELS[r.person_type] || r.person_type;
+  r.job_position?.trim() || TYPE_CONFIG[r.person_type]?.label || r.person_type;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -83,6 +91,16 @@ interface Props {
   onClose: () => void;
   onSuccess?: () => void;
 }
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+/** Thin section label used to group form fields visually. */
+const SectionLabel = ({ icon, label }: { icon: string; label: string }) => (
+  <div className="flex items-center gap-2 mb-3">
+    <span className={`iconify ${icon} size-4 text-base-content/40`} />
+    <span className="text-xs font-semibold text-base-content/40 uppercase tracking-wider">{label}</span>
+  </div>
+);
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -159,16 +177,13 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
   const fetchSlots = useCallback(async (recipientPersonId: string, weekStart: string) => {
     const { schoolId } = getOrgConfig();
     if (!schoolId) return;
-
     setSlotsLoading(true);
     setSlotsError(null);
     setSlotDays([]);
     try {
       const data = await getPersonSlots({
-        schoolId,
-        personId: recipientPersonId,
-        fromDate: weekStart,
-        toDate: upcomingSunday(weekStart),
+        schoolId, personId: recipientPersonId,
+        fromDate: weekStart, toDate: upcomingSunday(weekStart),
       });
       setSlotDays(data.days ?? []);
     } catch {
@@ -190,7 +205,6 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
     if (!personId || !personType) return;
     const { schoolId } = getOrgConfig();
     if (!schoolId) return;
-
     setRecipientsLoading(true);
     setRecipientsError(null);
     try {
@@ -216,7 +230,6 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
     const skipChanged = prevSkipRef.current !== skip;
     prevTypeRef.current = selectedType;
     prevSkipRef.current = skip;
-
     const delay = typeChanged || skipChanged ? 0 : 400;
     const timer = setTimeout(() => fetchRecipients(selectedType, searchQuery, skip), delay);
     return () => clearTimeout(timer);
@@ -252,14 +265,13 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
     if (submitLoading) return false;
     if (timeMode === "slot") return !!selectedSlot && !slotsError;
     if (timeMode === "manual") return !!date && !!startTime;
-    return !!date; // open – date required
+    return !!date;
   })();
 
   const handleSubmit = async () => {
     if (!personId || !selectedRecipient || !canSubmit) return;
     const { schoolId } = getOrgConfig();
     if (!schoolId) return;
-
     setSubmitLoading(true);
     setSubmitError(null);
     try {
@@ -286,7 +298,6 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
         });
       } else {
         let scheduledStart: string, scheduledEnd: string, duration: number;
-
         if (timeMode === "slot" && selectedSlot) {
           scheduledStart = selectedSlot.start;
           scheduledEnd = selectedSlot.end;
@@ -298,7 +309,6 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
           scheduledEnd = end.toISOString();
           duration = durationMinutes;
         }
-
         await createAppointment({
           schoolId,
           dto: {
@@ -327,17 +337,17 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-md flex flex-col" style={{ maxHeight: "90vh" }}>
+      <div className="modal-box max-w-lg flex flex-col" style={{ maxHeight: "92vh" }}>
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4 shrink-0">
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between mb-5 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="iconify lucide--calendar-plus size-4 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="iconify lucide--calendar-plus size-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-bold text-xl">Nueva cita</h3>
-              <p className="text-xs text-base-content/50">{STEP_LABELS[step - 1]}</p>
+              <h3 className="font-bold text-xl leading-tight">Nueva cita</h3>
+              <p className="text-xs text-base-content/40 mt-0.5">{STEP_LABELS[step - 1]}</p>
             </div>
           </div>
           <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose} disabled={submitLoading}>
@@ -345,97 +355,121 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
           </button>
         </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center justify-center gap-2 mb-5 shrink-0">
+        {/* ── Step indicator ───────────────────────────────────────────────── */}
+        <div className="flex items-center mb-6 shrink-0">
           {[1, 2, 3].map((s) => (
             <Fragment key={s}>
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                step === s ? "bg-primary text-primary-content"
-                : step > s ? "bg-primary/20 text-primary"
-                : "bg-base-300 text-base-content/40"
-              }`}>
-                {step > s ? <span className="iconify lucide--check size-3.5" /> : s}
+              <div className="flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  step === s ? "bg-primary text-primary-content shadow-md shadow-primary/30"
+                  : step > s ? "bg-primary/20 text-primary"
+                  : "bg-base-200 text-base-content/30"
+                }`}>
+                  {step > s ? <span className="iconify lucide--check size-3.5" /> : s}
+                </div>
+                <span className={`text-xs font-medium transition-colors ${
+                  step === s ? "text-base-content" : "text-base-content/30"
+                }`}>
+                  {STEP_LABELS[s - 1]}
+                </span>
               </div>
-              {s < 3 && <div className={`h-0.5 w-10 transition-colors ${step > s ? "bg-primary/40" : "bg-base-300"}`} />}
+              {s < 3 && (
+                <div className={`flex-1 h-0.5 mx-2 transition-colors ${step > s ? "bg-primary/40" : "bg-base-200"}`} />
+              )}
             </Fragment>
           ))}
         </div>
 
-        {/* ── Step 1: Details ───────────────────────────────────────────────── */}
+        {/* ══ STEP 1: Details ══════════════════════════════════════════════════ */}
         {step === 1 && (
-          <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
-            <div className="form-control">
-              <label className="label pb-1">
-                <span className="label-text text-sm font-medium">Título</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                placeholder="Ej. Reunión de seguimiento"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                autoFocus
-              />
-            </div>
+          <div className="flex flex-col gap-5 flex-1 overflow-y-auto pr-0.5">
 
-            <div className="form-control">
-              <label className="label pb-1">
-                <span className="label-text text-sm font-medium">Descripción</span>
-                <span className="label-text-alt text-base-content/40">Opcional</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered resize-none"
-                placeholder="Ej. Revisión de avances del trimestre"
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
+            {/* Basic info */}
+            <div className="rounded-xl border border-base-200 p-4 space-y-4 bg-base-50">
+              <SectionLabel icon="lucide--file-text" label="Información básica" />
 
-            <div className="form-control">
-              <label className="label pb-1">
-                <span className="label-text text-sm font-medium">Lugar</span>
-                <span className="label-text-alt text-base-content/40">Opcional</span>
-              </label>
-              <div className="relative">
-                <span className="iconify lucide--map-pin size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
+              <div className="form-control">
+                <label className="label pb-1.5">
+                  <span className="label-text font-medium">Título</span>
+                </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full pl-9"
-                  placeholder="Ej. Sala de juntas B"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  className="input input-bordered focus:input-primary w-full"
+                  placeholder="Ej. Reunión de seguimiento"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label pb-1.5">
+                  <span className="label-text font-medium">Descripción</span>
+                  <span className="label-text-alt text-base-content/40">Opcional</span>
+                </label>
+                <textarea
+                  className="textarea textarea-bordered focus:textarea-primary resize-none w-full"
+                  placeholder="Ej. Revisión de avances del trimestre"
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="form-control">
-              <label className="label pb-1">
-                <span className="label-text text-sm font-medium">Liga virtual</span>
-                <span className="label-text-alt text-base-content/40">Opcional</span>
-              </label>
-              <div className="relative">
-                <span className="iconify lucide--video size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
-                <input
-                  type="url"
-                  className="input input-bordered w-full pl-9"
-                  placeholder="https://meet.google.com/…"
-                  value={virtualLink}
-                  onChange={(e) => setVirtualLink(e.target.value)}
-                />
+            {/* Location */}
+            <div className="rounded-xl border border-base-200 p-4 space-y-4 bg-base-50">
+              <SectionLabel icon="lucide--map-pin" label="Ubicación" />
+
+              <div className="form-control">
+                <label className="label pb-1.5">
+                  <span className="label-text font-medium">Lugar físico</span>
+                  <span className="label-text-alt text-base-content/40">Opcional</span>
+                </label>
+                <div className="relative">
+                  <span className="iconify lucide--map-pin size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
+                  <input
+                    type="text"
+                    className="input input-bordered focus:input-primary w-full pl-9"
+                    placeholder="Ej. Sala de juntas B"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label pb-1.5">
+                  <span className="label-text font-medium">Liga virtual</span>
+                  <span className="label-text-alt text-base-content/40">Opcional</span>
+                </label>
+                <div className="relative">
+                  <span className="iconify lucide--video size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
+                  <input
+                    type="url"
+                    className="input input-bordered focus:input-primary w-full pl-9"
+                    placeholder="https://meet.google.com/…"
+                    value={virtualLink}
+                    onChange={(e) => setVirtualLink(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── Step 2: Recipient ──────────────────────────────────────────────── */}
+        {/* ══ STEP 2: Recipient ════════════════════════════════════════════════ */}
         {step === 2 && (
-          <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-            <p className="text-sm text-base-content/60 mb-3 shrink-0">
+          <div className="flex flex-col flex-1 min-h-0">
+
+            {/* ── Static header: description + type filter + search ── */}
+            <div className="shrink-0">
+            <p className="text-sm text-base-content/55 mb-4">
               ¿Con qué persona deseas agendar la cita?
             </p>
 
-            <div className="shrink-0">
+            {/* Type cards */}
+            <div className="mb-4">
               {noConfig ? (
                 <div className="alert alert-warning">
                   <span className="iconify lucide--alert-triangle size-5" />
@@ -447,102 +481,171 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
                   <span className="text-sm">No tienes permisos para agendar citas.</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-5 gap-2">
-                  <button
-                    className={`btn btn-sm flex-col h-auto py-2 gap-1 ${selectedType === null ? "btn-primary" : "btn-outline"}`}
-                    onClick={() => handleTypeClick(null)}
-                  >
-                    <span className="iconify lucide--search size-4" />
-                    <span className="text-xs">Cualquiera</span>
-                  </button>
-                  {allowedTypes.map((type) => (
+                <>
+                  <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2.5">
+                    Tipo de persona
+                  </div>
+                  <div className="flex gap-2">
+                    {/* "All" card */}
                     <button
-                      key={type}
-                      className={`btn btn-sm flex-col h-auto py-2 gap-1 ${selectedType === type ? "btn-primary" : "btn-outline"}`}
-                      onClick={() => handleTypeClick(type)}
+                      onClick={() => handleTypeClick(null)}
+                      className={`flex-1 flex flex-col items-center gap-2 py-3 px-1 rounded-xl border-2 transition-all cursor-pointer min-w-0 ${
+                        selectedType === null
+                          ? "border-base-content/50 bg-base-content/8 text-base-content"
+                          : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                      }`}
                     >
-                      <span className="iconify lucide--user size-4" />
-                      <span className="text-xs">{TYPE_LABELS[type] ?? type}</span>
+                      <span className="iconify lucide--search size-5" />
+                      <span className="text-xs font-semibold">Todos</span>
                     </button>
-                  ))}
-                </div>
+
+                    {allowedTypes.map((type) => {
+                      const cfg = TYPE_CONFIG[type];
+                      const isActive = selectedType === type;
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => handleTypeClick(type)}
+                          className={`flex-1 flex flex-col items-center gap-2 py-3 px-1 rounded-xl border-2 transition-all cursor-pointer min-w-0 ${
+                            isActive
+                              ? cfg?.activeCard ?? "border-primary bg-primary/10 text-primary"
+                              : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                          }`}
+                        >
+                          <span className={`iconify ${cfg?.icon ?? "lucide--user"} size-5`} />
+                          <span className="text-xs font-semibold truncate w-full text-center">{cfg?.label ?? type}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </div>
 
+            {/* Search */}
             {allowedTypes.length > 0 && (
-              <div className="relative mt-3 shrink-0">
-                <span className="iconify lucide--search size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
+              <div className="relative mb-3">
+                <span className="iconify lucide--search size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
                 <input
                   type="text"
-                  className="input input-bordered w-full pl-9 pr-9"
-                  placeholder={selectedType ? `Buscar ${TYPE_LABELS[selectedType] ?? selectedType}…` : "Buscar por nombre o ID…"}
+                  className="input input-bordered focus:input-primary w-full pl-9 pr-9"
+                  placeholder={
+                    selectedType
+                      ? `Buscar ${TYPE_CONFIG[selectedType]?.label ?? selectedType}…`
+                      : "Buscar por nombre o ID…"
+                  }
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   autoFocus
                 />
                 {searchQuery && (
-                  <button className="btn btn-ghost btn-xs btn-circle absolute right-2 top-1/2 -translate-y-1/2" onClick={() => handleSearchChange("")}>
+                  <button
+                    className="btn btn-ghost btn-xs btn-circle absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => handleSearchChange("")}
+                  >
                     <span className="iconify lucide--x size-3.5" />
                   </button>
                 )}
               </div>
             )}
+            </div>{/* end static header */}
 
+            {/* Recipient list */}
             {allowedTypes.length > 0 && (
-              <div className="mt-3 flex-1 overflow-hidden flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
                 {recipientsLoading && (
-                  <div className="flex justify-center py-6">
+                  <div className="flex justify-center py-8">
                     <span className="loading loading-spinner loading-md text-primary" />
                   </div>
                 )}
+
                 {!recipientsLoading && recipientsError && (
                   <div className="alert alert-error">
                     <span className="iconify lucide--alert-circle size-4" />
                     <span className="text-sm">{recipientsError}</span>
                   </div>
                 )}
+
                 {!recipientsLoading && !recipientsError && recipients.length === 0 && (
-                  <p className="text-center text-base-content/40 text-sm py-6">Sin resultados.</p>
+                  <div className="text-center py-8">
+                    <span className="iconify lucide--users size-10 text-base-content/15 block mx-auto mb-2" />
+                    <p className="text-sm text-base-content/40">Sin resultados.</p>
+                  </div>
                 )}
+
                 {!recipientsLoading && !recipientsError && recipients.length > 0 && (
                   <>
-                    <div className="overflow-y-auto max-h-52 space-y-1 pr-1">
-                      {recipients.map((r) => (
-                        <button
-                          key={r.person_id}
-                          className={`w-full text-left flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
-                            selectedRecipient?.person_id === r.person_id
-                              ? "bg-primary/10 outline outline-2 outline-primary/40"
-                              : "hover:bg-base-200"
-                          }`}
-                          onClick={() => setSelectedRecipient(selectedRecipient?.person_id === r.person_id ? null : r)}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-base-300 flex items-center justify-center shrink-0">
-                            <span className="iconify lucide--user size-4 text-base-content/50" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{recipientName(r)}</p>
-                            <p className="text-xs text-base-content/50 truncate">
-                              {r.person_internal_id && <span className="mr-2">{r.person_internal_id}</span>}
-                              <span>{recipientPosition(r)}</span>
-                            </p>
-                          </div>
-                          <span className="badge badge-ghost badge-xs shrink-0">
-                            {TYPE_LABELS[r.person_type] ?? r.person_type}
-                          </span>
-                        </button>
-                      ))}
+                    <div className="space-y-1 pr-0.5">
+                      {recipients.map((r) => {
+                        const typeCfg = TYPE_CONFIG[r.person_type];
+                        const isSelected = selectedRecipient?.person_id === r.person_id;
+                        return (
+                          <button
+                            key={r.person_id}
+                            className={`w-full text-left flex items-center gap-3 p-3 rounded-xl transition-all ${
+                              isSelected
+                                ? "bg-primary/8 ring-2 ring-primary/25"
+                                : "hover:bg-base-200"
+                            }`}
+                            onClick={() =>
+                              setSelectedRecipient(isSelected ? null : r)
+                            }
+                          >
+                            {/* Colored avatar */}
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                              typeCfg?.avatar ?? "bg-base-300 text-base-content/50"
+                            }`}>
+                              <span className={`iconify ${typeCfg?.icon ?? "lucide--user"} size-4`} />
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate leading-snug">
+                                {recipientName(r)}
+                              </p>
+                              <p className="text-xs text-base-content/45 truncate mt-0.5">
+                                {r.person_internal_id && (
+                                  <span className="font-mono mr-2">{r.person_internal_id}</span>
+                                )}
+                                <span>{recipientPosition(r)}</span>
+                              </p>
+                            </div>
+
+                            {/* Type badge */}
+                            <span className={`badge badge-xs shrink-0 ${typeCfg?.badge ?? "badge-ghost"}`}>
+                              {typeCfg?.label ?? r.person_type}
+                            </span>
+
+                            {/* Selected indicator */}
+                            {isSelected && (
+                              <span className="iconify lucide--check-circle size-4 text-primary shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-base-200 shrink-0">
-                      <span className="text-xs text-base-content/50">
+
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-base-200 sticky bottom-0 bg-base-100">
+                      <span className="text-xs text-base-content/40">
                         {skip + 1}–{Math.min(skip + PAGE_LIMIT, total)} de {total}
                       </span>
                       <div className="flex items-center gap-1">
-                        <button className="btn btn-ghost btn-xs btn-circle" onClick={() => setSkip(skip - PAGE_LIMIT)} disabled={!hasPrev}>
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle"
+                          onClick={() => setSkip(skip - PAGE_LIMIT)}
+                          disabled={!hasPrev}
+                        >
                           <span className="iconify lucide--chevron-left size-4" />
                         </button>
-                        <span className="text-xs font-medium px-1">{currentPage} / {totalPages}</span>
-                        <button className="btn btn-ghost btn-xs btn-circle" onClick={() => setSkip(skip + PAGE_LIMIT)} disabled={!hasNext}>
+                        <span className="text-xs font-medium px-1">
+                          {currentPage} / {totalPages}
+                        </span>
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle"
+                          onClick={() => setSkip(skip + PAGE_LIMIT)}
+                          disabled={!hasNext}
+                        >
                           <span className="iconify lucide--chevron-right size-4" />
                         </button>
                       </div>
@@ -554,53 +657,83 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
           </div>
         )}
 
-        {/* ── Step 3: Time ──────────────────────────────────────────────────── */}
+        {/* ══ STEP 3: Time ══════════════════════════════════════════════════════ */}
         {step === 3 && (
           <div className="flex flex-col flex-1 overflow-hidden min-h-0">
 
             {/* Recipient summary */}
-            {selectedRecipient && (
-              <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg mb-4 shrink-0">
-                <div className="w-8 h-8 rounded-full bg-base-300 flex items-center justify-center shrink-0">
-                  <span className="iconify lucide--user size-4 text-base-content/50" />
+            {selectedRecipient && (() => {
+              const typeCfg = TYPE_CONFIG[selectedRecipient.person_type];
+              return (
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-base-200 bg-base-50 mb-4 shrink-0">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                    typeCfg?.avatar ?? "bg-base-300 text-base-content/50"
+                  }`}>
+                    <span className={`iconify ${typeCfg?.icon ?? "lucide--user"} size-4`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">{recipientName(selectedRecipient)}</p>
+                    <p className="text-xs text-base-content/40 mt-0.5">
+                      {typeCfg?.label ?? selectedRecipient.person_type}
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-xs btn-ghost text-base-content/40"
+                    onClick={() => setStep(2)}
+                  >
+                    Cambiar
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{recipientName(selectedRecipient)}</p>
-                  <p className="text-xs text-base-content/40">
-                    {TYPE_LABELS[selectedRecipient.person_type] ?? selectedRecipient.person_type}
-                  </p>
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
-            {/* Mode selector (hidden for RECIPIENT_SLOT_REQUIRED) */}
+            {/* Mode selector */}
             {showModePicker && (
-              <div className="flex gap-2 mb-4 shrink-0">
-                <button
-                  className={`btn btn-sm flex-1 ${timeMode === "open" ? "btn-primary" : "btn-outline"}`}
-                  onClick={() => { setTimeMode("open"); setSelectedSlot(null); }}
-                >
-                  <span className="iconify lucide--calendar-off size-4" />
-                  Horario abierto
-                </button>
-                {schedulingPolicy === "RECIPIENT_SLOT_OPTIONAL" && (
+              <div className="mb-4 shrink-0">
+                <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2.5">
+                  Tipo de horario
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <button
-                    className={`btn btn-sm flex-1 ${timeMode === "slot" ? "btn-primary" : "btn-outline"}`}
-                    onClick={() => setTimeMode("slot")}
+                    className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
+                      timeMode === "open"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                    }`}
+                    onClick={() => { setTimeMode("open"); setSelectedSlot(null); }}
                   >
-                    <span className="iconify lucide--clock size-4" />
-                    Seleccionar slot
+                    <span className="iconify lucide--calendar-off size-5" />
+                    <span className="text-xs font-semibold text-center leading-tight">Horario abierto</span>
                   </button>
-                )}
-                {(schedulingPolicy === "FREE_SCHEDULING" || schedulingPolicy === "NO_SLOT_REQUIRED" || schedulingPolicy === null) && (
-                  <button
-                    className={`btn btn-sm flex-1 ${timeMode === "manual" ? "btn-primary" : "btn-outline"}`}
-                    onClick={() => setTimeMode("manual")}
-                  >
-                    <span className="iconify lucide--calendar-clock size-4" />
-                    Selección horario
-                  </button>
-                )}
+
+                  {schedulingPolicy === "RECIPIENT_SLOT_OPTIONAL" && (
+                    <button
+                      className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
+                        timeMode === "slot"
+                          ? "border-secondary bg-secondary/10 text-secondary"
+                          : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                      }`}
+                      onClick={() => setTimeMode("slot")}
+                    >
+                      <span className="iconify lucide--clock size-5" />
+                      <span className="text-xs font-semibold text-center leading-tight">Slots disponibles</span>
+                    </button>
+                  )}
+
+                  {(schedulingPolicy === "FREE_SCHEDULING" || schedulingPolicy === "NO_SLOT_REQUIRED" || schedulingPolicy === null) && (
+                    <button
+                      className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
+                        timeMode === "manual"
+                          ? "border-accent bg-accent/10 text-accent"
+                          : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                      }`}
+                      onClick={() => setTimeMode("manual")}
+                    >
+                      <span className="iconify lucide--calendar-clock size-5" />
+                      <span className="text-xs font-semibold text-center leading-tight">Horario específico</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -608,9 +741,9 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
             {showSlotPicker && (
               <div className="flex flex-col flex-1 overflow-hidden min-h-0">
                 {/* Week navigator */}
-                <div className="flex items-center justify-between mb-3 shrink-0">
+                <div className="flex items-center justify-between mb-3 shrink-0 px-1">
                   <button
-                    className="btn btn-ghost btn-xs btn-circle"
+                    className="btn btn-ghost btn-sm btn-circle"
                     disabled={!canGoPrevWeek}
                     onClick={() => {
                       const prev = addDays(slotWeekStart, -7);
@@ -620,11 +753,11 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
                   >
                     <span className="iconify lucide--chevron-left size-4" />
                   </button>
-                  <span className="text-xs font-medium text-base-content/70">
+                  <span className="text-sm font-medium text-base-content/70">
                     {fmtWeekRange(slotWeekStart, weekEnd)}
                   </span>
                   <button
-                    className="btn btn-ghost btn-xs btn-circle"
+                    className="btn btn-ghost btn-sm btn-circle"
                     onClick={() => { setSlotWeekStart(addDays(weekEnd, 1)); setSelectedSlot(null); }}
                   >
                     <span className="iconify lucide--chevron-right size-4" />
@@ -658,22 +791,24 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
                 )}
 
                 {!slotsLoading && !slotsError && activeDays.length > 0 && (
-                  <div className="overflow-y-auto flex-1 space-y-3 pr-1">
+                  <div className="overflow-y-auto flex-1 space-y-3 pr-0.5">
                     {activeDays.map((day) => (
                       <div key={day.date}>
-                        <p className="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-1.5 capitalize">
+                        <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wide mb-1.5 capitalize">
                           {fmtDateLabel(day.date)}
                         </p>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="grid grid-cols-4 gap-1.5">
                           {day.slots.map((slot, i) => (
                             <button
                               key={i}
-                              className={`btn btn-xs ${
+                              className={`btn btn-sm rounded-lg w-full whitespace-nowrap ${
                                 selectedSlot?.start === slot.start
                                   ? "btn-primary"
                                   : "btn-outline"
                               }`}
-                              onClick={() => setSelectedSlot(selectedSlot?.start === slot.start ? null : slot)}
+                              onClick={() =>
+                                setSelectedSlot(selectedSlot?.start === slot.start ? null : slot)
+                              }
                             >
                               {fmtSlotTime(slot.start)}
                             </button>
@@ -686,57 +821,64 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
               </div>
             )}
 
-            {/* Sin horario – date only */}
+            {/* Open mode – date only */}
             {step === 3 && timeMode === "open" && (
-              <div className="form-control shrink-0">
-                <label className="label pb-1">
-                  <span className="label-text text-sm font-medium">Fecha</span>
-                </label>
-                <div className="relative">
-                  <span className="iconify lucide--calendar size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
-                  <input
-                    type="date"
-                    className="input input-bordered w-full pl-9"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    min={todayISO()}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Manual date + time picker */}
-            {step === 3 && timeMode === "manual" && (
-              <div className="flex flex-col gap-3 shrink-0">
+              <div className="rounded-xl border border-base-200 p-4 shrink-0">
+                <SectionLabel icon="lucide--calendar" label="Fecha" />
                 <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text text-sm font-medium">Fecha</span>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-medium">Fecha de la cita</span>
                   </label>
                   <div className="relative">
-                    <span className="iconify lucide--calendar size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
+                    <span className="iconify lucide--calendar size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
                     <input
                       type="date"
-                      className="input input-bordered w-full pl-9"
+                      className="input input-bordered focus:input-primary w-full pl-9"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       min={todayISO()}
                     />
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text text-sm font-medium">Hora de inicio</span>
-                  </label>
-                  <TimePicker value={startTime} onChange={setStartTime} />
+            {/* Manual mode – date + time */}
+            {step === 3 && timeMode === "manual" && (
+              <div className="rounded-xl border border-base-200 p-4 shrink-0 space-y-4">
+                <SectionLabel icon="lucide--calendar-clock" label="Fecha y hora" />
+
+                <div className="flex gap-3 items-end">
+                  <div className="form-control flex-1 min-w-0">
+                    <label className="label pb-1.5">
+                      <span className="label-text font-medium">Fecha</span>
+                    </label>
+                    <div className="relative">
+                      <span className="iconify lucide--calendar size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
+                      <input
+                        type="date"
+                        className="input input-bordered input-sm focus:input-primary w-full pl-9"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        min={todayISO()}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-control shrink-0">
+                    <label className="label pb-1.5">
+                      <span className="label-text font-medium">Hora de inicio</span>
+                    </label>
+                    <TimePicker value={startTime} onChange={setStartTime} />
+                  </div>
                 </div>
 
                 <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text text-sm font-medium">Duración</span>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-medium">Duración</span>
                   </label>
                   <select
-                    className="select select-bordered"
+                    className="select select-bordered focus:select-primary w-full"
                     value={durationMinutes}
                     onChange={(e) => setDurationMinutes(Number(e.target.value))}
                   >
@@ -757,14 +899,16 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
           </div>
         )}
 
-        {/* Footer */}
-        <div className="flex justify-between mt-4 shrink-0 pt-2 border-t border-base-200">
+        {/* ── Footer ──────────────────────────────────────────────────────── */}
+        <div className="flex justify-between mt-5 shrink-0 pt-4 border-t border-base-200">
           <button
             className="btn btn-ghost"
             onClick={step === 1 ? onClose : () => setStep(step - 1)}
             disabled={submitLoading}
           >
-            {step === 1 ? "Cancelar" : (
+            {step === 1 ? (
+              "Cancelar"
+            ) : (
               <><span className="iconify lucide--arrow-left size-4" /> Anterior</>
             )}
           </button>
@@ -784,10 +928,11 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
               disabled={!canSubmit}
               onClick={handleSubmit}
             >
-              {submitLoading
-                ? <><span className="loading loading-spinner loading-sm" /> Creando…</>
-                : <><span className="iconify lucide--check size-4" /> Confirmar</>
-              }
+              {submitLoading ? (
+                <><span className="loading loading-spinner loading-sm" /> Creando…</>
+              ) : (
+                <><span className="iconify lucide--check size-4" /> Confirmar cita</>
+              )}
             </button>
           )}
         </div>

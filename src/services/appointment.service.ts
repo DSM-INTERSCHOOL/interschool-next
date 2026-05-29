@@ -360,6 +360,28 @@ export const createAppointment = async ({
   return response.data;
 };
 
+export const removeParticipant = async ({
+  schoolId,
+  appointmentId,
+  personId,
+}: SchoolArgs & { appointmentId: string; personId: string }): Promise<void> => {
+  await communicationApi.delete(
+    `/v1/schools/${schoolId}/appointments/${appointmentId}/participants/${personId}`
+  );
+};
+
+export const addParticipant = async ({
+  schoolId,
+  appointmentId,
+  personId,
+  addedBy,
+}: SchoolArgs & { appointmentId: string; personId: string; addedBy: string }): Promise<void> => {
+  await communicationApi.post(
+    `/v1/schools/${schoolId}/appointments/${appointmentId}/participants`,
+    { person_id: personId, added_by: addedBy }
+  );
+};
+
 export const getAppointments = async ({
   schoolId,
   personId,

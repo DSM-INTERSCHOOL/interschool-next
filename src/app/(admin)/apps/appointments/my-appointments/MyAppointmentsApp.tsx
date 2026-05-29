@@ -51,18 +51,7 @@ export const MyAppointmentsApp = () => {
   return (
     <>
       <PageTitle
-        title="Mis Citas"
         items={[{ label: "Apps" }, { label: "Citas" }, { label: "Mis Citas", active: true }]}
-        centerItem={
-          <button
-            className="btn btn-sm btn-ghost gap-1.5"
-            title="Configurar disponibilidad"
-            onClick={() => setAvailabilityOpen(true)}
-          >
-            <span className="iconify lucide--settings-2 size-4" />
-            <span className="hidden sm:inline text-sm">Disponibilidad</span>
-          </button>
-        }
       />
 
       <div className="mt-6 space-y-4">
@@ -80,6 +69,7 @@ export const MyAppointmentsApp = () => {
           personId={pid}
           onReload={reload}
           onSelect={setSelectedAppointment}
+          onAvailability={() => setAvailabilityOpen(true)}
         />
 
       </div>
