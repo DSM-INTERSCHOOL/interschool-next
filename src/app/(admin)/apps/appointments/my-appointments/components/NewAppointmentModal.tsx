@@ -30,7 +30,7 @@ const TYPE_CONFIG: Record<string, {
   USER:     { label: "Usuario",   icon: "lucide--user",           activeCard: "border-accent   bg-accent/10   text-accent",     avatar: "bg-accent/15   text-accent",     badge: "badge-accent"    },
   STUDENT:  { label: "Alumno",    icon: "lucide--graduation-cap", activeCard: "border-primary  bg-primary/10  text-primary",    avatar: "bg-primary/15  text-primary",    badge: "badge-primary"   },
   TEACHER:  { label: "Profesor",   icon: "lucide--user-check",     activeCard: "border-secondary bg-secondary/10 text-secondary", avatar: "bg-secondary/15 text-secondary", badge: "badge-secondary" },
-  RELATIVE: { label: "Familiar",  icon: "lucide--heart",          activeCard: "border-success  bg-success/10  text-success",    avatar: "bg-success/15  text-success",    badge: "badge-success"   },
+  RELATIVE: { label: "Familiar",  icon: "lucide--users-round",    activeCard: "border-success  bg-success/10  text-success",    avatar: "bg-success/15  text-success",    badge: "badge-success"   },
   ACADEMIC: { label: "Académico", icon: "lucide--book-open",      activeCard: "border-warning  bg-warning/10  text-warning",    avatar: "bg-warning/15  text-warning",    badge: "badge-warning"   },
 };
 
@@ -52,6 +52,10 @@ const addDays = (dateStr: string, n: number): string => {
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
+const nowTimeHHMM = () => {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+};
 
 const upcomingSunday = (dateStr: string): string => {
   const d = new Date(dateStr + "T12:00:00Z");
@@ -85,7 +89,7 @@ const recipientPosition = (r: IAppointmentRecipient) =>
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type TimeMode = "open" | "slot" | "manual";
+type TimeMode = "open" | "slot" | "manual" | "propose";
 
 interface Props {
   onClose: () => void;
@@ -110,6 +114,10 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
 
   // Navigation
   const [step, setStep] = useState(1);
+
+  // Proposed slot builder — active when timeMode === "propose"
+  const [proposedSlots, setProposedSlots] = useState<{ id: number; date: string; startTime: string; duration: number }[]>([]);
+  const nextSlotId = useRef(0);
 
   // Step 1 – Details
   const [title, setTitle] = useState("");
@@ -161,6 +169,14 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
     if (!personType || !selectedRecipient || !school?.inoty_config?.inoty_appointments_config) return null;
     const cfg = school.inoty_config.inoty_appointments_config[personType];
     return cfg?.[selectedRecipient.person_type]?.schedulingPolicy ?? null;
+  })();
+
+  // When true and policy is RECIPIENT_SLOT_REQUIRED, the manual scheduling mode
+  // is also offered (the user can bypass slots and enter a custom date/time).
+  const customSlotEnabled: boolean = (() => {
+    if (!personType || !selectedRecipient || !school?.inoty_config?.inoty_appointments_config) return false;
+    const cfg = school.inoty_config.inoty_appointments_config[personType];
+    return cfg?.[selectedRecipient.person_type]?.custom_slot_enabled ?? false;
   })();
 
   const hasPrev = skip > 0;
@@ -242,7 +258,7 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
     setSelectedType(type); setSkip(0); setSelectedRecipient(null);
   };
   const handleSearchChange = (value: string) => {
-    setSearchQuery(value); setSkip(0); setSelectedRecipient(null);
+    setSearchQuery(value.toUpperCase()); setSkip(0); setSelectedRecipient(null);
   };
 
   const goToStep3 = () => {
@@ -251,11 +267,15 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
       const cfg = school.inoty_config.inoty_appointments_config[personType];
       return cfg?.[selectedRecipient.person_type]?.schedulingPolicy ?? null;
     })();
+    // Default to "slot" when the policy requires it; otherwise start on "open".
+    // Even when custom_slot_enabled unlocks manual mode for RECIPIENT_SLOT_REQUIRED,
+    // slot is still the recommended default.
     setTimeMode(policy === "RECIPIENT_SLOT_REQUIRED" ? "slot" : "open");
     setSelectedSlot(null);
     setSlotDays([]);
     setSlotsError(null);
     setSlotWeekStart(todayISO());
+    setProposedSlots([]);
     setStep(3);
   };
 
@@ -265,7 +285,8 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
     if (submitLoading) return false;
     if (timeMode === "slot") return !!selectedSlot && !slotsError;
     if (timeMode === "manual") return !!date && !!startTime;
-    return !!date;
+    if (timeMode === "propose") return proposedSlots.length > 0;
+    return !!date; // "open"
   })();
 
   const handleSubmit = async () => {
@@ -283,6 +304,15 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
         virtual_link: virtualLink.trim() || null,
         notes: null,
         participant_ids: [String(selectedRecipient.person_id)],
+        ...(timeMode === "propose" && proposedSlots.length > 0 && {
+          proposed_slots: proposedSlots.map((s) => {
+            const start = new Date(`${s.date}T${s.startTime}:00`);
+            return {
+              start_datetime: start.toISOString(),
+              end_datetime: new Date(start.getTime() + s.duration * 60_000).toISOString(),
+            };
+          }),
+        }),
       };
 
       if (timeMode === "open") {
@@ -294,6 +324,17 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
             scheduled_start: `${date}T00:00:00Z`,
             scheduled_end: `${date}T23:59:59Z`,
             duration_minutes: 1140,
+          },
+        });
+      } else if (timeMode === "propose") {
+        await createAppointment({
+          schoolId,
+          dto: {
+            ...base,
+            without_time: true,
+            scheduled_start: null,
+            scheduled_end: null,
+            duration_minutes: 0,
           },
         });
       } else {
@@ -333,7 +374,7 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
 
   const isSlotMode = timeMode === "slot";
   const showSlotPicker = step === 3 && isSlotMode;
-  const showModePicker = step === 3 && schedulingPolicy !== "RECIPIENT_SLOT_REQUIRED";
+  const showModePicker = step === 3;
 
   return (
     <div className="modal modal-open">
@@ -528,7 +569,7 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
                 <span className="iconify lucide--search size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
                 <input
                   type="text"
-                  className="input input-bordered focus:input-primary w-full pl-9 pr-9"
+                  className="input input-bordered focus:input-primary w-full pl-9 pr-9 uppercase"
                   placeholder={
                     selectedType
                       ? `Buscar ${TYPE_CONFIG[selectedType]?.label ?? selectedType}…`
@@ -688,54 +729,84 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
             })()}
 
             {/* Mode selector */}
-            {showModePicker && (
-              <div className="mb-4 shrink-0">
-                <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2.5">
-                  Tipo de horario
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
-                      timeMode === "open"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
-                    }`}
-                    onClick={() => { setTimeMode("open"); setSelectedSlot(null); }}
-                  >
-                    <span className="iconify lucide--calendar-off size-5" />
-                    <span className="text-xs font-semibold text-center leading-tight">Horario abierto</span>
-                  </button>
+            {showModePicker && (() => {
+              // Count visible buttons to pick the right grid column count
+              const nButtons = [
+                customSlotEnabled,                                                                                               // "Propose" — only when flag is set
+                schedulingPolicy !== "RECIPIENT_SLOT_REQUIRED",                                                                  // "Open"
+                schedulingPolicy === "RECIPIENT_SLOT_REQUIRED" || schedulingPolicy === "RECIPIENT_SLOT_OPTIONAL",                // "Slot"
+                schedulingPolicy === "FREE_SCHEDULING" || schedulingPolicy === "NO_SLOT_REQUIRED" || schedulingPolicy === null,  // "Manual"
+              ].filter(Boolean).length;
+              return (
+                <div className="mb-4 shrink-0">
+                  <div className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2.5">
+                    Tipo de horario
+                  </div>
+                  <div className={`grid gap-2 ${nButtons >= 4 ? "grid-cols-4" : "grid-cols-3"}`}>
 
-                  {schedulingPolicy === "RECIPIENT_SLOT_OPTIONAL" && (
-                    <button
-                      className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
-                        timeMode === "slot"
-                          ? "border-secondary bg-secondary/10 text-secondary"
-                          : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
-                      }`}
-                      onClick={() => setTimeMode("slot")}
-                    >
-                      <span className="iconify lucide--clock size-5" />
-                      <span className="text-xs font-semibold text-center leading-tight">Slots disponibles</span>
-                    </button>
-                  )}
+                    {/* "Open" mode — hidden when slot is required */}
+                    {schedulingPolicy !== "RECIPIENT_SLOT_REQUIRED" && (
+                      <button
+                        className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
+                          timeMode === "open"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                        }`}
+                        onClick={() => { setTimeMode("open"); setSelectedSlot(null); }}
+                      >
+                        <span className="iconify lucide--calendar-off size-5" />
+                        <span className="text-xs font-semibold text-center leading-tight">Horario abierto</span>
+                      </button>
+                    )}
 
-                  {(schedulingPolicy === "FREE_SCHEDULING" || schedulingPolicy === "NO_SLOT_REQUIRED" || schedulingPolicy === null) && (
-                    <button
-                      className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
-                        timeMode === "manual"
-                          ? "border-accent bg-accent/10 text-accent"
-                          : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
-                      }`}
-                      onClick={() => setTimeMode("manual")}
-                    >
-                      <span className="iconify lucide--calendar-clock size-5" />
-                      <span className="text-xs font-semibold text-center leading-tight">Horario específico</span>
-                    </button>
-                  )}
+                    {/* "Slot" mode — shown when policy requires or allows slots */}
+                    {(schedulingPolicy === "RECIPIENT_SLOT_REQUIRED" || schedulingPolicy === "RECIPIENT_SLOT_OPTIONAL") && (
+                      <button
+                        className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
+                          timeMode === "slot"
+                            ? "border-secondary bg-secondary/10 text-secondary"
+                            : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                        }`}
+                        onClick={() => setTimeMode("slot")}
+                      >
+                        <span className="iconify lucide--clock size-5" />
+                        <span className="text-xs font-semibold text-center leading-tight">Slots disponibles</span>
+                      </button>
+                    )}
+
+                    {/* "Manual" mode — shown for free-scheduling policies */}
+                    {(schedulingPolicy === "FREE_SCHEDULING" || schedulingPolicy === "NO_SLOT_REQUIRED" || schedulingPolicy === null) && (
+                      <button
+                        className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
+                          timeMode === "manual"
+                            ? "border-accent bg-accent/10 text-accent"
+                            : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                        }`}
+                        onClick={() => setTimeMode("manual")}
+                      >
+                        <span className="iconify lucide--calendar-clock size-5" />
+                        <span className="text-xs font-semibold text-center leading-tight">Horario específico</span>
+                      </button>
+                    )}
+
+                    {/* "Propose" mode — last, only when custom_slot_enabled */}
+                    {customSlotEnabled && (
+                      <button
+                        className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 transition-all ${
+                          timeMode === "propose"
+                            ? "border-success bg-success/10 text-success"
+                            : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
+                        }`}
+                        onClick={() => { setTimeMode("propose"); setSelectedSlot(null); setProposedSlots([]); }}
+                      >
+                        <span className="iconify lucide--calendar-range size-5" />
+                        <span className="text-xs font-semibold text-center leading-tight">Proponer slots</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Slot picker */}
             {showSlotPicker && (
@@ -843,42 +914,28 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
               </div>
             )}
 
-            {/* Manual mode – date + time */}
+            {/* Manual mode – date + time + duration (single row) */}
             {step === 3 && timeMode === "manual" && (
-              <div className="rounded-xl border border-base-200 p-4 shrink-0 space-y-4">
+              <div className="rounded-xl border border-base-200 p-4 shrink-0">
                 <SectionLabel icon="lucide--calendar-clock" label="Fecha y hora" />
-
-                <div className="flex gap-3 items-end">
-                  <div className="form-control flex-1 min-w-0">
-                    <label className="label pb-1.5">
-                      <span className="label-text font-medium">Fecha</span>
-                    </label>
-                    <div className="relative">
-                      <span className="iconify lucide--calendar size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
-                      <input
-                        type="date"
-                        className="input input-bordered input-sm focus:input-primary w-full pl-9"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        min={todayISO()}
-                      />
-                    </div>
+                <div className="grid items-center gap-2 mt-3" style={{ gridTemplateColumns: "minmax(8rem, 1fr) auto auto" }}>
+                  <div className="relative">
+                    <span className="iconify lucide--calendar size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
+                    <input
+                      type="date"
+                      className="input input-bordered input-sm w-full pl-8"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      min={todayISO()}
+                    />
                   </div>
-
-                  <div className="form-control shrink-0">
-                    <label className="label pb-1.5">
-                      <span className="label-text font-medium">Hora de inicio</span>
-                    </label>
-                    <TimePicker value={startTime} onChange={setStartTime} />
-                  </div>
-                </div>
-
-                <div className="form-control">
-                  <label className="label pb-1.5">
-                    <span className="label-text font-medium">Duración</span>
-                  </label>
+                  <TimePicker
+                    value={startTime}
+                    minTime={date === todayISO() ? nowTimeHHMM() : undefined}
+                    onChange={setStartTime}
+                  />
                   <select
-                    className="select select-bordered focus:select-primary w-full"
+                    className="select select-bordered select-sm"
                     value={durationMinutes}
                     onChange={(e) => setDurationMinutes(Number(e.target.value))}
                   >
@@ -887,6 +944,97 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
                     ))}
                   </select>
                 </div>
+              </div>
+            )}
+
+            {/* ── Propose mode – slot builder ────────────────────────────── */}
+            {step === 3 && timeMode === "propose" && (
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <p className="text-xs text-base-content/50 mb-3 shrink-0">
+                  Define horarios opcionales para que el destinatario elija uno.
+                </p>
+
+                {/* Slot rows */}
+                <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-0.5">
+                  {proposedSlots.length === 0 && (
+                    <div className="text-center py-6">
+                      <span className="iconify lucide--calendar-range size-10 text-base-content/15 block mx-auto mb-2" />
+                      <p className="text-sm text-base-content/40">Agrega al menos un horario propuesto.</p>
+                    </div>
+                  )}
+
+                  {proposedSlots.map((slot) => (
+                    <div key={slot.id} className="grid items-center gap-2" style={{ gridTemplateColumns: "minmax(8rem, 1fr) auto auto auto" }}>
+                      {/* Date */}
+                      <div className="relative">
+                        <span className="iconify lucide--calendar size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
+                        <input
+                          type="date"
+                          className="input input-bordered input-sm w-full pl-8"
+                          value={slot.date}
+                          min={todayISO()}
+                          onChange={(e) =>
+                            setProposedSlots((prev) =>
+                              prev.map((s) => s.id === slot.id ? { ...s, date: e.target.value } : s)
+                            )
+                          }
+                        />
+                      </div>
+
+                      {/* Start time */}
+                      <TimePicker
+                        value={slot.startTime}
+                        minTime={slot.date === todayISO() ? nowTimeHHMM() : undefined}
+                        onChange={(v) =>
+                          setProposedSlots((prev) =>
+                            prev.map((s) => s.id === slot.id ? { ...s, startTime: v } : s)
+                          )
+                        }
+                      />
+
+                      {/* Duration */}
+                      <select
+                        className="select select-bordered select-sm"
+                        value={slot.duration}
+                        onChange={(e) =>
+                          setProposedSlots((prev) =>
+                            prev.map((s) => s.id === slot.id ? { ...s, duration: Number(e.target.value) } : s)
+                          )
+                        }
+                      >
+                        <option value={15}>15 min</option>
+                        <option value={30}>30 min</option>
+                        <option value={45}>45 min</option>
+                        <option value={60}>60 min</option>
+                      </select>
+
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs btn-circle text-base-content/30 hover:text-error"
+                        onClick={() => setProposedSlots((prev) => prev.filter((s) => s.id !== slot.id))}
+                      >
+                        <span className="iconify lucide--x size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add button — pinned at bottom */}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm gap-1.5 shrink-0 mt-2 w-full border border-dashed border-success/40 text-success hover:bg-success/5"
+                  onClick={() => {
+                    const id = nextSlotId.current++;
+                    setProposedSlots((prev) => [
+                      ...prev,
+                      { id, date: todayISO(), startTime: "09:00", duration: 30 },
+                    ]);
+                  }}
+                >
+                  <span className="iconify lucide--plus size-4" />
+                  Agregar horario
+                </button>
               </div>
             )}
 

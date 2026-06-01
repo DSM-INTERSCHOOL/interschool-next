@@ -5,7 +5,7 @@ import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyAvailability, useMyAppointments } from "./hooks";
-import { AppointmentsList, NewAppointmentModal, AppointmentDetailModal } from "./components";
+import { AppointmentsList, NewAppointmentModal, AppointmentDetailModal, ProposedSlotPickerModal } from "./components";
 import { IAppointmentRead } from "@/interfaces/IAppointment";
 import {
   AvailabilitySettings,
@@ -82,15 +82,32 @@ export const MyAppointmentsApp = () => {
         />
       )}
 
-      {/* ── Appointment detail modal ─────────────────────────────────────── */}
-      {selectedAppointment && (
-        <AppointmentDetailModal
-          appointment={selectedAppointment}
-          personId={pid}
-          onClose={() => setSelectedAppointment(null)}
-          onUpdate={() => { reload(); setSelectedAppointment(null); }}
-        />
-      )}
+      {/* ── Appointment detail / slot-picker modal ──────────────────────── */}
+      {selectedAppointment && (() => {
+        const needsSlotPick =
+          selectedAppointment.status !== "CONFIRMED" &&
+          !selectedAppointment.scheduled_start &&
+          !selectedAppointment.scheduled_end &&
+          (selectedAppointment.proposed_slots?.length ?? 0) > 0 &&
+          selectedAppointment.participants.some(
+            (p) => String(p.person_id) === String(pid) && p.role === "ATTENDEE" && !p.removed_at
+          );
+        return needsSlotPick ? (
+          <ProposedSlotPickerModal
+            appointment={selectedAppointment}
+            personId={pid}
+            onClose={() => setSelectedAppointment(null)}
+            onConfirmed={() => { reload(); setSelectedAppointment(null); }}
+          />
+        ) : (
+          <AppointmentDetailModal
+            appointment={selectedAppointment}
+            personId={pid}
+            onClose={() => setSelectedAppointment(null)}
+            onUpdate={() => { reload(); setSelectedAppointment(null); }}
+          />
+        );
+      })()}
 
       {/* ── Availability modal ───────────────────────────────────────────── */}
       {availabilityOpen && (

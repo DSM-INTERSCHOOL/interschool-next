@@ -39,6 +39,7 @@ export type IInotyRecipientsConfig = Record<string, Record<string, RecipientScop
 export interface IAppointmentPolicy {
   schedulingPolicy: SchedulingPolicy;
   allowed_target_groups: RecipientScope;
+  custom_slot_enabled: boolean;
 }
 
 export type IInotyAppointmentsConfig = Record<string, Record<string, IAppointmentPolicy | null> | null>;

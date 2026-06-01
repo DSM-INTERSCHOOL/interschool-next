@@ -22,6 +22,7 @@ import {
   IAppointmentRead,
   IAppointmentUpdate,
   IAppointmentCreate,
+  IProposedSlot,
   AppointmentStatus,
 } from "@/interfaces/IAppointment";
 
@@ -379,6 +380,26 @@ export const addParticipant = async ({
   await communicationApi.post(
     `/v1/schools/${schoolId}/appointments/${appointmentId}/participants`,
     { person_id: personId, added_by: addedBy }
+  );
+};
+
+export const deleteAppointment = async ({
+  schoolId,
+  appointmentId,
+}: SchoolArgs & { appointmentId: string }): Promise<void> => {
+  await communicationApi.delete(
+    `/v1/schools/${schoolId}/appointments/${appointmentId}`
+  );
+};
+
+export const addProposedSlot = async ({
+  schoolId,
+  appointmentId,
+  dto,
+}: SchoolArgs & { appointmentId: string; dto: IProposedSlot }): Promise<void> => {
+  await communicationApi.post(
+    `/v1/schools/${schoolId}/appointments/${appointmentId}/proposed-slots`,
+    dto
   );
 };
 

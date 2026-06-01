@@ -235,6 +235,13 @@ export interface IAppointmentRecipientsResponse {
   limit: number;
 }
 
+// ── Proposed slots ────────────────────────────────────────────────────────────
+
+export interface IProposedSlot {
+  start_datetime: string;
+  end_datetime: string;
+}
+
 // ── Appointments ──────────────────────────────────────────────────────────────
 
 export type AppointmentStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
@@ -287,6 +294,7 @@ export interface IAppointmentRead {
   created_at: string | null;
   modified_at: string | null;
   participants: IAppointmentParticipant[];
+  proposed_slots?: IProposedSlot[];
 }
 
 export interface IAppointmentUpdate {
@@ -306,11 +314,12 @@ export interface IAppointmentCreate {
   title: string | null;
   description: string | null;
   without_time: boolean;
-  scheduled_start?: string;
-  scheduled_end?: string;
+  scheduled_start?: string | null;
+  scheduled_end?: string | null;
   duration_minutes?: number;
   location: string | null;
   virtual_link: string | null;
   notes: string | null;
   participant_ids: string[];
+  proposed_slots?: IProposedSlot[];
 }

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { IAppointmentRead, AppointmentStatus, IAppointmentParticipant } from "@/interfaces/IAppointment";
-import { updateParticipantStatus, updateAppointmentStatus } from "@/services/appointment.service";
+import { updateParticipantStatus, updateAppointmentStatus, deleteAppointment } from "@/services/appointment.service";
 import { getOrgConfig } from "@/lib/orgConfig";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -87,8 +87,10 @@ export const AppointmentsList = ({
 
   const [view,        setView]        = useState<ViewType>("list");
   const [filter,      setFilter]      = useState<FilterType>("all");
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmingId,   setConfirmingId]   = useState<string | null>(null);
+  const [cancellingId,   setCancellingId]   = useState<string | null>(null);
+  const [deletingId,     setDeletingId]     = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // ── Filter counts ──────────────────────────────────────────────────────────
   const countFor = (f: FilterType) => {
@@ -109,6 +111,7 @@ export const AppointmentsList = ({
   const appointmentsByDay = useMemo(() => {
     const map: Record<number, IAppointmentRead[]> = {};
     filteredAppointments.forEach(appt => {
+      if (!appt.scheduled_start) return; // proposed-slot appointments have no date yet
       const d = new Date(appt.scheduled_start).getDate();
       if (!map[d]) map[d] = [];
       map[d].push(appt);
@@ -137,6 +140,19 @@ export const AppointmentsList = ({
       onReload();
     } finally {
       setConfirmingId(null);
+    }
+  };
+
+  const handleDeleteAppointment = async (appointmentId: string) => {
+    const { schoolId } = getOrgConfig();
+    if (!schoolId) return;
+    setDeletingId(appointmentId);
+    try {
+      await deleteAppointment({ schoolId, appointmentId });
+      setConfirmDeleteId(null);
+      onReload();
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -276,7 +292,8 @@ export const AppointmentsList = ({
                   <div className="space-y-3">
                     {filteredAppointments.map((appt) => {
                       const status = STATUS_CONFIG[appt.status] ?? { label: appt.status, cls: "badge-ghost" };
-                      const start = new Date(appt.scheduled_start);
+                      const hasDates = !!appt.scheduled_start;
+                      const start = hasDates ? new Date(appt.scheduled_start) : null;
                       const activeParticipants = appt.participants.filter((p) => !p.removed_at);
                       const others = activeParticipants.filter((p) => p.role !== "ORGANIZER");
                       const myParticipant = findMyParticipant(appt);
@@ -284,24 +301,31 @@ export const AppointmentsList = ({
                       const isConfirming = confirmingId === appt.id;
                       const isCancelling = cancellingId === appt.id;
                       const needsAction = myParticipant?.status === "PENDING";
+                      const needsSlotPick = appt.status !== "CONFIRMED" && !hasDates && (appt.proposed_slots?.length ?? 0) > 0;
                       const canCancelAppt = amOrganizer &&
                         appt.status !== "CANCELLED" && appt.status !== "COMPLETED";
 
                       return (
                         <div
                           key={appt.id}
-                          className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:brightness-95 transition-[filter] ${
+                          className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:brightness-95 transition-[filter] ${
                             needsAction ? "bg-warning/10 border border-warning/30" : "bg-base-200"
                           }`}
                           onClick={() => onSelect(appt)}
                         >
                           {/* Date block */}
-                          <div className="shrink-0 w-12 text-center bg-base-100 rounded-lg p-1.5">
-                            <p className="text-lg font-bold leading-none">{start.getDate()}</p>
-                            <p className="text-xs text-base-content/50 uppercase">
-                              {MONTH_NAMES[start.getMonth()].slice(0, 3)}
-                            </p>
-                          </div>
+                          {hasDates ? (
+                            <div className="shrink-0 w-12 flex flex-col items-center justify-center gap-0.5 bg-base-100 rounded-lg p-1.5 min-h-[3rem]">
+                              <p className="text-lg font-bold leading-none">{start!.getDate()}</p>
+                              <p className="text-xs text-base-content/50 uppercase leading-none">
+                                {MONTH_NAMES[start!.getMonth()].slice(0, 3)}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="shrink-0 w-12 flex items-center justify-center bg-base-100 rounded-lg p-1.5 min-h-[3rem]">
+                              <span className="iconify lucide--alarm-clock size-5 text-base-content/50" />
+                            </div>
+                          )}
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
@@ -312,7 +336,15 @@ export const AppointmentsList = ({
                               )}
                             </div>
 
-                            {appt.without_time ? (
+                            {!hasDates ? (
+                              <p className="text-sm text-info/80">
+                                <span className="iconify lucide--alarm-clock size-3.5 inline mr-1" />
+                                {(appt.proposed_slots?.length ?? 0) > 0
+                                  ? `${appt.proposed_slots!.length} horario${appt.proposed_slots!.length !== 1 ? "s" : ""} propuesto${appt.proposed_slots!.length !== 1 ? "s" : ""}`
+                                  : "Esperando selección de horario"
+                                }
+                              </p>
+                            ) : appt.without_time ? (
                               <p className="text-sm text-base-content/70">Horario abierto</p>
                             ) : (
                               <p className="text-sm text-base-content/70">
@@ -374,18 +406,34 @@ export const AppointmentsList = ({
                             {myParticipant && (
                               <div className="mt-2 pt-2 border-t border-base-200 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                                 {myParticipant.status === "PENDING" && (
-                                  <>
-                                    <span className="text-xs text-warning font-medium flex-1">
-                                      <span className="iconify lucide--clock-alert size-3.5 inline mr-1" />
-                                      Pendiente de confirmación
-                                    </span>
-                                    <button className="btn btn-xs btn-success" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}>
-                                      {isConfirming ? <span className="loading loading-spinner loading-xs" /> : <><span className="iconify lucide--check size-3" /> Confirmar</>}
-                                    </button>
-                                    <button className="btn btn-xs btn-outline btn-error" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "DECLINED")}>
-                                      Declinar
-                                    </button>
-                                  </>
+                                  needsSlotPick ? (
+                                    <>
+                                      <span className="text-xs text-info font-medium flex-1">
+                                        <span className="iconify lucide--alarm-clock size-3.5 inline mr-1" />
+                                        Horarios propuestos disponibles
+                                      </span>
+                                      <button
+                                        className="btn btn-xs btn-info"
+                                        onClick={(e) => { e.stopPropagation(); onSelect(appt); }}
+                                      >
+                                        <span className="iconify lucide--alarm-clock size-3" />
+                                        Elegir horario
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="text-xs text-warning font-medium flex-1">
+                                        <span className="iconify lucide--clock-alert size-3.5 inline mr-1" />
+                                        Pendiente de confirmación
+                                      </span>
+                                      <button className="btn btn-xs btn-success" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "CONFIRMED")}>
+                                        {isConfirming ? <span className="loading loading-spinner loading-xs" /> : <><span className="iconify lucide--check size-3" /> Confirmar</>}
+                                      </button>
+                                      <button className="btn btn-xs btn-outline btn-error" disabled={isConfirming} onClick={() => handleStatusUpdate(appt.id, "DECLINED")}>
+                                        Declinar
+                                      </button>
+                                    </>
+                                  )
                                 )}
                                 {myParticipant.status === "CONFIRMED" && (
                                   <>
@@ -427,6 +475,22 @@ export const AppointmentsList = ({
                               </div>
                             )}
                           </div>
+
+                          {/* Delete button — organizer only */}
+                          {amOrganizer && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs btn-circle text-base-content/25 hover:text-error shrink-0 self-start"
+                              title="Eliminar cita"
+                              disabled={deletingId === appt.id}
+                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(appt.id); }}
+                            >
+                              {deletingId === appt.id
+                                ? <span className="loading loading-spinner loading-xs" />
+                                : <span className="iconify lucide--trash-2 size-3.5" />
+                              }
+                            </button>
+                          )}
                         </div>
                       );
                     })}
@@ -500,6 +564,47 @@ export const AppointmentsList = ({
         )}
 
       </div>
+
+      {/* ── Delete confirmation modal ──────────────────────────────────────── */}
+      {confirmDeleteId && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center shrink-0">
+                <span className="iconify lucide--trash-2 size-5 text-error" />
+              </div>
+              <h3 className="font-bold text-lg">Eliminar cita</h3>
+            </div>
+            <p className="text-sm text-base-content/70 mb-2">
+              ¿Estás seguro de que deseas eliminar esta cita?
+            </p>
+            <p className="text-sm text-base-content/50 mb-6">Esta acción no se puede deshacer.</p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="btn btn-ghost"
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={deletingId === confirmDeleteId}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-error"
+                onClick={() => handleDeleteAppointment(confirmDeleteId)}
+                disabled={deletingId === confirmDeleteId}
+              >
+                {deletingId === confirmDeleteId
+                  ? <><span className="loading loading-spinner loading-sm" /> Eliminando…</>
+                  : <><span className="iconify lucide--trash-2 size-4" /> Eliminar</>
+                }
+              </button>
+            </div>
+          </div>
+          <div
+            className="modal-backdrop"
+            onClick={() => { if (!deletingId) setConfirmDeleteId(null); }}
+          />
+        </div>
+      )}
     </div>
   );
 };

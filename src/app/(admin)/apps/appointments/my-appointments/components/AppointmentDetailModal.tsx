@@ -11,6 +11,7 @@ import {
   updateParticipantStatus,
   addParticipant,
   removeParticipant,
+  addProposedSlot,
 } from "@/services/appointment.service";
 import { getAppointmentRecipients } from "@/services/auth.service";
 import { getOrgConfig } from "@/lib/orgConfig";
@@ -74,6 +75,10 @@ const fmtTime = (iso: string) =>
   });
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
+const nowTimeHHMM = () => {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+};
 
 const isValidUrl = (v: string) => { try { new URL(v); return true; } catch { return false; } };
 
@@ -117,12 +122,13 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
   const [startTime, setStartTime] = useState(
     appt.without_time ? "09:00" : toTimeStr(appt.scheduled_start)
   );
-  const [endDate, setEndDate] = useState(
-    appt.without_time ? todayISO() : toDateStr(appt.scheduled_end)
-  );
-  const [endTime, setEndTime] = useState(
-    appt.without_time ? "09:30" : toTimeStr(appt.scheduled_end)
-  );
+  const [scheduleDuration, setScheduleDuration] = useState<number>(() => {
+    if (appt.without_time || !appt.scheduled_start || !appt.scheduled_end) return 30;
+    const diff = Math.round(
+      (new Date(appt.scheduled_end).getTime() - new Date(appt.scheduled_start).getTime()) / 60_000
+    );
+    return [15, 30, 45, 60].reduce((a, b) => Math.abs(b - diff) < Math.abs(a - diff) ? b : a);
+  });
   const [location, setLocation] = useState(appt.location ?? "");
   const [editingLocation, setEditingLocation] = useState(!appt.location);
   const [virtualLink, setVirtualLink] = useState(appt.virtual_link ?? "");
@@ -240,6 +246,49 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
     }
   };
 
+  // ── Proposed-slot flag (derived from school config) ──────────────────────────
+  const customSlotEnabled: boolean = (() => {
+    if (!myPersonType || !school?.inoty_config?.inoty_appointments_config) return false;
+    const cfg = school.inoty_config.inoty_appointments_config[myPersonType];
+    if (!cfg) return false;
+    const other = appt.participants.find(
+      (p) => !p.removed_at && String(p.person_id) !== String(personId)
+    );
+    if (!other?.person.type) return false;
+    return cfg[other.person.type]?.custom_slot_enabled ?? false;
+  })();
+
+  // ── Add proposed-slot state ───────────────────────────────────────────────────
+  const [slotPanelOpen, setSlotPanelOpen] = useState(false);
+  const [slotDate, setSlotDate] = useState(todayISO());
+  const [slotStartTime, setSlotStartTime] = useState("09:00");
+  const [slotDuration, setSlotDuration] = useState(30);
+  const [slotSaving, setSlotSaving] = useState(false);
+  const [slotSaveError, setSlotSaveError] = useState<string | null>(null);
+
+  const handleAddProposedSlot = async () => {
+    const { schoolId } = getOrgConfig();
+    if (!schoolId) return;
+    setSlotSaving(true);
+    setSlotSaveError(null);
+    try {
+      await addProposedSlot({
+        schoolId,
+        appointmentId: appt.id,
+        dto: {
+          start_datetime: new Date(`${slotDate}T${slotStartTime}:00`).toISOString(),
+          end_datetime: new Date(new Date(`${slotDate}T${slotStartTime}:00`).getTime() + slotDuration * 60_000).toISOString(),
+        },
+      });
+      setSlotPanelOpen(false);
+      onUpdate();
+    } catch (err) {
+      setSlotSaveError(getApiErrorMessage(err, "No se pudo agregar el horario."));
+    } finally {
+      setSlotSaving(false);
+    }
+  };
+
   // ── Remove participant state ──────────────────────────────────────────────────
   const [removingPersonId, setRemovingPersonId] = useState<string | null>(null);
 
@@ -263,12 +312,9 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
     const { schoolId } = getOrgConfig();
     if (!schoolId) return;
 
-    const start = new Date(`${startDate}T${startTime}:00`).toISOString();
-    const end = new Date(`${endDate}T${endTime}:00`).toISOString();
-    const duration = Math.max(
-      0,
-      Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60_000)
-    );
+    const startMs = new Date(`${startDate}T${startTime}:00`).getTime();
+    const start = new Date(startMs).toISOString();
+    const end = new Date(startMs + scheduleDuration * 60_000).toISOString();
 
     setSaving(true);
     setSaveError(null);
@@ -280,7 +326,7 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
         dto: {
           scheduled_start: start,
           scheduled_end: end,
-          duration_minutes: duration,
+          duration_minutes: scheduleDuration,
           without_time: false,
           location: location.trim() || null,
           virtual_link: virtualLink.trim() || null,
@@ -405,6 +451,131 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
             <div className="flex items-start gap-2 text-sm">
               <span className="iconify lucide--align-left size-4 text-base-content/40 mt-0.5 shrink-0" />
               <p className="text-base-content/70">{appt.description}</p>
+            </div>
+          )}
+
+          {/* ── Proposed slots ──────────────────────────────────────────────── */}
+          {appt.status !== "CONFIRMED" && !appt.scheduled_start && ((appt.proposed_slots?.length ?? 0) > 0 || (customSlotEnabled && canEdit)) && (
+            <div>
+              {/* Section header */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="iconify lucide--calendar-range size-4 text-base-content/40 shrink-0" />
+                  <p className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+                    Horarios propuestos
+                  </p>
+                </div>
+                {customSlotEnabled && canEdit && !slotPanelOpen && (
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-primary"
+                    onClick={() => {
+                      setSlotDate(todayISO());
+                      setSlotStartTime("09:00");
+                      setSlotDuration(30);
+                      setSlotSaveError(null);
+                      setSlotPanelOpen(true);
+                    }}
+                  >
+                    <span className="iconify lucide--plus size-3.5" />
+                    Agregar
+                  </button>
+                )}
+              </div>
+
+              {/* Existing slots */}
+              {(appt.proposed_slots?.length ?? 0) > 0 && (
+                <div className="space-y-1 mb-2">
+                  {appt.proposed_slots!.map((slot, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-base-content/70">
+                      <span className="iconify lucide--clock size-3.5 text-base-content/35 shrink-0" />
+                      <span>
+                        {fmtDate(slot.start_datetime)},{" "}
+                        {fmtTime(slot.start_datetime)} – {fmtTime(slot.end_datetime)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!(appt.proposed_slots?.length) && !slotPanelOpen && (
+                <p className="text-sm text-base-content/35 italic">Sin horarios propuestos.</p>
+              )}
+
+              {/* Add-slot inline panel */}
+              {slotPanelOpen && (
+                <div className="mt-2 rounded-xl border border-base-200 bg-base-50 p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+                      Nuevo horario
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-ghost btn-circle"
+                      onClick={() => setSlotPanelOpen(false)}
+                      disabled={slotSaving}
+                    >
+                      <span className="iconify lucide--x size-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Date + Start time + Duration — single row */}
+                  <div className="grid items-center gap-2" style={{ gridTemplateColumns: "minmax(8rem, 1fr) auto auto" }}>
+                    <div className="relative">
+                      <span className="iconify lucide--calendar size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
+                      <input
+                        type="date"
+                        className="input input-bordered input-sm w-full pl-8"
+                        value={slotDate}
+                        min={todayISO()}
+                        onChange={(e) => setSlotDate(e.target.value)}
+                      />
+                    </div>
+                    <TimePicker
+                      value={slotStartTime}
+                      minTime={slotDate === todayISO() ? nowTimeHHMM() : undefined}
+                      onChange={setSlotStartTime}
+                    />
+                    <select
+                      className="select select-bordered select-sm"
+                      value={slotDuration}
+                      onChange={(e) => setSlotDuration(Number(e.target.value))}
+                    >
+                      <option value={15}>15 min</option>
+                      <option value={30}>30 min</option>
+                      <option value={45}>45 min</option>
+                      <option value={60}>60 min</option>
+                    </select>
+                  </div>
+
+                  {slotSaveError && (
+                    <div className="alert alert-error py-2">
+                      <span className="iconify lucide--alert-circle size-4" />
+                      <span className="text-xs">{slotSaveError}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2 pt-1 border-t border-base-200">
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setSlotPanelOpen(false)}
+                      disabled={slotSaving}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      disabled={!slotDate || slotSaving}
+                      onClick={handleAddProposedSlot}
+                    >
+                      {slotSaving
+                        ? <><span className="loading loading-spinner loading-xs" /> Guardando…</>
+                        : <><span className="iconify lucide--check size-4" /> Agregar</>
+                      }
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -921,44 +1092,33 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
                     )}
                   </div>
 
-                  {/* Start */}
-                  <div className="form-control">
-                    <label className="label pb-1">
-                      <span className="label-text text-sm font-medium">Inicio</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1 min-w-0">
-                        <span className="iconify lucide--calendar size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
-                        <input
-                          type="date"
-                          className="input input-bordered input-sm w-full pl-9"
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          min={todayISO()}
-                        />
-                      </div>
-                      <TimePicker value={startTime} onChange={setStartTime} />
+                  {/* Date · Time · Duration — single row */}
+                  <div className="grid items-center gap-2" style={{ gridTemplateColumns: "minmax(8rem, 1fr) auto auto" }}>
+                    <div className="relative">
+                      <span className="iconify lucide--calendar size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-base-content/35 pointer-events-none" />
+                      <input
+                        type="date"
+                        className="input input-bordered input-sm w-full pl-8"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        min={todayISO()}
+                      />
                     </div>
-                  </div>
-
-                  {/* End */}
-                  <div className="form-control">
-                    <label className="label pb-1">
-                      <span className="label-text text-sm font-medium">Fin</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1 min-w-0">
-                        <span className="iconify lucide--calendar size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
-                        <input
-                          type="date"
-                          className="input input-bordered input-sm w-full pl-9"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          min={startDate}
-                        />
-                      </div>
-                      <TimePicker value={endTime} onChange={setEndTime} />
-                    </div>
+                    <TimePicker
+                      value={startTime}
+                      minTime={startDate === todayISO() ? nowTimeHHMM() : undefined}
+                      onChange={setStartTime}
+                    />
+                    <select
+                      className="select select-bordered select-sm"
+                      value={scheduleDuration}
+                      onChange={(e) => setScheduleDuration(Number(e.target.value))}
+                    >
+                      <option value={15}>15 min</option>
+                      <option value={30}>30 min</option>
+                      <option value={45}>45 min</option>
+                      <option value={60}>60 min</option>
+                    </select>
                   </div>
                 </>
               )}
@@ -1011,7 +1171,7 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
           {canEdit && (
             <button
               className="btn btn-primary btn-sm"
-              disabled={saving || !startDate || !startTime || !endDate || !endTime}
+              disabled={saving || !startDate || !startTime}
               onClick={handleSave}
             >
               {saving
