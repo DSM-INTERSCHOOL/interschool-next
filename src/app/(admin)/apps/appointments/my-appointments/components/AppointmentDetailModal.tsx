@@ -362,7 +362,7 @@ export const AppointmentDetailModal = ({ appointment: appt, personId, onClose, o
     if (!schoolId) return;
     setCancellingAppt(true);
     try {
-      await updateAppointmentStatus({ schoolId, appointmentId: appt.id, status: "CANCELLED" });
+      await updateAppointmentStatus({ schoolId, appointmentId: appt.id, status: "CANCELLED", cancelledBy: personId ?? undefined });
       onUpdate();
     } finally {
       setCancellingAppt(false);

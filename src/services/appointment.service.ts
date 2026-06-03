@@ -324,13 +324,17 @@ export const updateAppointmentStatus = async ({
   schoolId,
   appointmentId,
   status,
+  cancelledBy,
 }: SchoolArgs & {
   appointmentId: string;
   status: "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
+  cancelledBy?: string;
 }): Promise<void> => {
+  const body: Record<string, unknown> = { status };
+  if (status === "CANCELLED" && cancelledBy) body.cancelled_by = cancelledBy;
   await communicationApi.put(
     `/v1/schools/${schoolId}/appointments/${appointmentId}`,
-    { status }
+    body
   );
 };
 

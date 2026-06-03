@@ -321,9 +321,9 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
           dto: {
             ...base,
             without_time: true,
-            scheduled_start: `${date}T00:00:00Z`,
-            scheduled_end: `${date}T23:59:59Z`,
-            duration_minutes: 1140,
+            scheduled_start: new Date(`${date}T00:00:00`).toISOString(),
+            scheduled_end: new Date(`${date}T00:00:00`).toISOString(),
+            duration_minutes: 0,
           },
         });
       } else if (timeMode === "propose") {

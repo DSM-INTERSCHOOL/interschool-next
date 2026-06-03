@@ -161,7 +161,7 @@ export const AppointmentsList = ({
     if (!schoolId) return;
     setCancellingId(appointmentId);
     try {
-      await updateAppointmentStatus({ schoolId, appointmentId, status: "CANCELLED" });
+      await updateAppointmentStatus({ schoolId, appointmentId, status: "CANCELLED", cancelledBy: personId ?? undefined });
       onReload();
     } finally {
       setCancellingId(null);
@@ -218,6 +218,15 @@ export const AppointmentsList = ({
               </button>
             );
           })}
+
+          <button
+            className="btn btn-ghost btn-sm btn-circle"
+            title="Actualizar"
+            disabled={loading}
+            onClick={onReload}
+          >
+            <span className={`iconify lucide--refresh-cw size-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
 
           <div className="flex-1" />
 
