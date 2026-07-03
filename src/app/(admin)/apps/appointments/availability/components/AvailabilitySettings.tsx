@@ -138,7 +138,7 @@ export const AvailabilitySettings = ({
               />
               <div>
                 <p className="font-medium text-sm">Activo</p>
-                <p className="text-xs text-base-content/50">La disponibilidad se considera para agendar citas</p>
+                <p className="text-xs text-base-content/50">La disponibilidad se considera para agendar reuniones</p>
               </div>
             </label>
           </fieldset>

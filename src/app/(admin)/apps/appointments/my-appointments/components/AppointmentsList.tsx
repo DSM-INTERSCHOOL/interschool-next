@@ -8,8 +8,9 @@ import { getOrgConfig } from "@/lib/orgConfig";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ParticipantUpdateStatus = "CONFIRMED" | "DECLINED" | "CANCELLED";
-type FilterType = "all" | "pending" | "confirmed";
-type ViewType  = "list" | "calendar";
+type RoleFilter   = "all" | "organizer" | "attendee";
+type StatusFilter = "all" | "pending" | "confirmed";
+type ViewType     = "list" | "calendar";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -28,8 +29,14 @@ const STATUS_CONFIG: Record<AppointmentStatus, { label: string; cls: string; cal
   NO_SHOW:   { label: "No asistió", cls: "badge-ghost",    calCls: "bg-base-300 text-base-content/40 border border-base-300" },
 };
 
-const FILTERS: { key: FilterType; label: string }[] = [
+const ROLE_FILTERS: { key: RoleFilter; label: string }[] = [
   { key: "all",       label: "Todas" },
+  { key: "attendee",  label: "Invitado" },
+  { key: "organizer", label: "Organizador" },
+];
+
+const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
+  { key: "all",       label: "Todos" },
   { key: "pending",   label: "Pendientes" },
   { key: "confirmed", label: "Confirmadas" },
 ];
@@ -85,25 +92,44 @@ export const AppointmentsList = ({
   const now = new Date();
   const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
 
-  const [view,        setView]        = useState<ViewType>("list");
-  const [filter,      setFilter]      = useState<FilterType>("all");
+  const [view,         setView]         = useState<ViewType>("list");
+  const [roleFilter,   setRoleFilter]   = useState<RoleFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [confirmingId,   setConfirmingId]   = useState<string | null>(null);
   const [cancellingId,   setCancellingId]   = useState<string | null>(null);
   const [deletingId,     setDeletingId]     = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // ── Filter counts ──────────────────────────────────────────────────────────
-  const countFor = (f: FilterType) => {
-    if (f === "pending")   return appointments.filter(a => a.status === "PENDING").length;
-    if (f === "confirmed") return appointments.filter(a => a.status === "CONFIRMED").length;
+  // ── Filtering ──────────────────────────────────────────────────────────────
+  const isAttendee = (appt: IAppointmentRead) =>
+    !!personId && appt.participants.some(
+      (p) => String(p.person_id) === String(personId) && p.role === "ATTENDEE" && !p.removed_at
+    );
+
+  const roleFiltered = useMemo(() => {
+    if (roleFilter === "organizer") return appointments.filter((a) => !!personId && String(a.host_person_id) === String(personId));
+    if (roleFilter === "attendee")  return appointments.filter(isAttendee);
+    return appointments;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointments, roleFilter, personId]);
+
+  const filteredAppointments = useMemo(() => {
+    if (statusFilter === "pending")   return roleFiltered.filter((a) => a.status === "PENDING");
+    if (statusFilter === "confirmed") return roleFiltered.filter((a) => a.status === "CONFIRMED");
+    return roleFiltered;
+  }, [roleFiltered, statusFilter]);
+
+  const roleCountFor = (r: RoleFilter) => {
+    if (r === "organizer") return appointments.filter((a) => !!personId && String(a.host_person_id) === String(personId)).length;
+    if (r === "attendee")  return appointments.filter(isAttendee).length;
     return appointments.length;
   };
 
-  const filteredAppointments = useMemo(() => {
-    if (filter === "pending")   return appointments.filter(a => a.status === "PENDING");
-    if (filter === "confirmed") return appointments.filter(a => a.status === "CONFIRMED");
-    return appointments;
-  }, [appointments, filter]);
+  const statusCountFor = (s: StatusFilter) => {
+    if (s === "pending")   return roleFiltered.filter((a) => a.status === "PENDING").length;
+    if (s === "confirmed") return roleFiltered.filter((a) => a.status === "CONFIRMED").length;
+    return roleFiltered.length;
+  };
 
   // ── Calendar ───────────────────────────────────────────────────────────────
   const calendarCells = useMemo(() => buildCalendarGrid(viewYear, viewMonth), [viewYear, viewMonth]);
@@ -178,7 +204,7 @@ export const AppointmentsList = ({
           {/* Left: title + add */}
           <div className="flex items-center gap-2">
             <span className="iconify lucide--calendar-clock size-5 text-primary" />
-            <h2 className="card-title text-xl">Mis Citas</h2>
+            <h2 className="card-title text-xl">Mis Reuniones</h2>
             <button
               className="btn btn-primary btn-sm btn-circle ml-1"
               title="Nueva cita"
@@ -199,25 +225,40 @@ export const AppointmentsList = ({
           </button>
         </div>
 
-        {/* ── Filter tabs + view controls ──────────────────────────────────── */}
+        {/* ── Role filter ─────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-1.5 mb-2">
+          {ROLE_FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              className={`btn btn-sm rounded-full gap-1.5 ${
+                roleFilter === key ? "btn-neutral" : "btn-ghost bg-base-200"
+              }`}
+              onClick={() => setRoleFilter(key)}
+            >
+              {label}
+              <span className={`badge badge-xs ${roleFilter === key ? "bg-white/20 text-white" : "badge-ghost"}`}>
+                {roleCountFor(key)}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── Status filter + controls ─────────────────────────────────────── */}
         <div className="flex items-center gap-1.5 mb-4">
-          {FILTERS.map(({ key, label }) => {
-            const count = countFor(key);
-            return (
-              <button
-                key={key}
-                className={`btn btn-sm rounded-full gap-1.5 ${
-                  filter === key ? "btn-primary" : "btn-ghost bg-base-200"
-                }`}
-                onClick={() => setFilter(key)}
-              >
-                {label}
-                <span className={`badge badge-xs ${filter === key ? "badge-primary-content bg-white/20" : "badge-ghost"}`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+          {STATUS_FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              className={`btn btn-sm rounded-full gap-1.5 ${
+                statusFilter === key ? "btn-primary" : "btn-ghost bg-base-200"
+              }`}
+              onClick={() => setStatusFilter(key)}
+            >
+              {label}
+              <span className={`badge badge-xs ${statusFilter === key ? "badge-primary-content bg-white/20" : "badge-ghost"}`}>
+                {statusCountFor(key)}
+              </span>
+            </button>
+          ))}
 
           <button
             className="btn btn-ghost btn-sm btn-circle"
@@ -288,8 +329,8 @@ export const AppointmentsList = ({
                 <span className="iconify lucide--calendar-x size-14 text-base-content/20 block mx-auto mb-3" />
                 <p className="text-base-content/50 text-sm">
                   {appointments.length === 0
-                    ? `Sin citas para ${MONTH_NAMES[viewMonth]} ${viewYear}.`
-                    : "Sin citas que coincidan con el filtro."}
+                    ? `Sin reuniones para ${MONTH_NAMES[viewMonth]} ${viewYear}.`
+                    : "Sin reuniones que coincidan con el filtro."}
                 </p>
               </div>
             )}

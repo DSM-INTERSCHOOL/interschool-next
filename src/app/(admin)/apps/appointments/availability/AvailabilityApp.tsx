@@ -47,7 +47,7 @@ export const AvailabilityApp = () => {
     <>
       <PageTitle
         title="Disponibilidad"
-        items={[{ label: "Apps" }, { label: "Citas" }, { label: "Disponibilidad", active: true }]}
+        items={[{ label: "Apps" }, { label: "Reuniones" }, { label: "Disponibilidad", active: true }]}
       />
 
       <div className="mt-6 space-y-4">

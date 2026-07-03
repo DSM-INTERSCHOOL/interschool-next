@@ -8,8 +8,8 @@ export const TopbarAppointmentsButton = () => (
       tabIndex={0}
       role="button"
       className="btn btn-circle btn-ghost btn-sm"
-      aria-label="Mis citas"
-      title="Mis citas"
+      aria-label="Mis reuniones"
+      title="Mis reuniones"
     >
       <span className="iconify lucide--calendar-clock size-4.5" />
     </div>

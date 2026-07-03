@@ -57,7 +57,7 @@ export const HolidayList = ({ holidays, onEdit, onDelete }: HolidayListProps) =>
           Sin días festivos
         </h3>
         <p className="text-base-content/60">
-          Crea días festivos para bloquear automáticamente citas en esas fechas
+          Crea días festivos para bloquear automáticamente reuniones en esas fechas
         </p>
       </div>
     );

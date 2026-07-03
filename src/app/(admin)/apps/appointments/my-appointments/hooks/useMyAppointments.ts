@@ -30,7 +30,7 @@ export const useMyAppointments = (personId: string | null) => {
       const data = await getAppointments({ schoolId, personId, startFrom, startUntil });
       setAppointments(data);
     } catch (err: any) {
-      setError(err.message || "Error al cargar citas");
+      setError(err.message || "Error al cargar reuniones");
     } finally {
       setLoading(false);
     }

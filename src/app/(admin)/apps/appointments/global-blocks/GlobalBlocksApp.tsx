@@ -41,7 +41,7 @@ export const GlobalBlocksApp = () => {
         title="Bloqueos Globales"
         items={[
           { label: "Apps" },
-          { label: "Citas" },
+          { label: "Reuniones" },
           { label: "Bloqueos Globales", active: true },
         ]}
       />

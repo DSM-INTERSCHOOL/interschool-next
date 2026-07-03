@@ -519,7 +519,7 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
               ) : allowedTypes.length === 0 ? (
                 <div className="alert alert-info">
                   <span className="iconify lucide--info size-5" />
-                  <span className="text-sm">No tienes permisos para agendar citas.</span>
+                  <span className="text-sm">No tienes permisos para agendar reuniones.</span>
                 </div>
               ) : (
                 <>

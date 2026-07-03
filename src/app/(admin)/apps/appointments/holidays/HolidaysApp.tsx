@@ -50,7 +50,7 @@ export const HolidaysApp = () => {
         title="Días Festivos"
         items={[
           { label: "Apps" },
-          { label: "Citas" },
+          { label: "Reuniones" },
           { label: "Días Festivos", active: true },
         ]}
       />

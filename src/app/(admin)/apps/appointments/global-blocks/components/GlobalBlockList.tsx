@@ -39,7 +39,7 @@ export const GlobalBlockList = ({
           Sin bloqueos globales
         </h3>
         <p className="text-base-content/60">
-          Crea un bloqueo para impedir citas durante un período específico
+          Crea un bloqueo para impedir reuniones durante un período específico
         </p>
       </div>
     );

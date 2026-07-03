@@ -41,7 +41,7 @@ export const MyAppointmentsApp = () => {
   } = useMyAvailability(pid);
 
   useEffect(() => {
-    document.title = "Mis Citas - Interschool";
+    document.title = "Mis Reuniones - Interschool";
   }, []);
 
   const ruleToDelete = availability?.rules.find((r) => r.id === deleteRuleId);
@@ -51,7 +51,7 @@ export const MyAppointmentsApp = () => {
   return (
     <>
       <PageTitle
-        items={[{ label: "Apps" }, { label: "Citas" }, { label: "Mis Citas", active: true }]}
+        items={[{ label: "Apps" }, { label: "Reuniones" }, { label: "Mis Reuniones", active: true }]}
       />
 
       <div className="mt-6 space-y-4">
