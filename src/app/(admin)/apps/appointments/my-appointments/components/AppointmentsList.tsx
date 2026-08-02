@@ -196,32 +196,36 @@ export const AppointmentsList = ({
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
+    <div className="max-w-4xl mx-auto">
+
+      {/* ── Header — outside the card ───────────────────────────────────── */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="iconify lucide--calendar-clock size-5 text-primary" />
+          <h2 className="text-xl font-bold">Mis Reuniones</h2>
+        </div>
+        <button
+          className="btn btn-primary btn-sm gap-1.5"
+          onClick={onAdd}
+        >
+          <span className="iconify lucide--plus size-4" />
+          Nueva reunión
+        </button>
+      </div>
+
     <div className="card bg-base-100 shadow-lg">
       <div className="card-body">
 
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-3">
-          {/* Left: title + add */}
-          <div className="flex items-center gap-2">
-            <span className="iconify lucide--calendar-clock size-5 text-primary" />
-            <h2 className="card-title text-xl">Mis Reuniones</h2>
-            <button
-              className="btn btn-primary btn-sm btn-circle ml-1"
-              title="Nueva cita"
-              onClick={onAdd}
-            >
-              <span className="iconify lucide--plus size-4" />
-            </button>
-          </div>
-
-          {/* Right: Disponibilidad */}
+        {/* ── Role filter ─────────────────────────────────────────────────── */}
+        {/* ── Disponibilidad ───────────────────────────────────────────────── */}
+        <div className="flex justify-end mb-2">
           <button
             className="btn btn-sm btn-ghost gap-1.5 text-base-content/60 hover:text-base-content"
             title="Configurar disponibilidad"
             onClick={onAvailability}
           >
             <span className="iconify lucide--settings-2 size-4" />
-            <span className="hidden sm:inline text-sm">Disponibilidad</span>
+            <span className="text-sm">Disponibilidad</span>
           </button>
         </div>
 
@@ -230,7 +234,7 @@ export const AppointmentsList = ({
           {ROLE_FILTERS.map(({ key, label }) => (
             <button
               key={key}
-              className={`btn btn-sm rounded-full gap-1.5 ${
+              className={`btn btn-sm rounded-full gap-1.5 min-w-32 ${
                 roleFilter === key ? "btn-neutral" : "btn-ghost bg-base-200"
               }`}
               onClick={() => setRoleFilter(key)}
@@ -248,7 +252,7 @@ export const AppointmentsList = ({
           {STATUS_FILTERS.map(({ key, label }) => (
             <button
               key={key}
-              className={`btn btn-sm rounded-full gap-1.5 ${
+              className={`btn btn-sm rounded-full gap-1.5 min-w-32 ${
                 statusFilter === key ? "btn-primary" : "btn-ghost bg-base-200"
               }`}
               onClick={() => setStatusFilter(key)}
@@ -656,5 +660,6 @@ export const AppointmentsList = ({
         </div>
       )}
     </div>
+  </div>
   );
 };

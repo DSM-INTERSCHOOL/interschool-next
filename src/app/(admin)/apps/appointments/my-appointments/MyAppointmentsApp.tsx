@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyAvailability, useMyAppointments } from "./hooks";
@@ -50,10 +49,6 @@ export const MyAppointmentsApp = () => {
 
   return (
     <>
-      <PageTitle
-        items={[{ label: "Apps" }, { label: "Reuniones" }, { label: "Mis Reuniones", active: true }]}
-      />
-
       <div className="mt-6 space-y-4">
 
         {/* ── Appointments list ────────────────────────────────────────── */}

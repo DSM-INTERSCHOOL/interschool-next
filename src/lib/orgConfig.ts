@@ -37,8 +37,8 @@ export interface SchoolInfo {
 
 export const schoolMap: Record<string, SchoolInfo> = {
     "10": {
-        school_name: "COLEGIO INTERNACIONAL",
-        school_image: "https://s3.us-east-2.amazonaws.com/app.content.interschool.mx/app_content/CNH/1659028648192_logocelta.png"
+        school_name: "ST JAMES COLLEGE",
+        school_image: "https://s3.us-east-2.amazonaws.com/app.content.interschool.mx/app_content/app_static_files/LOGO+INTERSCHOOL+color1+c%3Af.png"
     },
     "1000": {
         school_name: "COLEGIO CELTA",

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import { PageTitle } from "@/components/PageTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
 import { PollRead } from "@/interfaces/IPoll";
@@ -226,11 +225,15 @@ export default function PublicationsPage() {
 
     return (
         <>
-            <PageTitle title="Notificaciones" />
+            <div className="mt-6 max-w-4xl mx-auto">
 
-            <div className="bg-base-100 shadow-lg mt-6 space-y-6">
-                <div className="">
-                    <div className="bg-base-200 mt-6 flex h-screen flex-col">
+                {/* ── Título fuera del frame — mismo patrón que Noticias ── */}
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="iconify lucide--bell size-5 text-primary" />
+                    <h2 className="text-xl font-bold">Notificaciones</h2>
+                </div>
+
+                <div className="bg-base-100 shadow-lg rounded-xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 12rem)" }}>
                         {/* Tabs */}
                         <header className="bg-base-100 border-base-300 border-b">
                             <div className="border-base-300 flex border-t">
@@ -243,16 +246,6 @@ export default function PublicationsPage() {
                                     }`}>
                                     <span className="iconify lucide--megaphone size-4" />
                                     Avisos
-                                </button>
-                                <button
-                                    onClick={() => switchTab("assignments")}
-                                    className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
-                                        activeTab === "assignments"
-                                            ? "border-primary text-primary"
-                                            : "text-base-content/60 hover:text-base-content border-transparent"
-                                    }`}>
-                                    <span className="iconify lucide--clipboard-list size-4" />
-                                    Tareas
                                 </button>
                                 <button
                                     onClick={() => switchTab("events")}
@@ -273,6 +266,16 @@ export default function PublicationsPage() {
                                     }`}>
                                     <span className="iconify lucide--bar-chart-2 size-4" />
                                     Encuestas
+                                </button>
+                                <button
+                                    onClick={() => switchTab("assignments")}
+                                    className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
+                                        activeTab === "assignments"
+                                            ? "border-primary text-primary"
+                                            : "text-base-content/60 hover:text-base-content border-transparent"
+                                    }`}>
+                                    <span className="iconify lucide--clipboard-list size-4" />
+                                    Tareas
                                 </button>
                             </div>
                         </header>
@@ -367,7 +370,6 @@ export default function PublicationsPage() {
                                 )}
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
             <LegacyPageHidden/>

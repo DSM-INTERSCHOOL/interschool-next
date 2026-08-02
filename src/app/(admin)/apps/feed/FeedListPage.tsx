@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useFeed } from "./hooks/useFeed";
@@ -27,10 +26,6 @@ export default function FeedListPage() {
 
   return (
     <>
-      <PageTitle
-        items={[{ label: "Apps" }, { label: "Noticias", active: true }]}
-      />
-
       <div className="mt-6 max-w-2xl mx-auto space-y-4">
 
         {/* Header */}
