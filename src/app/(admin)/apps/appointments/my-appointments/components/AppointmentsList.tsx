@@ -9,7 +9,7 @@ import { getOrgConfig } from "@/lib/orgConfig";
 
 type ParticipantUpdateStatus = "CONFIRMED" | "DECLINED" | "CANCELLED";
 type RoleFilter   = "all" | "organizer" | "attendee";
-type StatusFilter = "all" | "pending" | "confirmed";
+type StatusCheck  = "PENDING" | "CONFIRMED";
 type ViewType     = "list" | "calendar";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -29,16 +29,15 @@ const STATUS_CONFIG: Record<AppointmentStatus, { label: string; cls: string; cal
   NO_SHOW:   { label: "No asistió", cls: "badge-ghost",    calCls: "bg-base-300 text-base-content/40 border border-base-300" },
 };
 
-const ROLE_FILTERS: { key: RoleFilter; label: string }[] = [
-  { key: "all",       label: "Todas" },
-  { key: "attendee",  label: "Invitado" },
-  { key: "organizer", label: "Organizador" },
+const ROLE_FILTERS: { key: RoleFilter; label: string; icon: string }[] = [
+  { key: "all",       label: "Todos",       icon: "lucide--users" },
+  { key: "attendee",  label: "Invitado",    icon: "lucide--user" },
+  { key: "organizer", label: "Organizador", icon: "lucide--shield" },
 ];
 
-const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
-  { key: "all",       label: "Todos" },
-  { key: "pending",   label: "Pendientes" },
-  { key: "confirmed", label: "Confirmadas" },
+const STATUS_CHECKS: { key: StatusCheck; label: string; checkboxCls: string }[] = [
+  { key: "PENDING",   label: "Pendientes",  checkboxCls: "checkbox-warning" },
+  { key: "CONFIRMED", label: "Confirmadas", checkboxCls: "checkbox-success" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -92,9 +91,9 @@ export const AppointmentsList = ({
   const now = new Date();
   const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
 
-  const [view,         setView]         = useState<ViewType>("list");
-  const [roleFilter,   setRoleFilter]   = useState<RoleFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [view,          setView]          = useState<ViewType>("list");
+  const [roleFilter,    setRoleFilter]    = useState<RoleFilter>("all");
+  const [statusChecks,  setStatusChecks]  = useState<Set<StatusCheck>>(new Set());
   const [confirmingId,   setConfirmingId]   = useState<string | null>(null);
   const [cancellingId,   setCancellingId]   = useState<string | null>(null);
   const [deletingId,     setDeletingId]     = useState<string | null>(null);
@@ -114,10 +113,9 @@ export const AppointmentsList = ({
   }, [appointments, roleFilter, personId]);
 
   const filteredAppointments = useMemo(() => {
-    if (statusFilter === "pending")   return roleFiltered.filter((a) => a.status === "PENDING");
-    if (statusFilter === "confirmed") return roleFiltered.filter((a) => a.status === "CONFIRMED");
-    return roleFiltered;
-  }, [roleFiltered, statusFilter]);
+    if (statusChecks.size === 0) return roleFiltered;
+    return roleFiltered.filter((a) => statusChecks.has(a.status as StatusCheck));
+  }, [roleFiltered, statusChecks]);
 
   const roleCountFor = (r: RoleFilter) => {
     if (r === "organizer") return appointments.filter((a) => !!personId && String(a.host_person_id) === String(personId)).length;
@@ -125,10 +123,14 @@ export const AppointmentsList = ({
     return appointments.length;
   };
 
-  const statusCountFor = (s: StatusFilter) => {
-    if (s === "pending")   return roleFiltered.filter((a) => a.status === "PENDING").length;
-    if (s === "confirmed") return roleFiltered.filter((a) => a.status === "CONFIRMED").length;
-    return roleFiltered.length;
+  const statusCountFor = (s: StatusCheck) => roleFiltered.filter((a) => a.status === s).length;
+
+  const toggleStatusCheck = (s: StatusCheck) => {
+    setStatusChecks((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s); else next.add(s);
+      return next;
+    });
   };
 
   // ── Calendar ───────────────────────────────────────────────────────────────
@@ -203,6 +205,14 @@ export const AppointmentsList = ({
         <div className="flex items-center gap-2">
           <span className="iconify lucide--calendar-clock size-5 text-primary" />
           <h2 className="text-xl font-bold">Mis Reuniones</h2>
+          <button
+            className="btn btn-ghost btn-sm btn-circle"
+            title="Actualizar"
+            disabled={loading}
+            onClick={onReload}
+          >
+            <span className={`iconify lucide--refresh-cw size-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
         </div>
         <button
           className="btn btn-primary btn-sm gap-1.5"
@@ -216,62 +226,43 @@ export const AppointmentsList = ({
     <div className="card bg-base-100 shadow-lg">
       <div className="card-body">
 
-        {/* ── Role filter ─────────────────────────────────────────────────── */}
-        {/* ── Disponibilidad ───────────────────────────────────────────────── */}
-        <div className="flex justify-end mb-2">
-          <button
-            className="btn btn-sm btn-ghost gap-1.5 text-base-content/60 hover:text-base-content"
-            title="Configurar disponibilidad"
-            onClick={onAvailability}
-          >
-            <span className="iconify lucide--settings-2 size-4" />
-            <span className="text-sm">Disponibilidad</span>
-          </button>
+        {/* ── Month nav ──────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-end mb-2">
+          <div className="flex items-center gap-1">
+            <button className="btn btn-ghost btn-sm btn-circle" onClick={onPrev} disabled={loading}>
+              <span className="iconify lucide--chevron-left size-4" />
+            </button>
+            <span className="text-sm font-medium min-w-36 text-center">
+              {MONTH_NAMES[viewMonth]} {viewYear}
+              {isCurrentMonth && (
+                <span className="ml-1.5 badge badge-primary badge-xs align-middle">Este mes</span>
+              )}
+            </span>
+            <button className="btn btn-ghost btn-sm btn-circle" onClick={onNext} disabled={loading}>
+              <span className="iconify lucide--chevron-right size-4" />
+            </button>
+          </div>
         </div>
 
-        {/* ── Role filter ─────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-1.5 mb-2">
-          {ROLE_FILTERS.map(({ key, label }) => (
+        {/* ── Role filter — tabs, same pattern as Notificaciones ────────────── */}
+        <div className="flex items-center border-b border-base-300 -mx-6 px-6 mb-4">
+          {ROLE_FILTERS.map(({ key, label, icon }) => (
             <button
               key={key}
-              className={`btn btn-sm rounded-full gap-1.5 min-w-32 ${
-                roleFilter === key ? "btn-neutral" : "btn-ghost bg-base-200"
+              className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
+                roleFilter === key
+                  ? "border-primary text-primary"
+                  : "text-base-content/60 hover:text-base-content border-transparent"
               }`}
               onClick={() => setRoleFilter(key)}
             >
+              <span className={`iconify ${icon} size-4`} />
               {label}
-              <span className={`badge badge-xs ${roleFilter === key ? "bg-white/20 text-white" : "badge-ghost"}`}>
+              <span className={`badge badge-xs ${roleFilter === key ? "badge-primary" : "badge-ghost"}`}>
                 {roleCountFor(key)}
               </span>
             </button>
           ))}
-        </div>
-
-        {/* ── Status filter + controls ─────────────────────────────────────── */}
-        <div className="flex items-center gap-1.5 mb-4">
-          {STATUS_FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              className={`btn btn-sm rounded-full gap-1.5 min-w-32 ${
-                statusFilter === key ? "btn-primary" : "btn-ghost bg-base-200"
-              }`}
-              onClick={() => setStatusFilter(key)}
-            >
-              {label}
-              <span className={`badge badge-xs ${statusFilter === key ? "badge-primary-content bg-white/20" : "badge-ghost"}`}>
-                {statusCountFor(key)}
-              </span>
-            </button>
-          ))}
-
-          <button
-            className="btn btn-ghost btn-sm btn-circle"
-            title="Actualizar"
-            disabled={loading}
-            onClick={onReload}
-          >
-            <span className={`iconify lucide--refresh-cw size-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
 
           <div className="flex-1" />
 
@@ -292,22 +283,33 @@ export const AppointmentsList = ({
               <span className="iconify lucide--calendar-days size-4" />
             </button>
           </div>
+        </div>
 
-          {/* Month nav */}
-          <div className="flex items-center gap-1">
-            <button className="btn btn-ghost btn-sm btn-circle" onClick={onPrev} disabled={loading}>
-              <span className="iconify lucide--chevron-left size-4" />
-            </button>
-            <span className="text-sm font-medium min-w-36 text-center">
-              {MONTH_NAMES[viewMonth]} {viewYear}
-              {isCurrentMonth && (
-                <span className="ml-1.5 badge badge-primary badge-xs align-middle">Este mes</span>
-              )}
-            </span>
-            <button className="btn btn-ghost btn-sm btn-circle" onClick={onNext} disabled={loading}>
-              <span className="iconify lucide--chevron-right size-4" />
-            </button>
-          </div>
+        {/* ── Status filter + controls ─────────────────────────────────────── */}
+        <div className="flex items-center gap-4 mb-4">
+          {STATUS_CHECKS.map(({ key, label, checkboxCls }) => (
+            <label key={key} className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className={`checkbox checkbox-sm ${checkboxCls}`}
+                checked={statusChecks.has(key)}
+                onChange={() => toggleStatusCheck(key)}
+              />
+              <span className="text-sm text-base-content/80">{label}</span>
+              <span className="badge badge-xs badge-ghost">{statusCountFor(key)}</span>
+            </label>
+          ))}
+
+          <div className="flex-1" />
+
+          <button
+            className="btn btn-sm btn-ghost gap-1.5 text-base-content/60 hover:text-base-content"
+            title="Configurar disponibilidad"
+            onClick={onAvailability}
+          >
+            <span className="iconify lucide--settings-2 size-4" />
+            <span className="text-sm">Disponibilidad</span>
+          </button>
         </div>
 
         {/* ── Loading ─────────────────────────────────────────────────────── */}

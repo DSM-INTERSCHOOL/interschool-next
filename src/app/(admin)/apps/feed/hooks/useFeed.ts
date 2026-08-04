@@ -58,7 +58,7 @@ export const useFeed = () => {
 
   const toggleLike = (feed: FeedRead) => {
     const { schoolId } = getOrgConfig();
-    if (!schoolId) return;
+    if (!schoolId || !personId) return;
 
     // Optimistic update
     setFeeds((prev) =>
@@ -73,13 +73,10 @@ export const useFeed = () => {
     if (likeTimers.current[feed.id]) clearTimeout(likeTimers.current[feed.id]);
     likeTimers.current[feed.id] = setTimeout(async () => {
       try {
-        if (feed.user_liked && feed.idUserLiked) {
-          await unlikeFeed({ schoolId, feedId: feed.id, likeId: feed.idUserLiked });
+        if (feed.user_liked) {
+          await unlikeFeed({ schoolId, feedId: feed.id, personId });
         } else {
-          const res = await likeFeed({ schoolId, feedId: feed.id });
-          setFeeds((prev) =>
-            prev.map((f) => (f.id === feed.id ? { ...f, idUserLiked: res?.id } : f))
-          );
+          await likeFeed({ schoolId, feedId: feed.id, personId });
         }
       } catch {
         // Revert on error

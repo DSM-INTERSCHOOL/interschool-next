@@ -41,15 +41,15 @@ export interface FeedRead {
   modified_at: string | null;
   created_by: string | null;
   user_liked: boolean | null;
-  idUserLiked?: string;
   publisher: FeedPublisher | null;
   attachments: FeedAttachment[] | null;
 }
 
 export interface FeedComment {
   id: string;
-  text: string;
+  comment: string;
   created_at: string;
+  parent_feed_comment_id?: string | null;
   person: {
     id: string;
     given_name: string | null;

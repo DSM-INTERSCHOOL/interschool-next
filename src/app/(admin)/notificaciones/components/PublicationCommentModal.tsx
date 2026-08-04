@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { FeedRead } from "@/interfaces/IFeed";
-import { useFeedComments } from "../hooks/useFeedComments";
+import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
+import { usePublicationComments, PublicationType } from "../hooks/usePublicationComments";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const fromNow = (iso: string) => {
@@ -17,28 +17,29 @@ const fromNow = (iso: string) => {
   return new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 };
 
-const initials = (given: string | null, paternal: string | null) =>
+const initials = (given: string | null | undefined, paternal: string | null | undefined) =>
   `${given?.[0] ?? ""}${paternal?.[0] ?? ""}`.toUpperCase() || "?";
 
 interface Props {
-  feed: FeedRead;
+  type: PublicationType;
+  publication: IAnnouncement | IAssignment | IEvent;
   onClose: () => void;
   onCountChange: (delta: number) => void;
 }
 
-export const FeedCommentModal = ({ feed, onClose, onCountChange }: Props) => {
+export const PublicationCommentModal = ({ type, publication, onClose, onCountChange }: Props) => {
   const personId = useAuthStore((s) => s.personId);
   const { comments, loading, submitting, error, loadComments, addComment, deleteComment } =
-    useFeedComments(feed.id, personId);
+    usePublicationComments(type, publication.id, personId);
   const [text, setText] = useState("");
   const [centerX, setCenterX] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Center horizontally on the Noticias frame instead of the full viewport
+  // Center horizontally on the Notificaciones frame instead of the full viewport
   useLayoutEffect(() => {
     const updateCenter = () => {
-      const frame = document.getElementById("feed-frame");
+      const frame = document.getElementById("notificaciones-frame");
       if (frame) {
         const rect = frame.getBoundingClientRect();
         setCenterX(rect.left + rect.width / 2);
@@ -97,7 +98,7 @@ export const FeedCommentModal = ({ feed, onClose, onCountChange }: Props) => {
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-base leading-tight">Comentarios</h3>
             <p className="text-xs text-base-content/40 truncate">
-              {feed.title || "Publicación"}
+              {publication.title || "Publicación"}
             </p>
           </div>
           <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>
@@ -165,7 +166,7 @@ export const FeedCommentModal = ({ feed, onClose, onCountChange }: Props) => {
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-[10px] font-bold text-primary">
-                        {initials(c.person?.given_name ?? null, c.person?.paternal_surname ?? null)}
+                        {initials(c.person?.given_name, c.person?.paternal_surname)}
                       </span>
                     </div>
                   )}
@@ -187,7 +188,7 @@ export const FeedCommentModal = ({ feed, onClose, onCountChange }: Props) => {
         </div>
 
         {/* Input */}
-        {feed.accept_comments && (
+        {publication.accept_comments && (
           <div className="px-4 py-3 border-t border-base-200 bg-base-100 shrink-0">
             <div className="flex items-end gap-2 bg-base-200 rounded-2xl px-3.5 py-2 transition-shadow focus-within:ring-2 focus-within:ring-primary/40">
               <textarea

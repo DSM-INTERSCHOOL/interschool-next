@@ -135,6 +135,18 @@ export interface IEvent {
     user_signed: boolean | null;
 }
 
+export interface IPublicationComment {
+    id: string;
+    comment: string;
+    created_at: string;
+    person?: {
+        id: string;
+        given_name: string | null;
+        paternal_surname: string | null;
+        profile_picture_url?: string | null;
+    } | null;
+}
+
 export interface IPublicationFilters {
     authorized?: boolean;
     person_id?: number;

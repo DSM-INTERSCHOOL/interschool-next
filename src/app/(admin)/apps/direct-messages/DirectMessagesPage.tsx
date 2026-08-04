@@ -65,6 +65,14 @@ export default function DirectMessagesPage() {
           <div className="flex items-center gap-2">
             <span className="iconify lucide--mail size-5 text-primary" />
             <h2 className="text-xl font-bold">Mensajes directos</h2>
+            <button
+              className="btn btn-ghost btn-sm btn-circle"
+              title="Actualizar"
+              disabled={loading}
+              onClick={load}
+            >
+              <span className={`iconify lucide--refresh-cw size-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
           </div>
           <div className="flex items-center gap-2">
             {sendSuccess && (
@@ -79,14 +87,6 @@ export default function DirectMessagesPage() {
             >
               <span className="iconify lucide--pencil size-4" />
               Nuevo mensaje
-            </button>
-            <button
-              className="btn btn-ghost btn-sm btn-circle"
-              title="Actualizar"
-              disabled={loading}
-              onClick={load}
-            >
-              <span className={`iconify lucide--refresh-cw size-4 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { PageTitle } from "@/components/PageTitle";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { createFeed } from "@/services/feed.service";
@@ -249,14 +248,6 @@ export default function CreateFeedPage() {
 
   return (
     <>
-      <PageTitle
-        items={[
-          { label: "Apps" },
-          { label: "Noticias", path: "/apps/feed" },
-          { label: "Nueva noticia", active: true },
-        ]}
-      />
-
       <div className="mt-6 max-w-2xl mx-auto space-y-4">
 
         {/* ── Main form card ─────────────────────────────────────────────── */}
@@ -269,14 +260,12 @@ export default function CreateFeedPage() {
             </div>
 
             {/* Content */}
-            <div className="form-control">
-              <label className="label pb-1.5">
-                <span className="label-text font-medium">
-                  Contenido <span className="text-error">*</span>
-                </span>
-              </label>
+            <div className="form-control flex flex-col gap-1">
+              <p className="text-sm font-medium">
+                Contenido <span className="text-error">*</span>
+              </p>
               <textarea
-                className="textarea textarea-bordered focus:textarea-primary resize-none text-sm"
+                className="textarea textarea-bordered focus:textarea-primary resize-none text-sm w-full"
                 rows={6}
                 placeholder="¿Qué quieres compartir con tu comunidad?"
                 value={content}

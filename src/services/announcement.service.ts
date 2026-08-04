@@ -234,7 +234,7 @@ export const addComment = async ({
   };
 }) => {
   const response = await communicationApi.post(
-    `/schools/${schoolId}/announcements/${announcementId}/comments`,
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments`,
     dto
   );
   return response.data;
@@ -257,7 +257,7 @@ export const getComments = async ({
   }
 
   const response = await communicationApi.get(
-    `/schools/${schoolId}/announcements/${announcementId}/comments?${params.toString()}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments?${params.toString()}`
   );
   return response.data;
 };
@@ -272,7 +272,7 @@ export const removeComment = async ({
   commentId: string;
 }) => {
   const response = await communicationApi.delete(
-    `/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
   );
   return response.data;
 };
@@ -287,7 +287,7 @@ export const getComment = async ({
   commentId: string;
 }) => {
   const response = await communicationApi.get(
-    `/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
   );
   return response.data;
 };
@@ -306,7 +306,7 @@ export const updateComment = async ({
   };
 }) => {
   const response = await communicationApi.patch(
-    `/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`,
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`,
     dto
   );
   return response.data;

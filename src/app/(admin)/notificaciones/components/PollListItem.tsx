@@ -31,12 +31,10 @@ export const PollListItem = ({ poll, isActive, onClick }: PollListItemProps) => 
         ? `${poll.publisher.given_name?.[0] ?? ""}${poll.publisher.paternal_surname?.[0] ?? ""}`.toUpperCase()
         : "?";
 
-    const questionCount = poll.questions?.length ?? 0;
-
     return (
         <div
             onClick={onClick}
-            className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-all hover:bg-base-200 ${
+            className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 transition-all hover:bg-base-200 ${
                 isActive ? "bg-base-200" : ""
             }`}
         >
@@ -66,15 +64,6 @@ export const PollListItem = ({ poll, isActive, onClick }: PollListItemProps) => 
                     </span>
                 )}
                 <div className="flex items-center gap-2 mt-1.5">
-                    <span className="badge badge-xs badge-warning">
-                        <span className="iconify lucide--bar-chart-2 size-3 mr-1" />
-                        Encuesta
-                    </span>
-                    {questionCount > 0 && (
-                        <span className="badge badge-xs badge-ghost">
-                            {questionCount} preg.
-                        </span>
-                    )}
                     {poll.anonymous && (
                         <span className="badge badge-xs badge-ghost">
                             <span className="iconify lucide--eye-off size-3" />

@@ -58,13 +58,13 @@ export const DirectMessageCard = ({ msg, personId, isSent, onClick, onReply, onD
       </div>
 
       {/* Subject + preview — flex-1 */}
-      <div className="flex-1 min-w-0 flex items-baseline gap-1.5 truncate">
-        <span className={`text-sm truncate shrink-0 max-w-[40%] ${unread ? "font-semibold text-base-content" : "text-base-content/80"}`}>
+      <div className="flex-1 min-w-0 truncate">
+        <p className={`text-sm truncate leading-tight ${unread ? "font-semibold text-base-content" : "text-base-content/80"}`}>
           {msg.subject}
-        </span>
-        <span className="text-sm text-base-content/40 truncate">
-          — {preview}
-        </span>
+        </p>
+        <p className="text-[10px] text-base-content/35 leading-tight truncate">
+          {preview}
+        </p>
       </div>
 
       {/* Actions — visible on hover */}

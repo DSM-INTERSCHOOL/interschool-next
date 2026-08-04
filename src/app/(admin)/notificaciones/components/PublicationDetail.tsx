@@ -5,6 +5,8 @@ import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
 import * as eventService from "@/services/event.service";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { useAuthStore } from "@/store/useAuthStore";
+import { PublicationCommentModal } from "./PublicationCommentModal";
+import { formatRelativeDate } from "../utils";
 
 type Publication = IAnnouncement | IAssignment | IEvent;
 
@@ -13,10 +15,12 @@ interface PublicationDetailProps {
     type: "announcement" | "assignment" | "event";
     onLike?: (id: string) => void;
     onConfirm?: (id: string) => void;
+    onCommentCountChange?: (id: string, delta: number) => void;
 }
 
-export const PublicationDetail = ({ publication, type, onLike, onConfirm }: PublicationDetailProps) => {
+export const PublicationDetail = ({ publication, type, onLike, onConfirm, onCommentCountChange }: PublicationDetailProps) => {
     const personId = useAuthStore((state) => state.personId);
+    const [showComments, setShowComments] = useState(false);
 
     const [confirmed, setConfirmed] = useState(false);
     const [signed, setSigned] = useState(false);
@@ -173,7 +177,7 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="border-base-300 flex items-start gap-4 border-b p-6">
+            <div className="border-base-300 flex items-center gap-4 border-b p-6">
                 <div className="avatar placeholder">
                     <div className="bg-neutral text-neutral-content w-12 rounded-full">
                         {publication.publisher.profile_picture_url ? (
@@ -185,41 +189,15 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
                 </div>
 
                 <div className="flex-1">
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-bold">{publication.title}</h2>
-                            <p className="text-base-content/60 text-sm">{getPublisherName()}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {type === 'event' && (
-                                <span className="badge badge-accent gap-1">
-                                    <span className="iconify lucide--calendar-days size-3" />
-                                    Evento
-                                </span>
-                            )}
-                            <span className={`badge ${publication.status === "ACTIVO" ? "badge-success" : "badge-ghost"}`}>
-                                {publication.status}
-                            </span>
-                        </div>
+                    <div>
+                        <h2 className="text-xl font-bold">{publication.title}</h2>
+                        <p className="text-base-content/60 text-sm">{getPublisherName()}</p>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-4 text-sm text-base-content/60">
+                    <div className="mt-1 flex items-center gap-4 text-sm text-base-content/60">
                         <div className="flex items-center gap-1">
                             <span className="iconify lucide--calendar size-4" />
-                            <span>
-                                {new Date(publication.created_at).toLocaleDateString("es-MX", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                })}
-                                {" a las "}
-                                {new Date(publication.created_at).toLocaleTimeString("es-MX", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                })}
-                            </span>
+                            <span>{formatRelativeDate(publication.created_at)}</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
@@ -247,23 +225,6 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
                     ) : (
                         <p className="text-base-content/60 italic">Sin contenido</p>
                     )}
-
-                    {/* Actions */}
-                    <div className="divider mt-6"></div>
-                    <div className="not-prose flex items-center gap-2 mb-6">
-                        <button
-                            onClick={() => onLike?.(publication.id)}
-                            className={`btn btn-sm ${publication.user_liked ? "btn-primary" : "btn-ghost"}`}>
-                            <span className="iconify lucide--thumbs-up size-4" />
-                            {publication.user_liked ? "Te gusta" : "Me gusta"}
-                        </button>
-                        {publication.accept_comments && (
-                            <button className="btn btn-ghost btn-sm">
-                                <span className="iconify lucide--message-square size-4" />
-                                Comentarios ({publication.comments})
-                            </button>
-                        )}
-                    </div>
 
                     {/* Event metadata */}
                     {event && (
@@ -514,8 +475,36 @@ export const PublicationDetail = ({ publication, type, onLike, onConfirm }: Publ
                             </div>
                         </>
                     )}
+
+                    {/* Actions */}
+                    <div className="divider mt-6"></div>
+                    <div className="not-prose flex items-center gap-2">
+                        <button
+                            onClick={() => onLike?.(publication.id)}
+                            className={`btn btn-sm gap-1.5 ${publication.user_liked ? "btn-primary" : "btn-ghost text-base-content/50"}`}>
+                            <span className="iconify lucide--thumbs-up size-4" />
+                            <span className="text-sm">{publication.likes}</span>
+                        </button>
+                        <button
+                            className="btn btn-sm btn-ghost gap-1.5 text-base-content/50"
+                            disabled={!publication.accept_comments}
+                            onClick={() => setShowComments(true)}>
+                            <span className="iconify lucide--message-circle size-4" />
+                            <span className="text-sm">{publication.comments}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Comments modal */}
+            {showComments && (
+                <PublicationCommentModal
+                    type={type}
+                    publication={publication}
+                    onClose={() => setShowComments(false)}
+                    onCountChange={(delta) => onCommentCountChange?.(publication.id, delta)}
+                />
+            )}
         </div>
     );
 };

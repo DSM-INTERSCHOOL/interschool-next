@@ -65,31 +65,24 @@ export const deleteFeed = async ({
   await communicationApi.delete(`/v1/schools/${schoolId}/feeds/${feedId}`);
 };
 
-export const likeFeed = async ({
-  schoolId,
-  feedId,
-}: {
+interface FeedLikeArgs {
   schoolId: string | number | null;
   feedId: string;
-}): Promise<{ id: string }> => {
-  const response = await communicationApi.post<{ id: string }>(
-    `/v1/schools/${schoolId}/feeds/${feedId}/likes`
+  personId: string | number;
+}
+
+export const likeFeed = async ({ schoolId, feedId, personId }: FeedLikeArgs) => {
+  const response = await communicationApi.post(
+    `/v1/schools/${schoolId}/feeds/${feedId}/likes/${personId}`
   );
   return response.data;
 };
 
-export const unlikeFeed = async ({
-  schoolId,
-  feedId,
-  likeId,
-}: {
-  schoolId: string | number | null;
-  feedId: string;
-  likeId: string;
-}): Promise<void> => {
-  await communicationApi.delete(
-    `/v1/schools/${schoolId}/feeds/${feedId}/likes/${likeId}`
+export const unlikeFeed = async ({ schoolId, feedId, personId }: FeedLikeArgs) => {
+  const response = await communicationApi.delete(
+    `/v1/schools/${schoolId}/feeds/${feedId}/likes/${personId}`
   );
+  return response.data;
 };
 
 export const getFeedComments = async ({
@@ -108,15 +101,23 @@ export const getFeedComments = async ({
 export const createFeedComment = async ({
   schoolId,
   feedId,
-  text,
+  personId,
+  comment,
+  parentFeedCommentId,
 }: {
   schoolId: string | number | null;
   feedId: string;
-  text: string;
+  personId: string | number;
+  comment: string;
+  parentFeedCommentId?: string;
 }): Promise<FeedComment> => {
   const response = await communicationApi.post<FeedComment>(
     `/v1/schools/${schoolId}/feeds/${feedId}/comments`,
-    { text }
+    {
+      person_id: String(personId),
+      comment,
+      ...(parentFeedCommentId ? { parent_feed_comment_id: parentFeedCommentId } : {}),
+    }
   );
   return response.data;
 };

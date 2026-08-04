@@ -2,22 +2,12 @@
 
 import { useState } from "react";
 import { FeedRead } from "@/interfaces/IFeed";
+import { formatRelativeDate } from "@/lib/formatRelativeDate";
 import { FeedLikeButton } from "./FeedLikeButton";
 import { FeedAttachments } from "./FeedAttachments";
 import { FeedCommentModal } from "./FeedCommentModal";
 
-const fromNow = (iso: string | null) => {
-  if (!iso) return "";
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "Justo ahora";
-  if (mins < 60) return `Hace ${mins} min`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `Hace ${hrs} h`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `Hace ${days} d`;
-  return new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
-};
+const fromNow = (iso: string | null) => (iso ? formatRelativeDate(iso) : "");
 
 const initials = (given: string | null, paternal: string | null) =>
   `${given?.[0] ?? ""}${paternal?.[0] ?? ""}`.toUpperCase() || "?";
@@ -67,8 +57,8 @@ export const FeedCard = ({
           <div className="flex items-center gap-3">
             <div className="avatar shrink-0">
               {feed.publisher?.profile_picture_url ? (
-                <div className="w-10 rounded-full">
-                  <img src={feed.publisher.profile_picture_url} alt={publisherName} />
+                <div className="w-10 h-10 rounded-full overflow-hidden">
+                  <img src={feed.publisher.profile_picture_url} alt={publisherName} className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div className="w-10 rounded-full bg-primary/10 flex items-center justify-center">

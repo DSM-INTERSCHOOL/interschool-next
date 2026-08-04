@@ -5,7 +5,7 @@ import { FeedComment } from "@/interfaces/IFeed";
 import { getFeedComments, createFeedComment, deleteFeedComment } from "@/services/feed.service";
 import { getOrgConfig } from "@/lib/orgConfig";
 
-export const useFeedComments = (feedId: string) => {
+export const useFeedComments = (feedId: string, personId: string | number | null) => {
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -28,10 +28,10 @@ export const useFeedComments = (feedId: string) => {
 
   const addComment = async (text: string): Promise<boolean> => {
     const { schoolId } = getOrgConfig();
-    if (!schoolId || !text.trim()) return false;
+    if (!schoolId || !personId || !text.trim()) return false;
     try {
       setSubmitting(true);
-      const comment = await createFeedComment({ schoolId, feedId, text: text.trim() });
+      const comment = await createFeedComment({ schoolId, feedId, personId, comment: text.trim() });
       setComments((prev) => [...prev, comment]);
       return true;
     } catch (e: unknown) {

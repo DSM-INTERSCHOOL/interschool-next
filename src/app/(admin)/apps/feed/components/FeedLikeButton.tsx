@@ -9,12 +9,10 @@ interface Props {
 
 export const FeedLikeButton = ({ feed, onToggle }: Props) => (
   <button
-    className={`btn btn-sm btn-ghost gap-1.5 ${feed.user_liked ? "text-error" : "text-base-content/50"}`}
+    className={`btn btn-sm gap-1.5 ${feed.user_liked ? "btn-primary" : "btn-ghost text-base-content/50"}`}
     onClick={() => onToggle(feed)}
   >
-    <span className={`iconify size-4 ${feed.user_liked ? "lucide--heart" : "lucide--heart"}`}
-      style={{ fill: feed.user_liked ? "currentColor" : "none", stroke: "currentColor" }}
-    />
+    <span className="iconify lucide--thumbs-up size-4" />
     <span className="text-sm">{feed.likes}</span>
   </button>
 );

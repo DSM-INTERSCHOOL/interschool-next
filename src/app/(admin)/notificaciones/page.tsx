@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
@@ -45,6 +45,7 @@ type ActiveTab = "announcements" | "assignments" | "events" | "polls";
 export default function PublicationsPage() {
     const [activeTab, setActiveTab] = useState<ActiveTab>("announcements");
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [expanded, setExpanded] = useState(false);
     const [announcements, setAnnouncements] = useState<IAnnouncement[]>([]);
     const [assignments, setAssignments] = useState<IAssignment[]>([]);
     const [events, setEvents] = useState<IEvent[]>([]);
@@ -55,37 +56,37 @@ export default function PublicationsPage() {
     const { token, personId } = useAuth();
     const { decrementUnread } = useNotifications();
 
-    useEffect(() => {
+    const loadData = useCallback(async () => {
         if (!token || !personId) return;
 
-        const loadData = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const { schoolId } = getOrgConfig();
-                if (activeTab === "announcements") {
-                    const data = await getAnnouncements({ personId: personId.toString(), token });
-                    setAnnouncements(data);
-                } else if (activeTab === "assignments") {
-                    const data = await getAssignments({ personId: personId.toString(), token });
-                    setAssignments(data);
-                } else if (activeTab === "events") {
-                    const data = await getEvents({ personId: personId.toString(), token });
-                    setEvents(data);
-                } else {
-                    const data = await getPolls({ schoolId, personId: personId.toString() });
-                    setPolls(data);
-                }
-            } catch (err) {
-                console.error("Error loading publications:", err);
-                setError("Error al cargar. Por favor, intenta de nuevo.");
-            } finally {
-                setLoading(false);
+        setLoading(true);
+        setError(null);
+        try {
+            const { schoolId } = getOrgConfig();
+            if (activeTab === "announcements") {
+                const data = await getAnnouncements({ personId: personId.toString(), token });
+                setAnnouncements(data);
+            } else if (activeTab === "assignments") {
+                const data = await getAssignments({ personId: personId.toString(), token });
+                setAssignments(data);
+            } else if (activeTab === "events") {
+                const data = await getEvents({ personId: personId.toString(), token });
+                setEvents(data);
+            } else {
+                const data = await getPolls({ schoolId, personId: personId.toString() });
+                setPolls(data);
             }
-        };
-
-        loadData();
+        } catch (err) {
+            console.error("Error loading publications:", err);
+            setError("Error al cargar. Por favor, intenta de nuevo.");
+        } finally {
+            setLoading(false);
+        }
     }, [activeTab, token, personId]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const isPollTab = activeTab === "polls";
 
@@ -198,6 +199,19 @@ export default function PublicationsPage() {
         );
     };
 
+    const handleCommentCountChange = (id: string, delta: number) => {
+        const bump = <T extends { id: string; comments: number }>(list: T[]): T[] =>
+            list.map((p) => p.id === id ? { ...p, comments: Math.max(0, p.comments + delta) } : p);
+
+        if (activeTab === "announcements") {
+            setAnnouncements(bump(announcements));
+        } else if (activeTab === "assignments") {
+            setAssignments(bump(assignments));
+        } else if (activeTab === "events") {
+            setEvents(bump(events));
+        }
+    };
+
     const tabLabel =
         activeTab === "announcements" ? "avisos"
         : activeTab === "assignments" ? "tareas"
@@ -207,6 +221,7 @@ export default function PublicationsPage() {
     const switchTab = (tab: ActiveTab) => {
         setActiveTab(tab);
         setSelectedId(null);
+        setExpanded(false);
     };
 
     if (!token || !personId) {
@@ -225,12 +240,20 @@ export default function PublicationsPage() {
 
     return (
         <>
-            <div className="mt-6 max-w-4xl mx-auto">
+            <div id="notificaciones-frame" className="mt-6 max-w-4xl mx-auto">
 
                 {/* ── Título fuera del frame — mismo patrón que Noticias ── */}
                 <div className="flex items-center gap-2 mb-4">
                     <span className="iconify lucide--bell size-5 text-primary" />
                     <h2 className="text-xl font-bold">Notificaciones</h2>
+                    <button
+                        className="btn btn-ghost btn-sm btn-circle"
+                        title="Actualizar"
+                        disabled={loading}
+                        onClick={loadData}
+                    >
+                        <span className={`iconify lucide--refresh-cw size-4 ${loading ? "animate-spin" : ""}`} />
+                    </button>
                 </div>
 
                 <div className="bg-base-100 shadow-lg rounded-xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 12rem)" }}>
@@ -283,6 +306,7 @@ export default function PublicationsPage() {
                         {/* Two-column layout */}
                         <div className="flex flex-1 overflow-hidden">
                             {/* Left list panel */}
+                            {!expanded && (
                             <div className="bg-base-100 border-base-300 w-80 flex-shrink-0 overflow-y-auto border-r">
                                 <div className="p-3">
                                     <div className="mb-3 px-3">
@@ -350,9 +374,17 @@ export default function PublicationsPage() {
                                     )}
                                 </div>
                             </div>
+                            )}
 
                             {/* Right detail panel */}
-                            <div className="bg-base-100 flex-1 overflow-hidden">
+                            <div className="bg-base-100 flex-1 overflow-hidden relative">
+                                <button
+                                    className="btn btn-sm btn-circle btn-ghost absolute top-1.5 right-1.5 z-10"
+                                    title={expanded ? "Mostrar lista" : "Expandir"}
+                                    onClick={() => setExpanded((v) => !v)}
+                                >
+                                    <span className={`iconify size-4 ${expanded ? "lucide--minimize-2" : "lucide--maximize-2"}`} />
+                                </button>
                                 {isPollTab ? (
                                     <PollDetail
                                         key={selectedId}
@@ -366,6 +398,7 @@ export default function PublicationsPage() {
                                         type={activeTab === "announcements" ? "announcement" : activeTab === "assignments" ? "assignment" : "event"}
                                         onLike={handleLike}
                                         onConfirm={handleConfirm}
+                                        onCommentCountChange={handleCommentCountChange}
                                     />
                                 )}
                             </div>
