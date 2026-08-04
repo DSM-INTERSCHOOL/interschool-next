@@ -11,6 +11,12 @@ export interface IPerson {
   email: string;
 }
 
+export interface IAcademicInfo {
+  id: number;
+  key: string;
+  description: string;
+}
+
 export interface IDaypass {
   id: number;
   school_id: number;
@@ -54,6 +60,12 @@ export interface IDaypassAuthorizer {
   authorizer: IPerson;
   daypass_config: IDaypassConfig;
   authorization_sequence: number;
+  academic_year?: IAcademicInfo | null;
+  academic_stage?: IAcademicInfo | null;
+  academic_program?: IAcademicInfo | null;
+  academic_modality?: IAcademicInfo | null;
+  program_year?: IAcademicInfo | null;
+  academic_group?: IAcademicInfo | null;
 }
 
 export interface IDaypassAuthorizeRequest {

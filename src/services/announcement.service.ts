@@ -4,13 +4,14 @@ import {
   IAnnouncementUpdate,
   IAnnouncementPersonCreate,
   IAnnouncementLikeRead,
+  IAnnouncementRecipient,
 } from "@/interfaces/IAnnouncement";
 import communicationApi from "./communicationApi";
 
 interface ServiceArgs {
   schoolId: string | number;
-  page?: number;
-  per_page?: number;
+  offset?: number;
+  limit?: number;
   filters?: string;
 }
 
@@ -52,35 +53,35 @@ export const create = async ({ schoolId, dto }: CreateArgs) => {
 
 export const getAll = async ({
   schoolId,
-  page = 1,
-  per_page = 10,
+  offset = 0,
+  limit = 100,
   filters,
 }: ServiceArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    offset: offset.toString(),
+    limit: limit.toString(),
   });
-  
+
   if (filters) {
     params.append("filters", filters);
   }
 
   const response = await communicationApi.get<IAnnouncementRead[]>(
-    `/schools/${schoolId}/announcements?${params.toString()}`
+    `/v1/schools/${schoolId}/announcements?${params.toString()}`
   );
   return response.data;
 };
 
 export const getById = async ({ schoolId, announcementId }: AnnouncementArgs) => {
   const response = await communicationApi.get<IAnnouncementRead>(
-    `/schools/${schoolId}/announcements/${announcementId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}`
   );
   return response.data;
 };
 
 export const update = async ({ schoolId, announcementId, dto }: UpdateArgs) => {
   const response = await communicationApi.put<IAnnouncementRead>(
-    `/schools/${schoolId}/announcements/${announcementId}`,
+    `/v1/schools/${schoolId}/announcements/${announcementId}`,
     dto
   );
   return response.data;
@@ -88,7 +89,7 @@ export const update = async ({ schoolId, announcementId, dto }: UpdateArgs) => {
 
 export const remove = async ({ schoolId, announcementId }: AnnouncementArgs) => {
   const response = await communicationApi.delete(
-    `/schools/${schoolId}/announcements/${announcementId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}`
   );
   return response.data;
 };
@@ -113,21 +114,12 @@ export const removePersons = async ({ schoolId, announcementId, dto }: PersonArg
 export const getPersons = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
-  filters,
-}: AnnouncementArgs) => {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
-  });
-  
-  if (filters) {
-    params.append("filters", filters);
-  }
-
-  const response = await communicationApi.get(
-    `/schools/${schoolId}/announcements/${announcementId}/persons?${params.toString()}`
+}: {
+  schoolId: string | number;
+  announcementId: string;
+}) => {
+  const response = await communicationApi.get<IAnnouncementRecipient[]>(
+    `/v1/schools/${schoolId}/announcements/${announcementId}/persons`
   );
   return response.data;
 };
@@ -135,21 +127,21 @@ export const getPersons = async ({
 // Gestión de likes
 export const like = async ({ schoolId, announcementId, personId }: LikeArgs) => {
   const response = await communicationApi.post<IAnnouncementLikeRead>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
   );
   return response.data;
 };
 
 export const unlike = async ({ schoolId, announcementId, personId }: LikeArgs) => {
   const response = await communicationApi.delete<IAnnouncementLikeRead>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
   );
   return response.data;
 };
 
 export const getLike = async ({ schoolId, announcementId, personId }: LikeArgs) => {
   const response = await communicationApi.get<IAnnouncementLikeRead>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes/${personId}`
   );
   return response.data;
 };
@@ -157,24 +149,36 @@ export const getLike = async ({ schoolId, announcementId, personId }: LikeArgs) 
 export const getLikes = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
+  offset = 0,
+  limit = 100,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    offset: offset.toString(),
+    limit: limit.toString(),
   });
 
   const response = await communicationApi.get<IAnnouncementLikeRead[]>(
-    `/schools/${schoolId}/announcements/${announcementId}/likes?${params.toString()}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/likes?${params.toString()}`
   );
   return response.data;
 };
 
 // Gestión de vistas
-export const addView = async ({ schoolId, announcementId }: AnnouncementArgs) => {
+export const addView = async ({
+  schoolId,
+  announcementId,
+  personId
+}: {
+  schoolId: string | number;
+  announcementId: string;
+  personId: string;
+}) => {
   const response = await communicationApi.post(
-    `/schools/${schoolId}/announcements/${announcementId}/views`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/views`,
+    {
+      announcement_id: announcementId,
+      person_id: personId
+    }
   );
   return response.data;
 };
@@ -182,15 +186,15 @@ export const addView = async ({ schoolId, announcementId }: AnnouncementArgs) =>
 export const getViews = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
+  offset = 0,
+  limit = 100,
   filters,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    offset: offset.toString(),
+    limit: limit.toString(),
   });
-  
+
   if (filters) {
     params.append("filters", filters);
   }
@@ -230,7 +234,7 @@ export const addComment = async ({
   };
 }) => {
   const response = await communicationApi.post(
-    `/schools/${schoolId}/announcements/${announcementId}/comments`,
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments`,
     dto
   );
   return response.data;
@@ -239,21 +243,21 @@ export const addComment = async ({
 export const getComments = async ({
   schoolId,
   announcementId,
-  page = 1,
-  per_page = 10,
+  offset = 0,
+  limit = 100,
   filters,
 }: AnnouncementArgs) => {
   const params = new URLSearchParams({
-    page: page.toString(),
-    per_page: per_page.toString(),
+    offset: offset.toString(),
+    limit: limit.toString(),
   });
-  
+
   if (filters) {
     params.append("filters", filters);
   }
 
   const response = await communicationApi.get(
-    `/schools/${schoolId}/announcements/${announcementId}/comments?${params.toString()}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments?${params.toString()}`
   );
   return response.data;
 };
@@ -268,7 +272,7 @@ export const removeComment = async ({
   commentId: string;
 }) => {
   const response = await communicationApi.delete(
-    `/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
   );
   return response.data;
 };
@@ -283,7 +287,7 @@ export const getComment = async ({
   commentId: string;
 }) => {
   const response = await communicationApi.get(
-    `/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`
   );
   return response.data;
 };
@@ -302,7 +306,7 @@ export const updateComment = async ({
   };
 }) => {
   const response = await communicationApi.patch(
-    `/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`,
+    `/v1/schools/${schoolId}/announcements/${announcementId}/comments/${commentId}`,
     dto
   );
   return response.data;

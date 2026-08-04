@@ -12,11 +12,11 @@ type Permiso = {
   Contexto: string;
   Discriminator: string;
   OrdenMenu?: number;
+  Legacy?: number;
 };
 
 export function buildSidebarMenuFromPermisos(permisos: Permiso[]): ISidebarMenuItem[] {
   const modulosMap = new Map<string, ISidebarMenuItem>();
-
 
   for (const permiso of permisos.filter(p => p.Discriminator === "Menu")) {
     const moduloId = permiso.NombreModulo.toUpperCase();
@@ -48,19 +48,25 @@ export function buildSidebarMenuFromPermisos(permisos: Permiso[]): ISidebarMenuI
     }
 
     // Nivel 3: Opción de menú (permiso)
+    const isLegacy = permiso.Legacy === 1;
+    const legacyUrl = permiso.Accion.startsWith('https://')
+      ? permiso.Accion
+      : `/${permiso.Contexto}/${permiso.Namespace}/${permiso.Accion}`;
+
     grupo.children!.push({
       id: permisoId,
       label: permiso.Etiqueta,
-      url: `/legacy`,
-      legacyUrl: `/${permiso.Contexto}/${permiso.Namespace}/${permiso.Accion}`,
+      url: isLegacy ? `/legacy` : permiso.Accion,
+      legacyUrl: isLegacy ? legacyUrl : undefined,
+      isLegacy,
     });
   }
   const menuItems: ISidebarMenuItem[] = [
-    // 👇 Sección "Apps" como título antes de todo
+    // 👇 Sección "Menu" como título antes de todo
     {
-      id: "Legacy-label",
+      id: "Menu-label",
       isTitle: true,
-      label: "Legacy",
+      label: "Menu",
     },
     // 👇 Módulos dinámicos
     ...Array.from(modulosMap.values()),

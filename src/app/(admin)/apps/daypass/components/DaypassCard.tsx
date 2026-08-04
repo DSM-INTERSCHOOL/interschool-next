@@ -28,20 +28,27 @@ const DaypassCard = ({
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const personId = useAuthStore((state) => state.personId);
 
+  console.log({daypass})
+
   const formatFullName = (person: any) => {
     return `${person.given_name} ${person.paternal_name}${person.maternal_name ? ` ${person.maternal_name}` : ''}`.trim();
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    // Formatear directamente sin convertir a Date para evitar conversión UTC
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
   };
 
   const formatTime = (timeString: string) => {
     return timeString.substring(0, 5); // Extraer solo HH:MM
+  };
+
+  const formatAcademicInfo = (info: any) => {
+    if (!info) return "N/A";
+    return `(${info.key}) ${info.description}`;
   };
 
   // Obtener la configuración de secuencia del primer elemento
@@ -97,6 +104,11 @@ const DaypassCard = ({
         <div className="card-body">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
+              <div className="mb-2">
+                <span className="pl-4 text-sm text-base-content/70">
+                  <strong>ID Pase:</strong> {daypass.id}
+                </span>
+              </div>
               <div className="flex items-center gap-2 mb-2">
                 <UserIcon className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold text-base-content">
@@ -106,7 +118,9 @@ const DaypassCard = ({
                   {daypass.person.person_internal_id}
                 </span>
               </div>
-              
+
+            
+
               <div className="flex items-center gap-2 mb-2">
                 <UserIcon className="w-4 h-4 text-secondary" />
                 <span className="text-base-content/70">
@@ -114,16 +128,45 @@ const DaypassCard = ({
                 </span>
               </div>
 
+              
+
               <div className="flex items-center gap-2 mb-2">
                 <CalendarIcon className="w-4 h-4 text-secondary" />
                 <span className="text-base-content/70">
-                  {formatDate(daypass.daypass_date)} a las {formatTime(daypass.daypass_time)}
+                  Fecha de pase: {formatDate(daypass.daypass_date)} a las {formatTime(daypass.daypass_time)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarIcon className="w-4 h-4 text-secondary" />
+                <span className="text-base-content/70">
+                  Fecha de solicitud: {formatDate(daypass.created)}
                 </span>
               </div>
 
               <p className="text-base-content/80 mb-2">
                 <strong>Motivo:</strong> {daypass.reason}
               </p>
+
+              {/* Academic Information */}
+              <div className="mt-3 space-y-1 text-sm text-base-content/70">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="font-semibold">Ciclo:</span> {firstAuth.academic_year?.key}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Nivel:</span> {firstAuth.academic_stage?.description}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Programa:</span> {(firstAuth.academic_program?.description)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Grado:</span> {(firstAuth.program_year?.description)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Grupo:</span> {(firstAuth.academic_group?.key)}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex-shrink-0 ml-4">

@@ -20,6 +20,8 @@
 
 import api from "./api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getOrgConfig } from "@/lib/orgConfig";
+import { getDeviceId } from "@/lib/deviceId";
 
 // Interfaz para el autorizador dentro de authorizers
 export interface IDaypassAuthorizer {
@@ -59,6 +61,14 @@ export interface IDaypassPerson {
   email: string;
 }
 
+// Interfaz para información académica
+export interface IAcademicInfo {
+  id: number;
+  key: string;
+  description: string;
+  label?: string;
+}
+
 // Interfaz para la respuesta de consulta de daypasses (estructura real)
 export interface IDaypassConsulta {
   school_id: number;
@@ -73,15 +83,22 @@ export interface IDaypassConsulta {
   id: number;
   created: string;
   modified: string;
+  pickup_person: string | null;
   authorizers: IDaypassAuthorizer[];
   person: IDaypassPerson;
   relative: IDaypassPerson;
+  academic_year?: IAcademicInfo | null;
+  academic_stage?: IAcademicInfo | null;
+  academic_program?: IAcademicInfo | null;
+  academic_modality?: IAcademicInfo | null;
+  program_year?: IAcademicInfo | null;
+  academic_group?: IAcademicInfo | null;
 }
 
 // Interfaz para los parámetros de consulta
 export interface GetDaypassesConsultaParams {
   schoolId?: string;
-  page?: number;
+  skip?: number;
   limit?: number;
   status?: string;
   date_from?: string;
@@ -99,8 +116,7 @@ export interface DaypassesConsultaResponse {
 export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = {}): Promise<DaypassesConsultaResponse> => {
   try {
     const {
-      schoolId = "1000",
-      page = 1,
+      skip = 0,
       limit = 10,
       status,
       date_from,
@@ -109,9 +125,10 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
       relative_id
     } = params;
 
-    // Construir los parámetros de consulta
+    // Construir los parámetros de consulta con paginación
     const queryParams: any = {
-      page,
+      filter_by_user_access_scope: true,
+      skip,
       limit
     };
 
@@ -124,6 +141,7 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
 
     // Obtener el token del store
     const token = useAuthStore.getState().token;
+    const { portalName, schoolId } = getOrgConfig();
 
     if (!token) {
       throw new Error('No hay token de autenticación disponible');
@@ -132,8 +150,8 @@ export const getDaypassesConsulta = async (params: GetDaypassesConsultaParams = 
     const response = await api.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/daypasses`, {
       params: queryParams,
       headers: {
-        'x-device-id': 'mobile-web-client',
-        'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
+        'x-device-id': getDeviceId(),
+        'x-url-origin': portalName,
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
@@ -223,10 +241,10 @@ export const validateConsultaParams = (params: GetDaypassesConsultaParams): stri
   if (params.limit && (params.limit < 1 || params.limit > 100)) {
     errors.push('El límite debe estar entre 1 y 100');
   }
-  
-  if (params.page && params.page < 1) {
-    errors.push('La página debe ser mayor a 0');
+
+  if (params.skip !== undefined && params.skip < 0) {
+    errors.push('El skip debe ser mayor o igual a 0');
   }
-  
+
   return errors;
 };

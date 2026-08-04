@@ -10,7 +10,11 @@ export const generateDaypassPDF = (
   daypasses: IDaypassConsulta[],
   options: PDFOptions = {}
 ) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  });
 
   // Configuración por defecto
   const config = {
@@ -31,8 +35,15 @@ export const generateDaypassPDF = (
     daypass.id.toString(),
     `${daypass.person.given_name} ${daypass.person.paternal_name}`,
     daypass.person.person_internal_id,
+    formatAcademicInfo(daypass.academic_year),
+    formatAcademicInfo(daypass.academic_stage),
+    formatAcademicInfo(daypass.academic_program),
+    formatAcademicInfo(daypass.program_year),
+    formatAcademicInfo(daypass.academic_group),
     `${daypass.relative.given_name} ${daypass.relative.paternal_name}`,
-    daypass.reason.length > 30 ? daypass.reason.substring(0, 30) + '...' : daypass.reason,
+    daypass.pickup_person || '-',
+    daypass.reason.length > 15 ? daypass.reason.substring(0, 15) + '...' : daypass.reason,
+    formatDateTime(daypass.created),
     formatDate(daypass.daypass_date),
     formatTime(daypass.daypass_time),
     getStatusText(daypass.status),
@@ -41,33 +52,24 @@ export const generateDaypassPDF = (
 
   // Generar tabla
   autoTable(doc, {
-    head: [['ID', 'Alumno', 'Matrícula', 'Pariente', 'Motivo', 'Fecha', 'Hora', 'Estado', 'Autorizaciones']],
+    head: [['ID', 'Alumno', 'Matrícula', 'Ciclo', 'Nivel', 'Programa', 'Grado', 'Grupo', 'Pariente', 'Recoge', 'Motivo', 'F.Solicitud', 'Fecha Pase', 'Hora Pase', 'Estado', 'Autorizaciones']],
     body: tableData,
     startY: 45,
     styles: {
-      fontSize: 8,
-      cellPadding: 2,
+      fontSize: 6,
+      cellPadding: 1.5,
     },
     headStyles: {
       fillColor: [41, 128, 185],
       textColor: 255,
       fontStyle: 'bold',
+      fontSize: 6,
     },
-    columnStyles: {
-      0: { cellWidth: 15 }, // ID
-      1: { cellWidth: 25 }, // Alumno
-      2: { cellWidth: 20 }, // Matrícula
-      3: { cellWidth: 25 }, // Pariente
-      4: { cellWidth: 30 }, // Motivo
-      5: { cellWidth: 20 }, // Fecha
-      6: { cellWidth: 15 }, // Hora
-      7: { cellWidth: 20 }, // Estado
-      8: { cellWidth: 15 }, // Autorizaciones
-    },
+    tableWidth: 'auto',
     alternateRowStyles: {
       fillColor: [245, 245, 245]
     },
-    margin: { top: 45, left: 10, right: 10 },
+    margin: { top: 45, left: 5, right: 5 },
   });
 
   // Pie de página
@@ -116,6 +118,15 @@ const formatDate = (dateString: string): string => {
   return `${day}/${month}/${year}`;
 };
 
+const formatDateTime = (dateTimeString: string): string => {
+  // Para fechas con timestamp ISO como "2025-09-26T17:42:42.814105Z"
+  const date = new Date(dateTimeString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 const formatTime = (timeString: string): string => {
   return timeString.substring(0, 5); // Solo HH:MM
 };
@@ -128,4 +139,9 @@ const getStatusText = (status: string): string => {
     'CANCELADO': 'Cancelado'
   };
   return statusMap[status] || status;
+};
+
+const formatAcademicInfo = (info: any): string => {
+  if (!info) return "N/A";
+  return `(${info.key}) ${info.description}`;
 };

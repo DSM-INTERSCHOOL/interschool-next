@@ -9,7 +9,14 @@
       "Bash(npm install:*)",
       "Bash(git checkout:*)",
       "Bash(git remote set-url:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Bash(npx tsc:*)",
+      "Read(//c/Users/alvar/dsm/medical_consultation/**)"
     ],
     "deny": [],
     "ask": []

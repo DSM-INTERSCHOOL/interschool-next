@@ -1,159 +1,433 @@
 import axios from "axios";
 
+import { getDeviceId } from "@/lib/deviceId";
+import { getOrgConfig } from "@/lib/orgConfig";
+import { useAuthStore } from "@/store/useAuthStore";
+import { ISchool } from "@/interfaces/ISchool";
+import { IAppointmentRecipientsResponse } from "@/interfaces/IAppointment";
+
 interface LoginRequest {
-  person_id: string;
-  password: string;
+    person_id: string;
+    password: string;
 }
 
 interface LoginResponse {
-  token: string;
-  person_id: number;
-  email: string;
-  name: string;
-  school_id: number;
-  person_internal_id: string;
-  status: string;
-  person_type: string;
-  person_photo: string;
-  time_zone: string;
-  last_login: string;
+    token: string;
+    person_id: number;
+    email: string;
+    name: string;
+    school_id: number;
+    person_internal_id: string;
+    status: string;
+    person_type: string;
+    person_photo: string;
+    time_zone: string;
+    last_login: string;
 }
 
 interface Permiso {
-  IdPermiso: number;
-  NombreModulo: string;
-  GrupoMenu: string;
-  Etiqueta: string;
-  Accion: string;
-  Namespace: string;
-  Contexto: string;
-  Discriminator: string;
-  OrdenMenu?: number;
-  TipoPermiso?: string;
-  Legacy?: number;
-  Clase?: string;
-  IdGrupoMenu?: number;
-  Target?: string;
-  TipoAccesso?: string;
-  Descripcion?: string;
+    IdPermiso: number;
+    NombreModulo: string;
+    GrupoMenu: string;
+    Etiqueta: string;
+    Accion: string;
+    Namespace: string;
+    Contexto: string;
+    Discriminator: string;
+    OrdenMenu?: number;
+    TipoPermiso?: string;
+    Legacy?: number;
+    Clase?: string;
+    IdGrupoMenu?: number;
+    Target?: string;
+    TipoAccesso?: string;
+    Descripcion?: string;
+}
+
+interface AlumnoInfo {
+    [studentId: string]: string; // key: studentId, value: nombre completo del alumno
 }
 
 interface PermisosResponse {
-  person_id?: number;
-  person_internal_id?: string;
-  token?: string;
-  school_id?: number;
-  given_name?: string;
-  paternal_name?: string;
-  maternal_name?: string;
-  email?: string;
-  status?: string;
-  last_login?: string;
-  time_zone?: string;
-  person_type?: string;
-  meta_data?: {
-    duration?: number;
-    sessionNumber?: number;
-    idUsuario?: number;
-    nombreEscuela?: string;
-    originalSessionId?: string;
-    sessionIdEncripted?: string;
-    nombreUsuario?: string;
-    permisos?: Permiso[];
-  };
-  // Campos adicionales que podrían estar presentes
-  [key: string]: any;
+    person_id?: number;
+    person_internal_id?: string;
+    token?: string;
+    school_id?: number;
+    given_name?: string;
+    paternal_name?: string;
+    maternal_name?: string;
+    email?: string;
+    status?: string;
+    last_login?: string;
+    time_zone?: string;
+    person_type?: string;
+    profile_picture_url?: string | null;
+    academic_year?: number | null;
+    academic_stage_id?: number | null;
+    cookies?: string[];
+    meta_data?: {
+        duration?: number;
+        sessionNumber?: number;
+        idUsuario?: number;
+        nombreEscuela?: string;
+        originalSessionId?: string;
+        sessionIdEncripted?: string;
+        nombreUsuario?: string;
+        permisos?: Permiso[];
+        alumnos?: AlumnoInfo[];
+        status?: string; // 'seleccion_alumno' indica que debe elegir alumno, 'error' indica error en el login
+        error?: string; // Mensaje de error cuando status === 'error'
+        baseUrl?: string;
+    };
+    // Campos adicionales que podrían estar presentes
+    [key: string]: any;
 }
 
 interface AuthError {
-  message: string;
-  status?: number;
+    message: string;
+    status?: number;
 }
 
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
-  try {
-    const response = await axios.post<LoginResponse>(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,
-      credentials,
-      {
-        headers: {
-          'x-device-id': 'mobile-web-client',
-          'Content-Type': 'application/json',
-          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || ''
-        },
-      }
+    try {
+        const { schoolId, portalName } = getOrgConfig();
+
+        const response = await axios.post<LoginResponse>(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/app-login`,
+            credentials,
+            {
+                headers: {
+                    "x-device-id": getDeviceId(),
+                    "Content-Type": "application/json",
+                    "x-url-origin": portalName,
+                },
+            },
+        );
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.status === 401) {
+            throw new Error(error.response?.data?.detail ?? "Error de acceso");
+        } else if (error.response?.status >= 500) {
+            throw new Error(error.response?.data?.detail ?? "Hubo un problema. Intenta más tarde");            
+        } else {
+            throw new Error("Error al iniciar sesión");
+        }
+    }
+};
+
+export const getPermisos = async (credentials: LoginRequest): Promise<PermisosResponse> => {
+    try {
+        const { portalName } = getOrgConfig();        
+
+        const response = await axios.post<PermisosResponse>(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-login`,
+            {
+                person_id: credentials.person_id,
+                password: credentials.password,
+            },
+            {
+                headers: {
+                    "x-device-id": getDeviceId(),
+                    "x-url-origin": portalName,
+                    "Content-Type": "application/json",
+                },
+            },
+        );
+
+        // Verificar si hay un error en meta_data a pesar del 200
+        if (response.data.meta_data?.status === "error" && response.data.meta_data?.error) {
+            throw new Error(response.data.meta_data.error);
+        }
+
+        const cookies = response.data.cookies;
+        if (cookies && Array.isArray(cookies)) {
+            for (let cookie of cookies) {
+                document.cookie = cookie;
+            }
+
+            // Forzar que el navegador procese las cookies antes de continuar
+            // Esto asegura que estén disponibles para iframes legacy
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            // Eliminar cookies duplicadas del dominio específico
+            removeDuplicateDomainCookies();
+        }
+
+        //console.log("Respuesta completa de la API:", response.data);
+
+        // Verificar que la respuesta sea exitosa
+        const permisos = response.data.meta_data?.permisos;
+        const status = response.data.status;
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching permisos:", error);
+
+        // Si el error ya es un Error que lanzamos (como el de meta_data), preservarlo
+        if (error instanceof Error && !error.response) {
+            throw error;
+        }
+
+        if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+        } else if (error.response?.status === 401) {
+            throw new Error(error.response?.data?.detail ?? "Error de acceso");
+        } else if (error.response?.status >= 500) {
+            throw new Error(error.response?.data?.detail ?? "Error del servidor al obtener permisos");            
+        } else if (error.code === "NETWORK_ERROR" || error.message?.includes("Network Error")) {
+            throw new Error("Error de conexión. Verifica tu conexión a internet");
+        } else if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+            throw new Error("La solicitud tardó demasiado. Intenta de nuevo");
+        } else {
+            throw new Error("Error al obtener permisos");
+        }
+    }
+};
+
+export const getStudentPermissions = async (
+    studentId: string,
+    token: string,
+    legacyUrl: string,
+    initialCookies?: string[],
+): Promise<PermisosResponse> => {
+    try {
+        const { schoolId, portalName } = getOrgConfig();
+
+        // Preparar el body de la petición
+        const requestBody: any = {
+            person_id: studentId,
+            legacy_url: legacyUrl,
+        };
+
+        // Agregar cookies en el body si existen
+        if (initialCookies && initialCookies.length > 0) {
+            requestBody.cookies = initialCookies;
+            console.log("📧 Enviando cookies en body:", initialCookies);
+        }
+
+        const response = await axios.post<PermisosResponse>(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/student-permissions`,
+            requestBody,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "x-device-id": getDeviceId(),
+                    "x-url-origin": portalName,
+                    "Content-Type": "application/json",
+                },
+            },
+        );
+
+        const responseCookies = response.data.cookies;
+        if (responseCookies && Array.isArray(responseCookies)) {
+            for (let cookie of responseCookies) {
+                document.cookie = cookie;
+            }
+
+            // Forzar que el navegador procese las cookies antes de continuar
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            // Eliminar cookies duplicadas del dominio específico
+            removeDuplicateDomainCookies();
+        }
+
+        console.log("Permisos del estudiante obtenidos:", response.data);
+
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching student permissions:", error);
+
+        if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+        } else if (error.response?.status === 401) {
+            throw new Error("No autorizado para obtener permisos del estudiante");
+        } else if (error.response?.status >= 500) {
+            throw new Error("Error del servidor al obtener permisos del estudiante");
+        } else {
+            throw new Error("Error al obtener permisos del estudiante");
+        }
+    }
+};
+
+/**
+ * Elimina cookies duplicadas del dominio específico, dejando solo las del dominio wildcard
+ */
+export const removeDuplicateDomainCookies = (): void => {
+  const hostname = window.location.hostname;
+  const cookies = document.cookie.split(';').filter(Boolean);
+
+  for (let cookie of cookies) {
+    const eqPos = cookie.indexOf('=');
+    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+
+    // Eliminar cookie del dominio específico (sin punto)
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname}; secure;`;
+  }
+};
+
+/**
+ * Elimina todas las cookies establecidas durante el login
+ */
+export const clearAuthCookies = (): void => {
+    console.log("[INFO] clearAuthCookies");
+    const hostname = window.location.hostname;
+
+    const getDomainVariants = (host: string): string[] => {
+        const parts = host.split(".");
+        const domains = new Set<string>();
+
+        domains.add(host);
+        domains.add(`.${host}`);
+
+        if (parts.length >= 2) {
+            const base2 = parts.slice(-2).join(".");
+            domains.add(base2);
+            domains.add(`.${base2}`);
+        }
+
+        if (parts.length >= 3) {
+            const base3 = parts.slice(-3).join(".");
+            domains.add(base3);
+            domains.add(`.${base3}`);
+        }
+
+        return Array.from(domains);
+    };
+
+    const domainVariants = getDomainVariants(hostname);
+    const paths = ["/", "/auth", "/auth/login"];
+
+    const cookies = document.cookie.split(";").filter(Boolean);
+
+    for (let cookie of cookies) {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+
+        console.log(`[INFO] Attempting to delete cookie: ${name}`);
+
+        // Intentar eliminar sin domain ni secure
+        for (const path of paths) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+        }
+
+        // Intentar con todas las combinaciones de domain, path y secure
+        for (const domain of domainVariants) {
+            for (const path of paths) {
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain};`;
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; secure;`;
+            }
+        }
+
+        const cookieNames = ["googlis", "googlal", "googlpr"];
+
+        const exp = "Thu, 01 Jan 1970 00:00:00 GMT";
+        const base = `Expires=${exp}; Max-Age=0; Path=/; SameSite=None; Secure`;
+
+
+        for (const name of cookieNames) {
+            // 1) host-only (sin Domain) - no partitioned + partitioned
+            document.cookie = `${name}=; ${base}`;
+            document.cookie = `${name}=; ${base}; Partitioned`;
+
+            // 2) con Domain - no partitioned + partitioned
+            for (const domain of domainVariants) {
+                document.cookie = `${name}=; ${base}; Domain=${domain}`;
+                document.cookie = `${name}=; ${base}; Domain=${domain}; Partitioned`;
+            }
+        }
+    }
+};
+
+export const logOutCore = async (): Promise<void> => {
+    try {
+        const { portalName, schoolId } = getOrgConfig();
+        const token = useAuthStore.getState().token;
+
+        // Llamar al endpoint de logout del backend para eliminar cookies HttpOnly
+        console.log("en logOutCore---");
+        await axios
+            .post(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/web-logout`,
+                {},
+                {
+                    headers: {
+                        "x-device-id": getDeviceId(),
+                        "x-url-origin": portalName,
+                        Authorization: `Bearer ${token}`,
+                    },
+                    withCredentials: true, // Importante para enviar cookies HttpOnly
+                },
+            )
+            .catch((error) => {
+                console.warn("Error en logout del servidor:", error);
+                // Continuar incluso si falla el logout del servidor
+            });
+
+        // Limpiar cookies accesibles desde JavaScript
+        clearAuthCookies();
+        console.log("Logout realizado");
+    } catch (error) {
+        console.log("Error al logout", error);
+    }
+};
+
+export const getSchool = async (schoolId: string | number): Promise<ISchool> => {
+    const { portalName } = getOrgConfig();
+    const token = useAuthStore.getState().token;
+    const response = await axios.get<ISchool>(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "x-device-id": getDeviceId(),
+                "x-url-origin": portalName,
+                "Content-Type": "application/json",
+            },
+        }
     );
-
-    console.log('response headres',response.headers)
-
     return response.data;
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      throw new Error('Credenciales inválidas');
-    } else if (error.response?.status >= 500) {
-      throw new Error('Hubo un problema. Intenta más tarde');
-    } else {
-      throw new Error('Error al iniciar sesión');
-    }
-  }
 };
 
-export const getPermisos = async (): Promise<Permiso[]> => {
-  try {
-    const response = await axios.post<PermisosResponse>(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL_DEV}/web-login`,
-      {
-        person_id: "DSM",
-        password: "DATA2023+"
+export const getAppointmentRecipients = async ({
+  schoolId,
+  personId,
+  personType,
+  searchTerm,
+  targetPersonType,
+  skip = 0,
+  limit = 20,
+}: {
+  schoolId: string | number;
+  personId: string | number;
+  personType: string;
+  searchTerm?: string;
+  targetPersonType?: string | null;
+  skip?: number;
+  limit?: number;
+}): Promise<IAppointmentRecipientsResponse> => {
+  const { portalName } = getOrgConfig();
+  const token = useAuthStore.getState().token;
+  const params = new URLSearchParams({
+    person_id: String(personId),
+    person_type: personType,
+    skip: String(skip),
+    limit: String(limit),
+  });
+  if (searchTerm?.trim()) params.set("search_term", searchTerm.trim());
+  if (targetPersonType) params.set("target_person_type", targetPersonType);
+  const response = await axios.get<IAppointmentRecipientsResponse>(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/appointment-recipients?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-device-id": getDeviceId(),
+        "x-url-origin": portalName,
+        "Content-Type": "application/json",
       },
-      {
-        headers: {
-          'x-device-id': 'agent-postman',
-          'x-url-origin': process.env.NEXT_PUBLIC_X_URL_ORIGIN || '',
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    console.log('Respuesta completa de la API:', response.data);
-    console.log('Status de la respuesta:', response.data.status);
-    console.log('Meta data:', response.data.meta_data);
-    console.log('Permisos en meta_data:', response.data.meta_data?.permisos);
-    console.log('Tipo de permisos:', typeof response.data.meta_data?.permisos);
-    console.log('Es array:', Array.isArray(response.data.meta_data?.permisos));
-
-    // Verificar que la respuesta sea exitosa
-    const permisos = response.data.meta_data?.permisos;
-    const status = response.data.status;
-    
-    if (permisos && Array.isArray(permisos)) {
-      console.log('Permisos válidos encontrados, retornando:', permisos.length, 'permisos');
-      return permisos;
-    } else {
-      console.error('Respuesta inválida - Status:', status, 'Permisos:', permisos);
-      console.error('Estructura completa de la respuesta:', JSON.stringify(response.data, null, 2));
-      throw new Error('Respuesta inválida del servidor');
     }
-  } catch (error: any) {
-    console.error('Error fetching permisos:', error);
-    
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    } else if (error.response?.status === 401) {
-      throw new Error('No autorizado para obtener permisos');
-    } else if (error.response?.status >= 500) {
-      throw new Error('Error del servidor al obtener permisos');
-    } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
-      throw new Error('Error de conexión. Verifica tu conexión a internet');
-    } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      throw new Error('La solicitud tardó demasiado. Intenta de nuevo');
-    } else {
-      throw new Error('Error al obtener permisos');
-    }
-  }
+  );
+  return response.data;
 };
 
-export const logout = async (): Promise<void> => {
-  // Implementar logout en el backend si es necesario
-  console.log('Logout realizado');
-};
+// Exportar tipos para uso en otros archivos
+export type { PermisosResponse, Permiso, AlumnoInfo };

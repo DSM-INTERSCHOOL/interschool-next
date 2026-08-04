@@ -1,13 +1,12 @@
 import api from "./api";
-import { 
-  IAcademicProgram, 
-  IAcademicProgramParams, 
+import { getOrgConfig } from "@/lib/orgConfig";
+import {
+  IAcademicProgram,
+  IAcademicProgramParams,
   AcademicProgramStatus,
   IAcademicProgramDisplay,
-  IAcademicProgramFilters 
+  IAcademicProgramFilters
 } from "@/interfaces/IAcademicProgram";
-
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
 
 /**
  * Get academic programs for a school
@@ -18,7 +17,8 @@ export const getAcademicPrograms = async (
   params?: IAcademicProgramParams
 ): Promise<IAcademicProgram[]> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/academic-programs`, { params });
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/academic-programs`, { params });
     
     return response.data;
   } catch (error) {
@@ -48,11 +48,12 @@ export const getAcademicProgramsByStages = async (
       return [];
     }
 
+    const { schoolId } = getOrgConfig();
     // Create filter string: academic_stage_id::in::[1;2;3]
     const stageIdsStr = stageIds.join(';');
     const filters = `academic_stage_id::in::[${stageIdsStr}]`;
-    
-    const response = await api.get(`/${SCHOOL_ID}/academic-programs`, {
+
+    const response = await api.get(`/${schoolId}/academic-programs`, {
       params: { filters }
     });
     
@@ -72,7 +73,8 @@ export const getAcademicProgramById = async (
   academicProgramId: number
 ): Promise<IAcademicProgram> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/academic-programs/${academicProgramId}`);
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/academic-programs/${academicProgramId}`);
     
     return response.data;
   } catch (error) {

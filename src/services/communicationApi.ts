@@ -1,22 +1,31 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getOrgConfig } from "@/lib/orgConfig";
+import { getDeviceId } from "@/lib/deviceId";
 
 const communicationApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_COMMUNICATION_URL,
   headers: {
     "Content-Type": "application/json",
-    "x-device-id": "mobile-web-client",
-    "x-url-origin": process.env.NEXT_PUBLIC_X_URL_ORIGIN || ""
   },
 });
 
-// Interceptor para agregar el token a todas las peticiones
+// Interceptor para agregar el token, x-url-origin y x-device-id a todas las peticiones
 communicationApi.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
+    const { portalName } = getOrgConfig();
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    if (portalName) {
+      config.headers["x-url-origin"] = portalName;
+    }
+
+    // Agregar device-id dinámico a cada petición
+    config.headers["x-device-id"] = getDeviceId();
+
     return config;
   },
   (error) => {

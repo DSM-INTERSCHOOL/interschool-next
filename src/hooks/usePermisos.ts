@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getPermisos } from '@/services/auth.service';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -24,43 +24,40 @@ interface Permiso {
 export const usePermisos = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const permisos = useAuthStore((state) => state.permisos);
   const setPermisos = useAuthStore((state) => state.setPermisos);
+  const legacyPersonId = useAuthStore((state) => state.legacyPersonId);
+  const legacyPassword = useAuthStore((state) => state.legacyPassword);
 
   const loadPermisos = async () => {
-    // Solo cargar si no hay permisos y no se está cargando
-    if (permisos.length === 0 && !isLoading) {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        console.log('Cargando permisos desde la API...');
-        const permisosData = await getPermisos();
-        console.log('Permisos cargados:', permisosData);
-        setPermisos(permisosData);
-      } catch (err: any) {
-        console.error('Error al cargar permisos:', err);
-        setError(err.message || 'Error al cargar permisos');
-      } finally {
-        setIsLoading(false);
-      }
-    }
+    // Ya no es necesario cargar permisos aquí porque se cargan durante el login
+    console.log('Permisos ya cargados durante el login');
   };
 
-  useEffect(() => {
-    loadPermisos();
-  }, []); // Solo ejecutar una vez al montar el componente
+  // Ya no necesitamos el useEffect porque los permisos se cargan durante el login
+  // useEffect(() => {
+  //   loadPermisos();
+  // }, [legacyPersonId, legacyPassword]);
 
   const refreshPermisos = async () => {
+    // Validar que existan credenciales
+    if (!legacyPersonId || !legacyPassword) {
+      setError('No hay credenciales legacy disponibles');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       console.log('Actualizando permisos desde la API...');
-      const permisosData = await getPermisos();
-      console.log('Permisos actualizados:', permisosData);
-      setPermisos(permisosData);
+      const response = await getPermisos({
+        person_id: legacyPersonId,
+        password: legacyPassword,
+      });
+      console.log('Permisos actualizados:', response.meta_data?.permisos);
+      setPermisos(response.meta_data?.permisos || []);
     } catch (err: any) {
       console.error('Error al actualizar permisos:', err);
       setError(err.message || 'Error al actualizar permisos');

@@ -1,3 +1,31 @@
+export interface IAcademicStage {
+  school_id: number;
+  academic_stage_key: string;
+  description: string;
+  precedence: number;
+  grade_class: string;
+  academic_stage_cert: string;
+  academic_stage_iedu: string;
+  spei_prefix: string;
+  spei_cost_center: string;
+  created_by: string;
+  last_modified_by: string;
+  status: string;
+  schedule: string | null;
+  campus_id: number | null;
+}
+
+export interface IAcademicProgram {
+  school_id: number;
+  academic_program_key: string;
+  description: string;
+  schedule: string | null;
+  created_by: string;
+  last_modified_by: string;
+  status: string;
+  academic_stage_id: number;
+}
+
 export interface IProgramYear {
   school_id: number;
   program_year_key: string; // e.g., "1", "2", "3", "0PF", "4", "5", "6"
@@ -10,6 +38,9 @@ export interface IProgramYear {
   id: number;
   created: string; // ISO datetime string
   modified: string; // ISO datetime string
+  academic_stage: IAcademicStage;
+  academic_program: IAcademicProgram;
+  academic_modality: null;
 }
 
 export interface IProgramYearResponse {
@@ -35,7 +66,7 @@ export interface IProgramYearDisplay {
 }
 
 // Interface for program year with stage and program information
-export interface IProgramYearWithRelations extends IProgramYear {
+export interface IProgramYearWithRelations extends Omit<IProgramYear, 'academic_stage' | 'academic_program' | 'academic_modality'> {
   academic_stage?: {
     id: number;
     academic_stage_key: string;

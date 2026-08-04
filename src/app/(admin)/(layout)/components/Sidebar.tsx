@@ -9,9 +9,10 @@ import "simplebar-react/dist/simplebar.min.css";
 
 import { Logo } from "@/components/Logo";
 import { LogoLight } from "@/components/LogoLight";
+import { SchoolBadge } from "@/components/SchoolBadge";
 import { useConfig } from "@/contexts/config";
-import { buildSidebarMenuFromPermisos } from "@/lib/buildMenuFromPermissions";
 import { usePermisos } from "@/hooks/usePermisos";
+import { buildSidebarMenuFromPermisos } from "@/lib/buildMenuFromPermissions";
 
 import { getActivatedItemParentKeys } from "../helpers";
 import { ISidebarMenuItem, SidebarMenuItem } from "./SidebarMenuItem";
@@ -21,7 +22,7 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
     const { config } = useConfig();
     const scrollRef = useRef<SimpleBarCore | null>(null);
     const hasMounted = useRef(false);
-    
+
     const { permisos, isLoading: isLoadingPermisos, error: permisosError } = usePermisos();
 
     const menuItems2 = buildSidebarMenuFromPermisos(permisos);
@@ -73,14 +74,22 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                     config.sidebarTheme == "dark" && ["light", "contrast"].includes(config.theme) ? "dark" : undefined
                 }>
                 <div className="sidebar-logo-area">
-                    <Link href="/home" className="flex items-center justify-center">
-                        {config.theme === "dark" ? <LogoLight /> : <Logo />}
+                    <Link href="/notificaciones" className="flex items-center justify-center">
+                        <div className="min-h-8">
+                            <SchoolBadge variant="mobile" />
+                        </div>
+                        {/* {config.theme === "dark" ? <LogoLight /> : <Logo />} */}
                     </Link>
                 </div>
                 <div className="relative min-h-0 grow">
                     <SimpleBar ref={scrollRef} className="size-full">
                         <div id="sidebar-menu" className="pt-2">
-                            {/* Sección de permisos comentada temporalmente
+                            {/* Sección hardcodeada de Apps */}
+                            {/* {menuItems.map((item, index) => (
+                                <SidebarMenuItem {...item} key={index} activated={activatedParents} />
+                            ))} */}
+
+                            {/* Sección dinámica de Menu (permisos) */}
                             {isLoadingPermisos && (
                                 <div className="flex items-center justify-center p-4">
                                     <div className="loading loading-spinner loading-sm"></div>
@@ -89,27 +98,32 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                             )}
                             {permisosError && (
                                 <div className="alert alert-error mx-2 mb-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 shrink-0 stroke-current"
+                                        fill="none"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
                                     </svg>
                                     <span className="text-xs">Error al cargar permisos</span>
                                 </div>
                             )}
-                            */}
-                            {/* Sección dinámica de Legacy comentada temporalmente
-                            {!isLoadingPermisos && !permisosError && menuItems2.map((item, index) => (
-                                <SidebarMenuItem {...item} key={index} activated={activatedParents} />
-                            ))}
-                            */}
-                            {menuItems.map((item, index) => (
-                                <SidebarMenuItem {...item} key={index} activated={activatedParents} />
-                            ))}
+                            {!isLoadingPermisos &&
+                                !permisosError &&
+                                menuItems2.map((item, index) => (
+                                    <SidebarMenuItem {...item} key={`legacy-${index}`} activated={activatedParents} />
+                                ))}
                         </div>
                     </SimpleBar>
                     <div className="from-base-100/60 absolute start-0 end-0 bottom-0 h-7 bg-linear-to-t to-transparent"></div>
                 </div>
 
-                <div className="mb-2">
+                {/* <div className="mb-2">
                     <hr className="border-base-300" />
                     <ul className="menu w-full">
                         <li>
@@ -159,12 +173,6 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                             </li>
                             <li>
                                 <div>
-                                    <span className="iconify lucide--bell size-4" />
-                                    <span>Notification</span>
-                                </div>
-                            </li>
-                            <li>
-                                <div>
                                     <span className="iconify lucide--arrow-left-right size-4" />
                                     <span>Switch Account</span>
                                 </div>
@@ -177,7 +185,7 @@ export const Sidebar = ({ menuItems }: { menuItems: ISidebarMenuItem[] }) => {
                             </li>
                         </ul>
                     </div>
-                </div>
+                </div> */}
             </div>
 
             <label htmlFor="layout-sidebar-toggle-trigger" id="layout-sidebar-backdrop"></label>

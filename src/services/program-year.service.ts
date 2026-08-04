@@ -1,13 +1,12 @@
 import api from "./api";
-import { 
-  IProgramYear, 
-  IProgramYearParams, 
+import { getOrgConfig } from "@/lib/orgConfig";
+import {
+  IProgramYear,
+  IProgramYearParams,
   IProgramYearDisplay,
   IProgramYearFilters,
   IProgramYearGrouped
 } from "@/interfaces/IProgramYear";
-
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID || "1000";
 
 /**
  * Get program years for a school
@@ -18,7 +17,8 @@ export const getProgramYears = async (
   params?: IProgramYearParams
 ): Promise<IProgramYear[]> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/program-years`, { params });
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/program-years`, { params });
     
     return response.data;
   } catch (error) {
@@ -42,12 +42,13 @@ export const getProgramYearsByStagesAndPrograms = async (
       return [];
     }
 
+    const { schoolId } = getOrgConfig();
     // Create filter string: academic_stage_id::in::[1;2],academic_program_id::in::[1;2]
     const stageIdsStr = stageIds.join(';');
     const programIdsStr = programIds.join(';');
     const filters = `academic_stage_id::in::[${stageIdsStr}],academic_program_id::in::[${programIdsStr}]`;
-    
-    const response = await api.get(`/${SCHOOL_ID}/program-years`, {
+
+    const response = await api.get(`/${schoolId}/program-years`, {
       params: { filters }
     });
     
@@ -67,7 +68,8 @@ export const getProgramYearById = async (
   programYearId: number
 ): Promise<IProgramYear> => {
   try {
-    const response = await api.get(`/${SCHOOL_ID}/program-years/${programYearId}`);
+    const { schoolId } = getOrgConfig();
+    const response = await api.get(`/${schoolId}/program-years/${programYearId}`);
     
     return response.data;
   } catch (error) {

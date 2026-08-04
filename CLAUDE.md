@@ -124,16 +124,39 @@ interface AuthState {
 4. Real-time status tracking
 
 ### 2. Configuration System
-**Theme Management**: Light/Dark themes with system preference support
+
+#### Theme Management
+Light/Dark themes with system preference support
 - Context: `ConfigProvider` in `contexts/config.tsx`
 - Themes: `["light", "contrast", "material", "dark", "dim", "system"]`
 - Persistence: LocalStorage with key `__NEXUS_CONFIG_v2.0__`
+
+#### Dynamic Organization Configuration
+Multi-school support via dynamic configuration
+- **Query Parameter**: `?org=BASE64_ENCODED_VALUE` (format: `schoolId_portalCode`)
+- **Storage**: `schoolId` and `portalName` stored in localStorage
+- **Helper**: `getOrgConfig()` function in `lib/orgConfig.ts`
+- **Portal Codes**: MT (Meta), ST (Student), TC (Teacher)
+- **Example**: `?org=MTAwMF9NVA%3D%3D` decodes to `1000_MT`
+
+**Configuration Flow**:
+1. User accesses root page with `org` query parameter
+2. Value is decoded from base64 and split into `schoolId` and `portalCode`
+3. Portal name is mapped from `orgsMap` configuration
+4. Values are stored in localStorage for subsequent requests
+5. All API services use `getOrgConfig()` to retrieve dynamic values
+6. Axios interceptors automatically inject `x-url-origin` header
+
+**Error Handling**:
+- Missing or invalid `org` parameter shows "Acceso no autorizado" message
+- No default values - requires valid `org` parameter on first access
 
 ## API Integration
 
 ### Base Configuration
 - **Base URL**: Configured via `NEXT_PUBLIC_API_CONSULTATION_URL`
-- **School ID**: `NEXT_PUBLIC_SCHOOL_ID=1000`
+- **School ID**: Dynamically obtained from `org` query parameter
+- **Portal Origin**: Dynamically obtained from `org` query parameter
 - **Authentication**: Bearer tokens via axios interceptors
 - **Error Handling**: Automatic 401 redirect to login
 
@@ -147,9 +170,12 @@ interface AuthState {
 ```env
 NEXT_PUBLIC_API_CONSULTATION_URL=https://core-api.idsm.xyz/schools
 NEXT_PUBLIC_API_COURSE_URL=https://course-api.idsm.xyz/schools
-NEXT_PUBLIC_SCHOOL_ID=1000
 NEXT_PUBLIC_API_CATALOGS_URL=http://cudec-testing.interschool-services.com.mx:8888
+NEXT_PUBLIC_API_BASE_URL=https://core-api.idsm.xyz
+NEXT_PUBLIC_API_COMMUNICATION_URL=https://stage.communication.idsm.xyz
 ```
+
+**Note**: `NEXT_PUBLIC_SCHOOL_ID` and `NEXT_PUBLIC_X_URL_ORIGIN` are no longer used. These values are now dynamically obtained from the `org` query parameter and stored in localStorage.
 
 ## Development Scripts
 

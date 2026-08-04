@@ -10,7 +10,7 @@ export interface IAnnouncementCreate {
   authorized?: boolean;
   authorized_by?: string | null;
   authorized_on?: string | null; // ISO date-time
-  academic_year?: string | null;
+  academic_years?: string[] | null;
   academic_stages?: string[] | null;
   academic_programs?: string[] | null;
   academic_modalities?: string[] | null;
@@ -20,6 +20,10 @@ export interface IAnnouncementCreate {
   publisher_person_id: string;
   persons: string[];
   attachments?: IAttachmentCreate[] | null;
+  // Campos adicionales para assignments (tareas)
+  subject_id?: string | null;
+  subject_name?: string | null;
+  due_date?: string | null; // ISO date-time
 }
 
 export interface IAnnouncementUpdate {
@@ -57,7 +61,7 @@ export interface IAnnouncementRead {
   authorized?: boolean;
   authorized_by?: string | null;
   authorized_on?: string | null; // ISO date-time
-  academic_year?: string | null;
+  academic_years?: string[] | null;
   academic_stages?: string[] | null;
   academic_programs?: string[] | null;
   academic_modalities?: string[] | null;
@@ -87,30 +91,59 @@ export interface IAnnouncementLikeRead {
 
 // Interfaces auxiliares que necesitamos
 export interface IAttachmentCreate {
-  filename: string;
-  content_type: string;
-  size: number;
-  url?: string | null;
+  id: string;
+  school_id: number;
+  file_name: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+  bucket_name: string;
+  public_url: string;
+  uploaded_at: string;
+  content_id: string | null;
+  is_inline: boolean;
+  inline_position: number;
 }
 
 export interface IAttachmentRead {
-  id: string; // UUID
-  filename: string;
-  content_type: string;
-  size: number;
-  url?: string | null;
-  created_at: string | null; // ISO date-time
-  modified_at: string | null; // ISO date-time
+  id: string;
+  school_id: number;
+  file_name: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+  bucket_name: string;
+  public_url: string;
+  uploaded_at: string;
+  content_id: string | null;
+  is_inline: boolean;
+  inline_position: number;
 }
 
 export interface IPersonRead {
   id: string;
-  first_name?: string | null;
-  last_name?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  // Agregar otros campos según sea necesario
+  school_id: number;
+  given_name?: string | null;
+  paternal_surname?: string | null;
+  maternal_surname?: string | null;
+  person_internal_id?: string | null;
+  type?: string | null;
+  official_picture_url?: string | null;
+  profile_picture_url?: string | null;
 }
+
+export interface IAnnouncementRecipient {
+  id: string;
+  school_id: number;
+  given_name: string | null;
+  paternal_surname: string | null;
+  maternal_surname: string | null;
+  person_internal_id: string | null;
+  type: string | null;
+  official_picture_url: string | null;
+  profile_picture_url: string | null;
+}
+
 
 
 
