@@ -279,15 +279,6 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
 
     return (
         <div className="bg-base-100 rounded-lg shadow-sm">
-            <div className="p-6 border-b border-base-300">
-                <h2 className="text-2xl font-bold text-base-content">
-                    Centro de Publicaciones
-                </h2>
-                <p className="text-base-content/70 mt-2">
-                    Crear y gestionar avisos para los años académicos seleccionados
-                </p>
-            </div>
-
             <div className="p-6">
                 <div className="space-y-6">
                     {/* Selección de tipo de publicación - Solo en modo creación */}

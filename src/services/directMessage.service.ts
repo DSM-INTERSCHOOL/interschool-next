@@ -1,5 +1,8 @@
+import axios from "axios";
 import communicationApi from "./communicationApi";
-import api from "./api";
+import { getDeviceId } from "@/lib/deviceId";
+import { getOrgConfig } from "@/lib/orgConfig";
+import { useAuthStore } from "@/store/useAuthStore";
 import { DirectMessageRead, DirectMessageCreateDto } from "@/interfaces/IDirectMessage";
 
 export interface RecipientCandidate {
@@ -14,6 +17,13 @@ export interface RecipientCandidate {
   academic_year_key: string | null;
   academic_stage_key: string | null;
   academic_group_key: string | null;
+}
+
+export interface RecipientSearchResponse {
+  items: RecipientCandidate[];
+  total: number;
+  skip: number;
+  limit: number;
 }
 
 export const getReceivedMessages = async (schoolId: string, personId: number): Promise<DirectMessageRead[]> => {
@@ -65,13 +75,29 @@ export const searchRecipients = async (
   personType: string,
   searchTerm: string,
   targetPersonType?: string,
-): Promise<RecipientCandidate[]> => {
-  const params: Record<string, unknown> = {
-    person_id: personId,
+  skip = 0,
+  limit = 20,
+): Promise<RecipientSearchResponse> => {
+  const { portalName } = getOrgConfig();
+  const token = useAuthStore.getState().token;
+  const params = new URLSearchParams({
+    person_id: String(personId),
     person_type: personType,
-    search_term: searchTerm,
-    ...(targetPersonType ? { target_person_type: targetPersonType } : {}),
-  };
-  const res = await api.get(`/schools/${schoolId}/message-recipients`, { params });
-  return Array.isArray(res.data) ? res.data : [];
+    skip: String(skip),
+    limit: String(limit),
+  });
+  if (searchTerm.trim()) params.set("search_term", searchTerm.trim());
+  if (targetPersonType) params.set("target_person_type", targetPersonType);
+  const res = await axios.get<RecipientSearchResponse>(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/schools/${schoolId}/message-recipients?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-device-id": getDeviceId(),
+        "x-url-origin": portalName,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return res.data;
 };

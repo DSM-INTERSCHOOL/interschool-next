@@ -530,14 +530,14 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
                     {/* "All" card */}
                     <button
                       onClick={() => handleTypeClick(null)}
-                      className={`flex-1 flex flex-col items-center gap-2 py-3 px-1 rounded-xl border-2 transition-all cursor-pointer min-w-0 ${
+                      className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg border-2 transition-all cursor-pointer min-w-0 ${
                         selectedType === null
                           ? "border-base-content/50 bg-base-content/8 text-base-content"
                           : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
                       }`}
                     >
-                      <span className="iconify lucide--search size-5" />
-                      <span className="text-xs font-semibold">Todos</span>
+                      <span className="iconify lucide--search size-4" />
+                      <span className="text-[11px] font-semibold">Todos</span>
                     </button>
 
                     {allowedTypes.map((type) => {
@@ -547,14 +547,14 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
                         <button
                           key={type}
                           onClick={() => handleTypeClick(type)}
-                          className={`flex-1 flex flex-col items-center gap-2 py-3 px-1 rounded-xl border-2 transition-all cursor-pointer min-w-0 ${
+                          className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg border-2 transition-all cursor-pointer min-w-0 ${
                             isActive
                               ? cfg?.activeCard ?? "border-primary bg-primary/10 text-primary"
                               : "border-base-200 text-base-content/40 hover:border-base-300 hover:text-base-content/60"
                           }`}
                         >
-                          <span className={`iconify ${cfg?.icon ?? "lucide--user"} size-5`} />
-                          <span className="text-xs font-semibold truncate w-full text-center">{cfg?.label ?? type}</span>
+                          <span className={`iconify ${cfg?.icon ?? "lucide--user"} size-4`} />
+                          <span className="text-[11px] font-semibold truncate w-full text-center">{cfg?.label ?? type}</span>
                         </button>
                       );
                     })}
@@ -591,9 +591,9 @@ export const NewAppointmentModal = ({ onClose, onSuccess }: Props) => {
             )}
             </div>{/* end static header */}
 
-            {/* Recipient list */}
+            {/* Recipient list — fixed size with vertical scroll (shrinks if space is tight) */}
             {allowedTypes.length > 0 && (
-              <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+              <div className="overflow-y-auto min-h-0 flex flex-col" style={{ height: "360px" }}>
                 {recipientsLoading && (
                   <div className="flex justify-center py-8">
                     <span className="loading loading-spinner loading-md text-primary" />

@@ -325,10 +325,7 @@ export default function PublicationsPage() {
 
     return (
         <>
-            <PageTitle
-                title="Publicaciones"
-                items={[{ label: "Apps" }, { label: "Publicaciones", active: true }]}
-            />
+            <PageTitle title="Publicaciones" />
             <div className="mt-6">
                 <div className="card bg-base-100 shadow-lg">
                     <div className="card-body">
@@ -341,13 +338,6 @@ export default function PublicationsPage() {
                                 >
                                     <span className="iconify lucide--megaphone size-5"></span>
                                     Avisos
-                                </button>
-                                <button
-                                    className={`join-item btn ${publicationType === 'assignment' ? 'btn-secondary' : 'btn-outline'}`}
-                                    onClick={() => setPublicationType('assignment')}
-                                >
-                                    <span className="iconify lucide--clipboard-list size-5"></span>
-                                    Tareas
                                 </button>
                                 <button
                                     className={`join-item btn ${publicationType === 'event' ? 'btn-accent' : 'btn-outline'}`}
@@ -363,6 +353,13 @@ export default function PublicationsPage() {
                                     <span className="iconify lucide--bar-chart-2 size-5"></span>
                                     Encuestas
                                 </button>
+                                <button
+                                    className={`join-item btn ${publicationType === 'assignment' ? 'btn-secondary' : 'btn-outline'}`}
+                                    onClick={() => setPublicationType('assignment')}
+                                >
+                                    <span className="iconify lucide--clipboard-list size-5"></span>
+                                    Tareas
+                                </button>
                             </div>
                         </div>
 
@@ -377,13 +374,13 @@ export default function PublicationsPage() {
                                 Lista de {publicationType === 'assignment' ? 'Tareas' : publicationType === 'event' ? 'Eventos' : publicationType === 'poll' ? 'Encuestas' : 'Avisos'}
                             </h2>
                             <div className="flex gap-2">
-                                <button
+                                {/* <button
                                     onClick={() => setIsFiltersModalOpen(true)}
                                     className="btn btn-outline"
                                 >
                                     <span className="iconify lucide--filter size-5"></span>
                                     Filtros
-                                </button>
+                                </button> */}
                                 {/* <Link href="/apps/publications/create" className="btn btn-primary">
                                     <span className="iconify lucide--plus size-5"></span>
                                     Nueva Publicación

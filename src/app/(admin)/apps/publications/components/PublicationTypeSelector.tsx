@@ -46,35 +46,6 @@ export const PublicationTypeSelector = ({ value, onChange }: PublicationTypeSele
                         </div>
                     </div>
 
-                    {/* Opción Tarea */}
-                    <div
-                        className={`card border-2 cursor-pointer transition-all duration-200 ${
-                            value === 'assignment'
-                                ? 'border-secondary bg-secondary/10'
-                                : 'border-base-300 hover:border-base-400'
-                        }`}
-                        onClick={() => onChange('assignment')}
-                    >
-                        <div className="card-body">
-                            <div className="flex items-center gap-4">
-                                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-                                    value === 'assignment' ? 'bg-secondary text-secondary-content' : 'bg-base-200'
-                                }`}>
-                                    <span className="iconify lucide--clipboard-list size-6"></span>
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-semibold text-base">Tarea</h4>
-                                    <p className="text-sm text-base-content/70">
-                                        Asignar tareas y actividades con fecha de entrega
-                                    </p>
-                                </div>
-                                {value === 'assignment' && (
-                                    <span className="iconify lucide--check-circle size-6 text-secondary"></span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Opción Evento */}
                     <div
                         className={`card border-2 cursor-pointer transition-all duration-200 ${
@@ -103,6 +74,7 @@ export const PublicationTypeSelector = ({ value, onChange }: PublicationTypeSele
                             </div>
                         </div>
                     </div>
+
                     {/* Opción Encuesta */}
                     <div
                         className={`card border-2 cursor-pointer transition-all duration-200 ${
@@ -127,6 +99,35 @@ export const PublicationTypeSelector = ({ value, onChange }: PublicationTypeSele
                                 </div>
                                 {value === 'poll' && (
                                     <span className="iconify lucide--check-circle size-6 text-warning"></span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Opción Tarea */}
+                    <div
+                        className={`card border-2 cursor-pointer transition-all duration-200 ${
+                            value === 'assignment'
+                                ? 'border-secondary bg-secondary/10'
+                                : 'border-base-300 hover:border-base-400'
+                        }`}
+                        onClick={() => onChange('assignment')}
+                    >
+                        <div className="card-body">
+                            <div className="flex items-center gap-4">
+                                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                                    value === 'assignment' ? 'bg-secondary text-secondary-content' : 'bg-base-200'
+                                }`}>
+                                    <span className="iconify lucide--clipboard-list size-6"></span>
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-semibold text-base">Tarea</h4>
+                                    <p className="text-sm text-base-content/70">
+                                        Asignar tareas y actividades con fecha de entrega
+                                    </p>
+                                </div>
+                                {value === 'assignment' && (
+                                    <span className="iconify lucide--check-circle size-6 text-secondary"></span>
                                 )}
                             </div>
                         </div>

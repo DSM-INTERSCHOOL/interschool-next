@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 export default function CreatePublicationPage() {
     return (
         <>
-            <PageTitle
-                title="Crear Publicación"
-                items={[{ label: "Apps" }, { label: "Publicaciones", path: "/apps/publications" }, { label: "Crear", active: true }]}
-            />
+            <PageTitle title="Crear Publicación" />
             <div className="mt-6">
                 <PublicationsApp />
             </div>
