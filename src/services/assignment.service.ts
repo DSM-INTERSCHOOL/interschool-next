@@ -193,6 +193,64 @@ export const getView = async ({
   return response.data;
 };
 
+// Gestión de comentarios
+export const addComment = async ({
+  schoolId,
+  assignmentId,
+  dto,
+}: {
+  schoolId: string | number;
+  assignmentId: string;
+  dto: {
+    person_id: string;
+    parent_assignment_comment_id?: string | null;
+    comment: string;
+  };
+}) => {
+  const response = await communicationApi.post(
+    `/v1/schools/${schoolId}/assignments/${assignmentId}/comments`,
+    dto
+  );
+  return response.data;
+};
+
+export const getComments = async ({
+  schoolId,
+  assignmentId,
+  offset = 0,
+  limit = 100,
+  filters,
+}: AssignmentArgs) => {
+  const params = new URLSearchParams({
+    offset: offset.toString(),
+    limit: limit.toString(),
+  });
+
+  if (filters) {
+    params.append("filters", filters);
+  }
+
+  const response = await communicationApi.get(
+    `/v1/schools/${schoolId}/assignments/${assignmentId}/comments?${params.toString()}`
+  );
+  return response.data;
+};
+
+export const removeComment = async ({
+  schoolId,
+  assignmentId,
+  commentId,
+}: {
+  schoolId: string | number;
+  assignmentId: string;
+  commentId: string;
+}) => {
+  const response = await communicationApi.delete(
+    `/v1/schools/${schoolId}/assignments/${assignmentId}/comments/${commentId}`
+  );
+  return response.data;
+};
+
 // Gestión de destinatarios
 export const getPersons = async ({
   schoolId,

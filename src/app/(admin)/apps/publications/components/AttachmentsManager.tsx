@@ -1,4 +1,5 @@
 import { IAttachmentRead } from "@/interfaces/IAnnouncement";
+import { PublicationType } from "./PublicationTypeSelector";
 
 interface AttachmentsManagerProps {
     attachments: File[];
@@ -6,7 +7,8 @@ interface AttachmentsManagerProps {
     onAdd: (file: File) => void;
     onRemove: (index: number) => void;
     onRemoveExisting: (index: number) => void;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
+    accept?: string;
 }
 
 export const AttachmentsManager = ({
@@ -15,13 +17,14 @@ export const AttachmentsManager = ({
     onAdd,
     onRemove,
     onRemoveExisting,
-    publicationType
+    publicationType,
+    accept = '*/*',
 }: AttachmentsManagerProps) => {
     const handleFileSelect = () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.multiple = true;
-        input.accept = '*/*';
+        input.accept = accept;
         input.onchange = (e: any) => {
             const files = Array.from(e.target.files) as File[];
             files.forEach((file) => onAdd(file));
@@ -41,8 +44,15 @@ export const AttachmentsManager = ({
                     className="border-2 border-dashed border-base-300 rounded-lg p-6 text-center hover:border-base-400 transition-colors cursor-pointer"
                     onDrop={(e) => {
                         e.preventDefault();
-                        const files = Array.from(e.dataTransfer.files);
-                        files.forEach(file => onAdd(file));
+                        const allowed = accept === '*/*'
+                            ? Array.from(e.dataTransfer.files)
+                            : Array.from(e.dataTransfer.files).filter((f) =>
+                                accept.split(',').some((a) => {
+                                    const t = a.trim();
+                                    return t === '*/*' || (t.endsWith('/*') && f.type.startsWith(t.slice(0, -1))) || f.type === t;
+                                })
+                              );
+                        allowed.forEach(file => onAdd(file));
                     }}
                     onDragOver={(e) => e.preventDefault()}
                     onClick={handleFileSelect}

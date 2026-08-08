@@ -14,17 +14,17 @@ interface EditPublicationPageProps {
 export default function EditPublicationPage({ params }: EditPublicationPageProps) {
     const { id } = use(params);
     const searchParams = useSearchParams();
-    const publicationType = (searchParams.get('publicationType') as 'announcement' | 'assignment') || 'announcement';
+    const publicationType = (searchParams.get('publicationType') as 'announcement' | 'assignment' | 'event') || 'announcement';
+    const typeLabel = publicationType === 'assignment' ? 'Tarea' : publicationType === 'event' ? 'Evento' : 'Aviso';
 
     useEffect(() => {
-        const title = publicationType === 'assignment' ? 'Editar Tarea' : 'Editar Aviso';
-        document.title = `${title} - Interschool`;
+        document.title = `Editar ${typeLabel} - Interschool`;
     }, [publicationType]);
 
     return (
         <>
             <PageTitle
-                title={`Editar ${publicationType === 'assignment' ? 'Tarea' : 'Aviso'}`}
+                title={`Editar ${typeLabel}`}
                 items={[
                     { label: "Apps" },
                     { label: "Publicaciones", path: "/apps/publications" },

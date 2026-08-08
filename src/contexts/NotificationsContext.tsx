@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { getAnnouncements, getAssignments } from "@/services/publications.service";
+import { getAnnouncements, getAssignments, getEvents } from "@/services/publications.service";
 
 interface NotificationsContextType {
     unreadCount: number;
@@ -27,17 +27,18 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
         try {
             setLoading(true);
 
-            // Obtener avisos y tareas en paralelo
-            const [announcements, assignments] = await Promise.all([
+            const [announcements, assignments, events] = await Promise.all([
                 getAnnouncements({ personId: personId.toString(), token }),
                 getAssignments({ personId: personId.toString(), token }),
+                getEvents({ personId: personId.toString(), token }),
             ]);
 
-            // Contar los que tienen user_viewed en false
-            const unreadAnnouncements = announcements.filter((a) => !a.user_viewed).length;
-            const unreadAssignments = assignments.filter((a) => !a.user_viewed).length;
+            const unread =
+                announcements.filter((a) => !a.user_viewed).length +
+                assignments.filter((a) => !a.user_viewed).length +
+                events.filter((e) => !e.user_viewed).length;
 
-            setUnreadCount(unreadAnnouncements + unreadAssignments);
+            setUnreadCount(unread);
         } catch (err) {
             console.error("Error fetching unread notifications:", err);
             setUnreadCount(0);

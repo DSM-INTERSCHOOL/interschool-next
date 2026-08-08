@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { getLikesForAnnouncement, getLikesForAssignment } from "@/services/likes.service";
+import { getLikesForAnnouncement, getLikesForAssignment, getLikesForEvent } from "@/services/likes.service";
+import type { PublicationType } from "./PublicationTypeSelector";
 
 interface LikesModalProps {
     publicationId: string | null;
     publicationTitle: string | null;
-    publicationType: 'announcement' | 'assignment';
+    publicationType: PublicationType;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -44,7 +45,9 @@ export function LikesModal({ publicationId, publicationTitle, publicationType, i
 
             const data = publicationType === 'assignment'
                 ? await getLikesForAssignment(publicationId)
-                : await getLikesForAnnouncement(publicationId);
+                : publicationType === 'event'
+                    ? await getLikesForEvent(publicationId)
+                    : await getLikesForAnnouncement(publicationId);
 
             setLikes(data);
         } catch (err: any) {

@@ -6,10 +6,12 @@ import { ThemeToggleDropdown } from "@/components/ThemeToggleDropdown";
 import { useAuth } from "@/hooks/useAuth";
 
 import { TopbarNotificationButton } from "./TopbarNotificationButton";
-import { TopbarSearchButton } from "./TopbarSearchButton";
+import { TopbarAppointmentsButton } from "./TopbarAppointmentsButton";
+import { TopbarFeedButton } from "./TopbarFeedButton";
+import { TopbarDirectMessagesButton } from "./TopbarDirectMessagesButton";
 
 export const Topbar = () => {
-    const { name, email, personInternalId, status, personType, logout } = useAuth();
+    const { name, email, personInternalId, personType, logout } = useAuth();
 
     return (
         <div
@@ -17,16 +19,23 @@ export const Topbar = () => {
             aria-label="Navbar"
             className="flex items-center justify-between px-3"
             id="layout-topbar">
-            <div className="inline-flex items-center gap-3">
+            <div className="inline-flex items-center">
                 <label
-                    className="btn btn-square btn-ghost btn-sm"
-                    aria-label="Leftmenu toggle"
+                    className="btn btn-circle btn-ghost btn-sm"
+                    aria-label="Ocultar/mostrar panel"
+                    title="Ocultar/mostrar panel"
                     htmlFor="layout-sidebar-toggle-trigger">
-                    <span className="iconify lucide--menu size-5" />
+                    <span className="iconify lucide--panel-left size-4.5" />
                 </label>
-                <TopbarSearchButton />
             </div>
             <div className="inline-flex items-center gap-1.5">
+                <TopbarFeedButton />
+                <TopbarNotificationButton />
+                <TopbarDirectMessagesButton />
+                <TopbarAppointmentsButton />
+
+                <span className="text-base-content/20 select-none">|</span>
+
                 <ThemeToggleDropdown
                     triggerClass="btn btn-sm btn-circle btn-ghost"
                     dropdownClass="dropdown-center"
@@ -36,7 +45,6 @@ export const Topbar = () => {
                 <label htmlFor="layout-rightbar-drawer" className="btn btn-circle btn-ghost btn-sm drawer-button">
                     <span className="iconify lucide--settings-2 size-4.5" />
                 </label>
-                <TopbarNotificationButton />
 
                 <div className="dropdown dropdown-bottom dropdown-end">
                     <div tabIndex={0} role="button" className="btn btn-ghost rounded-btn px-1.5">
@@ -50,12 +58,8 @@ export const Topbar = () => {
                                 <p className="text-sm">{name || 'Usuario'}</p>
                                 <p className="text-base-content/60 text-xs">
                                     {personInternalId || email || 'usuario@example.com'}
+                                    {personType && ` • ${personType}`}
                                 </p>
-                                {status && (
-                                    <p className="text-base-content/40 text-xs">
-                                        {status} • {personType}
-                                    </p>
-                                )}
                             </div>
                         </div>
                     </div>
@@ -65,24 +69,6 @@ export const Topbar = () => {
                                 <div>
                                     <span className="iconify lucide--user size-4" />
                                     <span>Mi Perfil</span>
-                                </div>
-                            </li>
-                            <li>
-                                <div>
-                                    <span className="iconify lucide--settings size-4" />
-                                    <span>Configuración</span>
-                                </div>
-                            </li>
-                            <li>
-                                <div>
-                                    <span className="iconify lucide--arrow-left-right size-4" />
-                                    <span>Cambiar Cuenta</span>
-                                </div>
-                            </li>
-                            <li>
-                                <div>
-                                    <span className="iconify lucide--help-circle size-4" />
-                                    <span>Ayuda</span>
                                 </div>
                             </li>
                         </ul>

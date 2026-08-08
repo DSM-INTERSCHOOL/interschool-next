@@ -10,6 +10,7 @@ import {
     PublicationFormCard,
     SubjectSelector
 } from "./components";
+import type { PublicationType } from "./components/PublicationTypeSelector";
 import {
     useAcademicData,
     useRecipients,
@@ -18,14 +19,16 @@ import {
     useUserRole,
     useTeacherSubjects
 } from "./hooks";
+import { usePollForm } from "@/app/(admin)/apps/polls/hooks";
+import { PollFormCard } from "@/app/(admin)/apps/polls/components";
 
 interface PublicationsAppProps {
     announcementId?: string;
-    type?: 'announcement' | 'assignment';
+    type?: PublicationType;
 }
 
 const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
-    const [publicationType, setPublicationType] = useState<'announcement' | 'assignment'>(type || 'announcement');
+    const [publicationType, setPublicationType] = useState<PublicationType>(type || 'announcement');
     const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
 
     // Custom hooks
@@ -37,9 +40,25 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
     const teacherSubjects = useTeacherSubjects(selections.selectedAcademicYears);
    
 
+    const pollForm = usePollForm();
+
+    const handleTypeChange = (newType: PublicationType) => {
+        setPublicationType(newType);
+        selections.setSelectedRecipientTypes(new Set());
+        selections.setSelectedAcademicYears(new Set());
+        selections.setSelectedAcademicStages(new Set());
+        selections.setSelectedAcademicPrograms(new Set());
+        selections.setSelectedProgramYears(new Set());
+        selections.setSelectedAcademicGroups(new Set());
+        selections.setSelectedRecipients(new Set());
+        setSelectedSubjects(new Set());
+        recipientsData.clearRecipients();
+    };
+
     const isTeacher = userRole === 'teacher';
     const isAdmin = userRole === 'admin';
     const isAssignment = publicationType === 'assignment';
+    const isPoll = publicationType === 'poll';
 
     
     // Seleccionar STUDENT por defecto para profesores
@@ -237,30 +256,36 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
         );
     };
 
+    const handlePublishPoll = (publish: boolean) => {
+        pollForm.handleSave(
+            selections.selectedRecipients,
+            {
+                academicYears: selections.selectedAcademicYears,
+                academicStages: selections.selectedAcademicStages,
+                academicPrograms: selections.selectedAcademicPrograms,
+                programYears: selections.selectedProgramYears,
+                academicGroups: selections.selectedAcademicGroups,
+            },
+            publish
+        );
+    };
+
     const isOnlyUser = selections.selectedRecipientTypes.size === 1 && selections.selectedRecipientTypes.has('USER');
     const shouldShowAcademicSelectors = !isOnlyUser;
     const shouldShowForm = selections.selectedAcademicYears.size > 0 ||
                           selections.selectedAcademicStages.size > 0 ||
-                          isOnlyUser;
+                          isOnlyUser ||
+                          (!!announcementId && !!publicationForm.loadedAnnouncement);
 
     return (
         <div className="bg-base-100 rounded-lg shadow-sm">
-            <div className="p-6 border-b border-base-300">
-                <h2 className="text-2xl font-bold text-base-content">
-                    Centro de Publicaciones
-                </h2>
-                <p className="text-base-content/70 mt-2">
-                    Crear y gestionar avisos para los años académicos seleccionados
-                </p>
-            </div>
-
             <div className="p-6">
                 <div className="space-y-6">
                     {/* Selección de tipo de publicación - Solo en modo creación */}
                     {!announcementId && (
                         <PublicationTypeSelector
                             value={publicationType}
-                            onChange={setPublicationType}
+                            onChange={handleTypeChange}
                         />
                     )}
 
@@ -417,7 +442,7 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                     )}
 
                     {/* Formulario de publicación */}
-                    {shouldShowForm && (
+                    {shouldShowForm && !isPoll && (
                         <PublicationFormCard
                             announcementId={announcementId}
                             publicationType={publicationType}
@@ -436,20 +461,38 @@ const PublicationsApp = ({ announcementId, type }: PublicationsAppProps) => {
                         />
                     )}
 
+                    {/* Formulario de encuesta */}
+                    {shouldShowForm && isPoll && (
+                        <PollFormCard
+                            formData={pollForm.formData}
+                            onFieldChange={pollForm.updateFormField}
+                            questions={pollForm.questions}
+                            questionTypes={pollForm.questionTypes}
+                            onAddQuestion={pollForm.addQuestion}
+                            onUpdateQuestion={(localId, data) => pollForm.updateQuestion(localId, data)}
+                            onDeleteQuestion={pollForm.deleteQuestion}
+                            onMoveQuestion={pollForm.moveQuestion}
+                            onSave={handlePublishPoll}
+                            saveLoading={pollForm.saveLoading}
+                            saveError={pollForm.saveError}
+                        />
+                    )}
+
                     {/* Mensaje cuando no hay elementos seleccionados */}
-                    {!academicData.loading &&
+                    {!announcementId &&
+                     !academicData.loading &&
                      !academicData.error &&
                      academicData.academicYears.length > 0 &&
                      selections.selectedAcademicYears.size === 0 &&
                      selections.selectedAcademicStages.size === 0 &&
                      !isOnlyUser && (
                         <div className="text-center py-12">
-                            <span className="iconify lucide--check-square size-16 text-base-content/30 mb-4"></span>
+                            <span className={`iconify size-16 text-base-content/30 mb-4 ${isPoll ? 'lucide--bar-chart-2' : 'lucide--check-square'}`}></span>
                             <h3 className="text-lg font-medium text-base-content mb-2">
                                 Selecciona años y niveles académicos
                             </h3>
                             <p className="text-base-content/70">
-                                Para crear un aviso, selecciona uno o más años académicos y niveles académicos
+                                Para crear {isPoll ? 'una encuesta' : 'un aviso'}, selecciona uno o más años académicos y niveles académicos
                             </p>
                         </div>
                     )}

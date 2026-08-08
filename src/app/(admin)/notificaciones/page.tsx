@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { PageTitle } from "@/components/PageTitle";
 import { useAuth } from "@/hooks/useAuth";
-import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
-import { getAnnouncements, getAssignments } from "@/services/publications.service";
+import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
+import { PollRead } from "@/interfaces/IPoll";
+import { getAnnouncements, getAssignments, getEvents } from "@/services/publications.service";
+import { getPolls, addPollView } from "@/services/poll.service";
 import * as announcementService from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";
+import * as eventService from "@/services/event.service";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { useNotifications } from "@/contexts/NotificationsContext";
 
-import { PublicationDetail, PublicationListItem } from "./components";
+import { PublicationDetail, PublicationListItem, PollListItem, PollDetail } from "./components";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const LegacyPageHidden = () => {
@@ -38,104 +40,104 @@ const LegacyPageHidden = () => {
     );
 };
 
+type ActiveTab = "announcements" | "assignments" | "events" | "polls";
+
 export default function PublicationsPage() {
-    const [activeTab, setActiveTab] = useState<"announcements" | "assignments">("announcements");
+    const [activeTab, setActiveTab] = useState<ActiveTab>("announcements");
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [expanded, setExpanded] = useState(false);
     const [announcements, setAnnouncements] = useState<IAnnouncement[]>([]);
     const [assignments, setAssignments] = useState<IAssignment[]>([]);
+    const [events, setEvents] = useState<IEvent[]>([]);
+    const [polls, setPolls] = useState<PollRead[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const { token, personId } = useAuth();
     const { decrementUnread } = useNotifications();
 
-    // Cargar datos cuando cambia el tab, token o personId
-    useEffect(() => {
+    const loadData = useCallback(async () => {
         if (!token || !personId) return;
 
-        const loadData = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                if (activeTab === "announcements") {
-                    const data = await getAnnouncements({
-                        personId: personId.toString(),
-                        token,
-                    });
-                    setAnnouncements(data);
-                } else {
-                    const data = await getAssignments({
-                        personId: personId.toString(),
-                        token,
-                    });
-                    setAssignments(data);
-                }
-            } catch (err) {
-                console.error("Error loading publications:", err);
-                setError("Error al cargar las publicaciones. Por favor, intenta de nuevo.");
-            } finally {
-                setLoading(false);
+        setLoading(true);
+        setError(null);
+        try {
+            const { schoolId } = getOrgConfig();
+            if (activeTab === "announcements") {
+                const data = await getAnnouncements({ personId: personId.toString(), token });
+                setAnnouncements(data);
+            } else if (activeTab === "assignments") {
+                const data = await getAssignments({ personId: personId.toString(), token });
+                setAssignments(data);
+            } else if (activeTab === "events") {
+                const data = await getEvents({ personId: personId.toString(), token });
+                setEvents(data);
+            } else {
+                const data = await getPolls({ schoolId, personId: personId.toString() });
+                setPolls(data);
             }
-        };
-
-        loadData();
+        } catch (err) {
+            console.error("Error loading publications:", err);
+            setError("Error al cargar. Por favor, intenta de nuevo.");
+        } finally {
+            setLoading(false);
+        }
     }, [activeTab, token, personId]);
 
-    const currentList = activeTab === "announcements" ? announcements : assignments;
-    const selectedPublication = currentList.find((p) => p.id === selectedId) || null;
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    const isPollTab = activeTab === "polls";
+
+    const currentList: (IAnnouncement | IAssignment | IEvent)[] =
+        activeTab === "announcements" ? announcements
+        : activeTab === "assignments" ? assignments
+        : activeTab === "events" ? events
+        : [];
+
+    const selectedPublication = !isPollTab
+        ? (currentList.find((p) => p.id === selectedId) || null)
+        : null;
+
+    const selectedPoll = isPollTab
+        ? (polls.find((p) => p.id === selectedId) || null)
+        : null;
+
+    const listCount = isPollTab ? polls.length : currentList.length;
 
     const handlePublicationClick = async (id: string) => {
         if (!token || !personId) return;
 
-        // Seleccionar la publicación
         setSelectedId(id);
 
-        // Verificar si la publicación no ha sido vista
         const publication = currentList.find((p) => p.id === id);
         const wasUnread = publication && !publication.user_viewed;
 
-        // Actualizar user_viewed localmente
-        const updateList = (list: (IAnnouncement | IAssignment)[]) =>
-            list.map((p) =>
-                p.id === id
-                    ? {
-                          ...p,
-                          user_viewed: true,
-                      }
-                    : p,
-            );
+        const markViewed = <T extends { id: string; user_viewed: boolean }>(list: T[]): T[] =>
+            list.map((p) => p.id === id ? { ...p, user_viewed: true } : p);
 
         if (activeTab === "announcements") {
-            setAnnouncements(updateList(announcements) as IAnnouncement[]);
-        } else {
-            setAssignments(updateList(assignments) as IAssignment[]);
+            setAnnouncements(markViewed(announcements));
+        } else if (activeTab === "assignments") {
+            setAssignments(markViewed(assignments));
+        } else if (activeTab === "events") {
+            setEvents(markViewed(events));
         }
 
-        // Decrementar el contador si la publicación no había sido vista
-        if (wasUnread) {
-            decrementUnread();
-        }
+        if (wasUnread) decrementUnread();
 
-        // Registrar la vista
         try {
             const { schoolId } = getOrgConfig();
-
             if (activeTab === "announcements") {
-                await announcementService.addView({
-                    schoolId,
-                    announcementId: id,
-                    personId: personId.toString(),
-                });
-            } else {
-                await assignmentService.addView({
-                    schoolId,
-                    assignmentId: id,
-                    personId: personId.toString(),
-                });
+                await announcementService.addView({ schoolId: schoolId!, announcementId: id, personId: personId.toString() });
+            } else if (activeTab === "assignments") {
+                await assignmentService.addView({ schoolId: schoolId!, assignmentId: id, personId: personId.toString() });
+            } else if (activeTab === "events") {
+                await eventService.addView({ schoolId: schoolId!, eventId: id, personId: personId.toString() });
             }
         } catch (err) {
             console.error("Error registering view:", err);
-            // No mostramos error al usuario, es una acción silenciosa
         }
     };
 
@@ -148,57 +150,78 @@ export default function PublicationsPage() {
 
             const { schoolId } = getOrgConfig();
 
-            // Llamar al servicio correspondiente
             if (activeTab === "announcements") {
-                if (publication.user_liked) {
-                    await announcementService.unlike({
-                        schoolId,
-                        announcementId: id,
-                        personId: personId.toString(),
-                    });
-                } else {
-                    await announcementService.like({
-                        schoolId,
-                        announcementId: id,
-                        personId: personId.toString(),
-                    });
-                }
+                publication.user_liked
+                    ? await announcementService.unlike({ schoolId: schoolId!, announcementId: id, personId: personId.toString() })
+                    : await announcementService.like({ schoolId: schoolId!, announcementId: id, personId: personId.toString() });
+            } else if (activeTab === "assignments") {
+                publication.user_liked
+                    ? await assignmentService.unlike({ schoolId: schoolId!, assignmentId: id, personId: personId.toString() })
+                    : await assignmentService.like({ schoolId: schoolId!, assignmentId: id, personId: personId.toString() });
             } else {
-                if (publication.user_liked) {
-                    await assignmentService.unlike({
-                        schoolId,
-                        assignmentId: id,
-                        personId: personId.toString(),
-                    });
-                } else {
-                    await assignmentService.like({
-                        schoolId,
-                        assignmentId: id,
-                        personId: personId.toString(),
-                    });
-                }
+                publication.user_liked
+                    ? await eventService.unlike({ schoolId: schoolId!, eventId: id, personId: personId.toString() })
+                    : await eventService.like({ schoolId: schoolId!, eventId: id, personId: personId.toString() });
             }
 
-            // Actualizar la lista localmente
-            const updateList = (list: (IAnnouncement | IAssignment)[]) =>
-                list.map((p) =>
-                    p.id === id
-                        ? {
-                              ...p,
-                              user_liked: !p.user_liked,
-                              likes: p.user_liked ? p.likes - 1 : p.likes + 1,
-                          }
-                        : p,
+            const toggleLike = <T extends { id: string; user_liked: boolean | null; likes: number }>(list: T[]): T[] =>
+                list.map((p) => p.id === id
+                    ? { ...p, user_liked: !p.user_liked, likes: p.user_liked ? p.likes - 1 : p.likes + 1 }
+                    : p
                 );
 
             if (activeTab === "announcements") {
-                setAnnouncements(updateList(announcements) as IAnnouncement[]);
+                setAnnouncements(toggleLike(announcements));
+            } else if (activeTab === "assignments") {
+                setAssignments(toggleLike(assignments));
             } else {
-                setAssignments(updateList(assignments) as IAssignment[]);
+                setEvents(toggleLike(events));
             }
         } catch (err) {
             console.error("Error toggling like:", err);
         }
+    };
+
+    const handlePollClick = async (id: string) => {
+        setSelectedId(id);
+        if (!personId) return;
+        try {
+            const { schoolId } = getOrgConfig();
+            await addPollView({ schoolId, pollId: id, personId: personId.toString() });
+        } catch (err) {
+            console.error("Error registering poll view:", err);
+        }
+    };
+
+    const handleConfirm = (id: string) => {
+        setEvents((prev) =>
+            prev.map((e) => e.id === id ? { ...e, user_confirmed: true } : e)
+        );
+    };
+
+    const handleCommentCountChange = (id: string, delta: number) => {
+        const bump = <T extends { id: string; comments: number }>(list: T[]): T[] =>
+            list.map((p) => p.id === id ? { ...p, comments: Math.max(0, p.comments + delta) } : p);
+
+        if (activeTab === "announcements") {
+            setAnnouncements(bump(announcements));
+        } else if (activeTab === "assignments") {
+            setAssignments(bump(assignments));
+        } else if (activeTab === "events") {
+            setEvents(bump(events));
+        }
+    };
+
+    const tabLabel =
+        activeTab === "announcements" ? "avisos"
+        : activeTab === "assignments" ? "tareas"
+        : activeTab === "events" ? "eventos"
+        : "encuestas";
+
+    const switchTab = (tab: ActiveTab) => {
+        setActiveTab(tab);
+        setSelectedId(null);
+        setExpanded(false);
     };
 
     if (!token || !personId) {
@@ -217,20 +240,28 @@ export default function PublicationsPage() {
 
     return (
         <>
-            <PageTitle title="Notificaciones" />
+            <div id="notificaciones-frame" className="mt-6 max-w-4xl mx-auto">
 
-            <div className=" bg-base-100 shadow-lg mt-6 space-y-6">
-                <div className="">
-                    <div className="bg-base-200 mt-6 flex h-screen flex-col">
-                        {/* Header con tabs integrados */}
+                {/* ── Título fuera del frame — mismo patrón que Noticias ── */}
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="iconify lucide--bell size-5 text-primary" />
+                    <h2 className="text-xl font-bold">Notificaciones</h2>
+                    <button
+                        className="btn btn-ghost btn-sm btn-circle"
+                        title="Actualizar"
+                        disabled={loading}
+                        onClick={loadData}
+                    >
+                        <span className={`iconify lucide--refresh-cw size-4 ${loading ? "animate-spin" : ""}`} />
+                    </button>
+                </div>
+
+                <div className="bg-base-100 shadow-lg rounded-xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 12rem)" }}>
+                        {/* Tabs */}
                         <header className="bg-base-100 border-base-300 border-b">
-                            {/* Tabs como navegación principal */}
                             <div className="border-base-300 flex border-t">
                                 <button
-                                    onClick={() => {
-                                        setActiveTab("announcements");
-                                        setSelectedId(null);
-                                    }}
+                                    onClick={() => switchTab("announcements")}
                                     className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
                                         activeTab === "announcements"
                                             ? "border-primary text-primary"
@@ -240,10 +271,27 @@ export default function PublicationsPage() {
                                     Avisos
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        setActiveTab("assignments");
-                                        setSelectedId(null);
-                                    }}
+                                    onClick={() => switchTab("events")}
+                                    className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
+                                        activeTab === "events"
+                                            ? "border-accent text-accent"
+                                            : "text-base-content/60 hover:text-base-content border-transparent"
+                                    }`}>
+                                    <span className="iconify lucide--calendar-days size-4" />
+                                    Eventos
+                                </button>
+                                <button
+                                    onClick={() => switchTab("polls")}
+                                    className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
+                                        activeTab === "polls"
+                                            ? "border-warning text-warning"
+                                            : "text-base-content/60 hover:text-base-content border-transparent"
+                                    }`}>
+                                    <span className="iconify lucide--bar-chart-2 size-4" />
+                                    Encuestas
+                                </button>
+                                <button
+                                    onClick={() => switchTab("assignments")}
                                     className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
                                         activeTab === "assignments"
                                             ? "border-primary text-primary"
@@ -255,9 +303,10 @@ export default function PublicationsPage() {
                             </div>
                         </header>
 
-                        {/* Layout de dos columnas */}
+                        {/* Two-column layout */}
                         <div className="flex flex-1 overflow-hidden">
-                            {/* Lista lateral */}
+                            {/* Left list panel */}
+                            {!expanded && (
                             <div className="bg-base-100 border-base-300 w-80 flex-shrink-0 overflow-y-auto border-r">
                                 <div className="p-3">
                                     <div className="mb-3 px-3">
@@ -265,7 +314,7 @@ export default function PublicationsPage() {
                                             {loading ? (
                                                 <span className="loading loading-spinner loading-xs mr-2"></span>
                                             ) : (
-                                                `${currentList.length} ${activeTab === "announcements" ? "avisos" : "tareas"}`
+                                                `${listCount} ${tabLabel}`
                                             )}
                                         </p>
                                     </div>
@@ -283,39 +332,77 @@ export default function PublicationsPage() {
                                         </div>
                                     ) : (
                                         <div className="space-y-1">
-                                            {currentList.length === 0 ? (
-                                                <div className="py-8 text-center">
-                                                    <span className="iconify lucide--inbox text-base-content/20 mx-auto size-12" />
-                                                    <p className="text-base-content/60 mt-2 text-sm">
-                                                        No hay {activeTab === "announcements" ? "avisos" : "tareas"}{" "}
-                                                        disponibles
-                                                    </p>
-                                                </div>
+                                            {isPollTab ? (
+                                                polls.length === 0 ? (
+                                                    <div className="py-8 text-center">
+                                                        <span className="iconify lucide--bar-chart-2 text-base-content/20 mx-auto size-12" />
+                                                        <p className="text-base-content/60 mt-2 text-sm">
+                                                            No hay encuestas disponibles
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    polls.map((poll) => (
+                                                        <PollListItem
+                                                            key={poll.id}
+                                                            poll={poll}
+                                                            isActive={selectedId === poll.id}
+                                                            onClick={() => handlePollClick(poll.id)}
+                                                        />
+                                                    ))
+                                                )
                                             ) : (
-                                                currentList.map((publication) => (
-                                                    <PublicationListItem
-                                                        key={publication.id}
-                                                        publication={publication}
-                                                        isActive={selectedId === publication.id}
-                                                        onClick={() => handlePublicationClick(publication.id)}
-                                                    />
-                                                ))
+                                                currentList.length === 0 ? (
+                                                    <div className="py-8 text-center">
+                                                        <span className="iconify lucide--inbox text-base-content/20 mx-auto size-12" />
+                                                        <p className="text-base-content/60 mt-2 text-sm">
+                                                            No hay {tabLabel} disponibles
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    currentList.map((publication) => (
+                                                        <PublicationListItem
+                                                            key={publication.id}
+                                                            publication={publication}
+                                                            isActive={selectedId === publication.id}
+                                                            onClick={() => handlePublicationClick(publication.id)}
+                                                            type={activeTab === "events" ? "event" : activeTab === "assignments" ? "assignment" : "announcement"}
+                                                        />
+                                                    ))
+                                                )
                                             )}
                                         </div>
                                     )}
                                 </div>
                             </div>
+                            )}
 
-                            {/* Panel de detalle */}
-                            <div className="bg-base-100 flex-1">
-                                <PublicationDetail
-                                    publication={selectedPublication}
-                                    type={activeTab === "announcements" ? "announcement" : "assignment"}
-                                    onLike={handleLike}
-                                />
+                            {/* Right detail panel */}
+                            <div className="bg-base-100 flex-1 overflow-hidden relative">
+                                <button
+                                    className="btn btn-sm btn-circle btn-ghost absolute top-1.5 right-1.5 z-10"
+                                    title={expanded ? "Mostrar lista" : "Expandir"}
+                                    onClick={() => setExpanded((v) => !v)}
+                                >
+                                    <span className={`iconify size-4 ${expanded ? "lucide--minimize-2" : "lucide--maximize-2"}`} />
+                                </button>
+                                {isPollTab ? (
+                                    <PollDetail
+                                        key={selectedId}
+                                        poll={selectedPoll}
+                                        personId={personId.toString()}
+                                    />
+                                ) : (
+                                    <PublicationDetail
+                                        key={selectedId}
+                                        publication={selectedPublication}
+                                        type={activeTab === "announcements" ? "announcement" : activeTab === "assignments" ? "assignment" : "event"}
+                                        onLike={handleLike}
+                                        onConfirm={handleConfirm}
+                                        onCommentCountChange={handleCommentCountChange}
+                                    />
+                                )}
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
             <LegacyPageHidden/>

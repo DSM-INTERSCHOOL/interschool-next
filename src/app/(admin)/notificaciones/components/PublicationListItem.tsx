@@ -1,70 +1,16 @@
 "use client";
 
-import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
+import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
+import { formatRelativeDate } from "../utils";
 
 interface PublicationListItemProps {
-    publication: IAnnouncement | IAssignment;
+    publication: IAnnouncement | IAssignment | IEvent;
     isActive: boolean;
     onClick: () => void;
+    type?: "announcement" | "assignment" | "event";
 }
 
-export const PublicationListItem = ({ publication, isActive, onClick }: PublicationListItemProps) => {
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffTime = date.getTime() - now.getTime();
-        const isPast = diffTime < 0;
-        const absDiffTime = Math.abs(diffTime);
-
-        const diffMinutes = Math.floor(absDiffTime / (1000 * 60));
-        const diffHours = Math.floor(absDiffTime / (1000 * 60 * 60));
-        const diffDays = Math.floor(absDiffTime / (1000 * 60 * 60 * 24));
-        const diffWeeks = Math.floor(diffDays / 7);
-        const remainingDaysAfterWeeks = diffDays % 7;
-        const diffMonths = Math.floor(diffDays / 30);
-        const remainingDaysAfterMonths = diffDays % 30;
-        const diffYears = Math.floor(diffDays / 365);
-        const remainingDaysAfterYears = diffDays % 365;
-
-        // Para fechas futuras
-        if (!isPast) {
-            if (diffMinutes < 1) return "En menos de 1 minuto";
-            if (diffMinutes < 60) return `En ${diffMinutes} ${diffMinutes === 1 ? 'minuto' : 'minutos'}`;
-            if (diffHours < 24) return `En ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
-            if (diffDays === 0) return "Hoy";
-            if (diffDays === 1) return "Mañana";
-            if (diffDays < 7) return `En ${diffDays} días`;
-            if (diffWeeks < 4) {
-                const weekText = `En ${diffWeeks} ${diffWeeks === 1 ? 'semana' : 'semanas'}`;
-                return remainingDaysAfterWeeks > 0 ? `${weekText} ${remainingDaysAfterWeeks} ${remainingDaysAfterWeeks === 1 ? 'día' : 'días'}` : weekText;
-            }
-            if (diffMonths < 12) {
-                const monthText = `En ${diffMonths} ${diffMonths === 1 ? 'mes' : 'meses'}`;
-                return remainingDaysAfterMonths > 0 ? `${monthText} ${remainingDaysAfterMonths} ${remainingDaysAfterMonths === 1 ? 'día' : 'días'}` : monthText;
-            }
-            const yearText = `En ${diffYears} ${diffYears === 1 ? 'año' : 'años'}`;
-            return remainingDaysAfterYears > 0 ? `${yearText} ${remainingDaysAfterYears} ${remainingDaysAfterYears === 1 ? 'día' : 'días'}` : yearText;
-        }
-
-        // Para fechas pasadas
-        if (diffMinutes < 1) return "Hace menos de 1 minuto";
-        if (diffMinutes < 60) return `Hace ${diffMinutes} ${diffMinutes === 1 ? 'minuto' : 'minutos'}`;
-        if (diffHours < 24) return `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
-        if (diffDays === 0) return "Hoy";
-        if (diffDays === 1) return "Ayer";
-        if (diffDays < 7) return `Hace ${diffDays} días`;
-        if (diffWeeks < 4) {
-            const weekText = `Hace ${diffWeeks} ${diffWeeks === 1 ? 'semana' : 'semanas'}`;
-            return remainingDaysAfterWeeks > 0 ? `${weekText} ${remainingDaysAfterWeeks} ${remainingDaysAfterWeeks === 1 ? 'día' : 'días'}` : weekText;
-        }
-        if (diffMonths < 12) {
-            const monthText = `Hace ${diffMonths} ${diffMonths === 1 ? 'mes' : 'meses'}`;
-            return remainingDaysAfterMonths > 0 ? `${monthText} ${remainingDaysAfterMonths} ${remainingDaysAfterMonths === 1 ? 'día' : 'días'}` : monthText;
-        }
-        const yearText = `Hace ${diffYears} ${diffYears === 1 ? 'año' : 'años'}`;
-        return remainingDaysAfterYears > 0 ? `${yearText} ${remainingDaysAfterYears} ${remainingDaysAfterYears === 1 ? 'día' : 'días'}` : yearText;
-    };
-
+export const PublicationListItem = ({ publication, isActive, onClick, type }: PublicationListItemProps) => {
     const getPublisherInitials = () => {
         const { given_name, paternal_surname } = publication.publisher;
         return `${given_name[0]}${paternal_surname?.[0] || ""}`.toUpperCase();
@@ -90,7 +36,7 @@ export const PublicationListItem = ({ publication, isActive, onClick }: Publicat
     return (
         <div
             onClick={onClick}
-            className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-all hover:bg-base-200 ${
+            className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 transition-all hover:bg-base-200 ${
                 isActive ? "bg-base-200" : isUnread ? "bg-primary/5 border-l-4 border-primary" : ""
             }`}>
             <div className="avatar placeholder">
@@ -114,7 +60,7 @@ export const PublicationListItem = ({ publication, isActive, onClick }: Publicat
                 </div>
                 <p className="text-base-content/60 text-xs">{getPublisherName()}</p>
                 <span className="text-base-content/60 text-xs whitespace-nowrap">
-                        {formatDate(publication.start_date)}
+                        {formatRelativeDate(publication.start_date)}
                 </span>
 
                 {/* Badges adicionales */}
@@ -123,12 +69,6 @@ export const PublicationListItem = ({ publication, isActive, onClick }: Publicat
                         <span className="badge badge-xs badge-ghost">
                             <span className="iconify lucide--paperclip size-3 mr-1" />
                             {publication.attachments.length}
-                        </span>
-                    )}
-                    {publication.likes > 0 && (
-                        <span className="badge badge-xs badge-ghost">
-                            <span className="iconify lucide--thumbs-up size-3 mr-1" />
-                            {publication.likes}
                         </span>
                     )}
                 </div>

@@ -1,8 +1,8 @@
-import { IAnnouncement, IAssignment } from "@/interfaces/IPublication";
+import { IAnnouncement, IAssignment, IEvent } from "@/interfaces/IPublication";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { getDeviceId } from "@/lib/deviceId";
 
-const BASE_URL = "https://stage.communication.idsm.xyz/v1";
+
 
 interface PublicationParams {
     personId?: string;
@@ -81,6 +81,34 @@ export const getAssignments = async ({
 
     if (!response.ok) {
         throw new Error(`Error fetching assignments: ${response.statusText}`);
+    }
+
+    return response.json();
+};
+
+/**
+ * Obtiene los eventos de la institución
+ */
+export const getEvents = async ({
+    personId,
+    skip = 0,
+    limit = 100,
+    token,
+}: PublicationParams): Promise<IEvent[]> => {
+    const { schoolId, portalName } = getOrgConfig();
+    const filters = buildFilters(personId);
+    const url = `${process.env.NEXT_PUBLIC_API_COMMUNICATION_URL}/v1/schools/${schoolId}/events?filters=${encodeURIComponent(filters)}&skip=${skip}&limit=${limit}`;
+
+    const response = await fetch(url, {
+        headers: {
+            "x-device-id": getDeviceId(),
+            "x-url-origin": portalName,
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error fetching events: ${response.statusText}`);
     }
 
     return response.json();

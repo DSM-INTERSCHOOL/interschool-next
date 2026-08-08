@@ -1,7 +1,8 @@
 import { useRouter } from "next/navigation";
 
-import { getPermisos, clearAuthCookies, logOutCore } from "@/services/auth.service";
+import { getPermisos, clearAuthCookies, logOutCore, getSchool } from "@/services/auth.service";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSchoolStore } from "@/store/useSchoolStore";
 
 import { useHydration } from "./useHydration";
 
@@ -40,6 +41,14 @@ export const useAuth = () => {
                 authData.meta_data.alumnos.length > 0;
 
             setAuthData(authData);
+
+            // Fetch and cache full school config (fire-and-forget)
+            const schoolId = authData.school_id;
+            if (schoolId) {
+                getSchool(schoolId)
+                    .then((school) => useSchoolStore.getState().setSchool(school))
+                    .catch(() => {});
+            }
 
             // Guardar credenciales legacy por separado
             useAuthStore.setState({

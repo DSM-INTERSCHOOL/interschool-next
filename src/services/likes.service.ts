@@ -30,3 +30,12 @@ export async function getLikesForAssignment(assignmentId: string): Promise<Like[
     const response = await communicationApi.get(`/v1/schools/${schoolId}/assignments/${assignmentId}/likes`);
     return response.data;
 }
+
+/**
+ * Get all likes for an event
+ */
+export async function getLikesForEvent(eventId: string): Promise<Like[]> {
+    const { schoolId } = getOrgConfig();
+    const response = await communicationApi.get(`/v1/schools/${schoolId}/events/${eventId}/likes`);
+    return response.data;
+}
