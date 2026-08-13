@@ -1,4 +1,4 @@
-import { useRouter } from "next/navigation";
+import { useAppRouter as useRouter } from "./useAppRouter";
 
 import { getPermisos, clearAuthCookies, logOutCore, getSchool } from "@/services/auth.service";
 import { useAuthStore } from "@/store/useAuthStore";

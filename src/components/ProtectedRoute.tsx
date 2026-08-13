@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useAppRouter as useRouter } from '@/hooks/useAppRouter';
 import { useAuthHydration } from '@/hooks/useHydration';
 import { LoadingSpinner } from './LoadingSpinner';
 

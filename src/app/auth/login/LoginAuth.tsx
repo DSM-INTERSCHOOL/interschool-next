@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useAppRouter as useRouter } from '@/hooks/useAppRouter';
 import { useAuth } from '@/hooks/useAuth';
 
 const LoginAuthContent = () => {

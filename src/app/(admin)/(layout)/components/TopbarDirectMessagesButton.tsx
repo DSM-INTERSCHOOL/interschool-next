@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink as Link } from "@/components/AppLink";
 
 export const TopbarDirectMessagesButton = () => (
   <Link href="/apps/direct-messages">

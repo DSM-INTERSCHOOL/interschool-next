@@ -35,6 +35,69 @@ export interface SchoolInfo {
     school_image: string;
 }
 
+// ── Path-based tenant routing (see docs/interschool-path-migration-plan.md) ──
+//
+// Maps the friendly `tenant` URL segment (e.g. /admin/cfe/...) to the numeric
+// schoolId used everywhere else in the app (orgsMap, schoolMap, API calls).
+export const VALID_PORTAL_NAMES = ["admin", "alumno", "profesor"] as const;
+export type PortalName = (typeof VALID_PORTAL_NAMES)[number];
+
+// URL portal segment -> legacy portal code used by orgsMap/schoolMap.
+export const PORTAL_NAME_TO_CODE: Record<PortalName, PortalCode> = {
+    admin: "MT",
+    alumno: "ST",
+    profesor: "TC",
+};
+
+// tenant slug (e.g. "cfe") -> schoolId (e.g. "1004")
+export const TENANT_TO_SCHOOL_ID: Record<string, string> = {
+    stjames: "10",
+    celta: "1000",
+    spongies: "1001",
+    "chk-mx": "1002",
+    annafreud: "1003",
+    cfe: "1004",
+    wch: "1005",
+    cf: "1006",
+    grupocudec: "1007",
+    ipia: "1008",
+    dali: "1009",
+    vizcaino: "1010",
+    "chk-qro": "1011",
+    "montessori-pachuca": "1013",
+    dicormo: "1014",
+    uc: "1015",
+    iamb: "1016",
+    ccolumbia: "1017",
+    plata: "1018",
+    nitamani: "1019",
+};
+
+export const isValidPortalName = (value: string): value is PortalName =>
+    (VALID_PORTAL_NAMES as readonly string[]).includes(value);
+
+/**
+ * Resolves a `/[portalName]/[tenant]` path pair to the same
+ * { schoolId, portalName } shape the legacy `?org=` flow persists to
+ * localStorage (see app/page.tsx and getOrgConfig() above). Returns null if
+ * the portal segment or tenant slug isn't recognized.
+ */
+export const resolveTenantRoute = (
+    portalSegment: string,
+    tenantSlug: string
+): { schoolId: string; portalName: string } | null => {
+    if (!isValidPortalName(portalSegment)) return null;
+
+    const schoolId = TENANT_TO_SCHOOL_ID[tenantSlug];
+    if (!schoolId) return null;
+
+    const portalCode = PORTAL_NAME_TO_CODE[portalSegment];
+    const portalName = orgsMap[schoolId]?.[portalCode];
+    if (!portalName) return null;
+
+    return { schoolId, portalName };
+};
+
 export const schoolMap: Record<string, SchoolInfo> = {
     "10": {
         school_name: "ST JAMES COLLEGE",
@@ -220,4 +283,38 @@ export const schoolMap: Record<string, SchoolInfo> = {
             "TC": "https://pr.nitamani.interschool.mx"
         }
     }
+
+// schoolId -> tenant slug (reverse of TENANT_TO_SCHOOL_ID)
+const SCHOOL_ID_TO_TENANT: Record<string, string> = Object.fromEntries(
+    Object.entries(TENANT_TO_SCHOOL_ID).map(([tenant, schoolId]) => [schoolId, tenant])
+);
+
+// portal code -> URL segment (reverse of PORTAL_NAME_TO_CODE)
+const PORTAL_CODE_TO_NAME: Record<PortalCode, PortalName> = {
+    MT: "admin",
+    ST: "alumno",
+    TC: "profesor",
+};
+
+/**
+ * Builds the `/[portalName]/[tenant]` prefix for the currently resolved
+ * org (whichever flow set it — legacy `?org=` or a path-based tenant route),
+ * by reversing schoolId/portalName back through the same maps used to
+ * resolve them. Returns null when there's no resolved org yet, or the
+ * school/portal isn't (yet) in the tenant slug map — callers should fall
+ * back to an unprefixed path in that case, never throw.
+ */
+export const getCurrentTenantPrefix = (): string | null => {
+    const { schoolId, portalName } = getOrgConfig();
+    if (!schoolId || !portalName) return null;
+
+    const tenantSlug = SCHOOL_ID_TO_TENANT[schoolId];
+    if (!tenantSlug) return null;
+
+    const portalCode = (Object.keys(orgsMap[schoolId] ?? {}) as PortalCode[])
+        .find((code) => orgsMap[schoolId][code] === portalName);
+    if (!portalCode) return null;
+
+    return `/${PORTAL_CODE_TO_NAME[portalCode]}/${tenantSlug}`;
+};
 

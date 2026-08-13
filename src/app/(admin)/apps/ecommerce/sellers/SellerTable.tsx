@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AppLink as Link } from "@/components/AppLink";
 
 import { SellerTableRow } from "./SellerTableRow";
 import { sellersData } from "./data";

@@ -1,7 +1,8 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter as useRouter } from "@/hooks/useAppRouter";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useSchoolStore } from "@/store/useSchoolStore";
 import { useHydration } from "@/hooks/useHydration";

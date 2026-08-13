@@ -1,9 +1,10 @@
 "use client";
 
 import { PageTitle } from "@/components/PageTitle";
-import Link from "next/link";
+import { AppLink as Link } from "@/components/AppLink";
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter as useRouter } from "@/hooks/useAppRouter";
 import { FiltersModal } from "./components/FiltersModal";
 import { PublicationDetailModal } from "./components/PublicationDetailModal";
 import { RecipientsModal } from "./components/RecipientsModal";

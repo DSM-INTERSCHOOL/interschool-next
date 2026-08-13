@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AppLink as Link } from "@/components/AppLink";
 
 const purchaseLink = "https://daisyui.com/store/checkout?product=cdd028c5-dd01-41fc-a036-fd73b7a24cc0&aff=K0XmL";
 
