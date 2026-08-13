@@ -16,6 +16,9 @@ import { TENANT_BRIDGE_SCHOOL_ID_COOKIE, TENANT_BRIDGE_PORTAL_NAME_COOKIE } from
 // rather than "fixed" — server-side auth gating never actually worked
 // here, so removing it doesn't change real behavior, just stops the loop.
 
+// Must match the catch-all destination in vercel.json's "rewrites".
+const WORDPRESS_ORIGIN = 'https://interschoolmx.wpcomstaging.com';
+
 const TENANT_PATH_RE = /^\/(admin|alumno|profesor)\/([^/]+)(\/.*)?$/;
 
 /**
@@ -43,6 +46,19 @@ function resolveTenantPrefix(pathname: string) {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // The root path is the one place this Next.js app and the WordPress
+  // marketing site collide: `/` is both this app's `?org=`-resolving entry
+  // page AND, for organic/search traffic with no `org` param, meant to be
+  // interschool.mx's homepage. vercel.json's catch-all rewrite to WordPress
+  // can't win that collision — Vercel's routing table puts this app's own
+  // `/` route ahead of vercel.json rewrites for framework (Next.js)
+  // deployments — so proxy it here instead, where the `org` check can
+  // actually run before deciding.
+  if (pathname === '/' && !request.nextUrl.searchParams.has('org')) {
+    return NextResponse.rewrite(new URL('/', WORDPRESS_ORIGIN));
+  }
+
   const tenant = resolveTenantPrefix(pathname);
   if (!tenant) return NextResponse.next();
 
