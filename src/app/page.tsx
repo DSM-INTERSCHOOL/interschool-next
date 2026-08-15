@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useSchoolStore } from "@/store/useSchoolStore";
 import { useHydration } from "@/hooks/useHydration";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { orgsMap, PortalCode, schoolMap } from "@/lib/orgConfig";
+import { decodeOrgParam, schoolMap } from "@/lib/orgConfig";
 
 // Tipos para el mapeo de organizaciones
 
@@ -24,7 +24,11 @@ function RootPageContent() {
 
 
     useEffect(() => {
-        // Extraer y decodificar el query param 'org'
+        // Extraer y decodificar el query param 'org'. Nota: en producción
+        // middleware.ts ya intercepta y redirige (301) esta misma URL antes
+        // de que la página llegue a cargar — este efecto solo sigue
+        // ejecutándose como fallback (org inválido/desconocido, o entornos
+        // donde el middleware no corrió) y para mostrar el error.
         const orgParam = searchParams.get('org');
 
         if (!orgParam) {
@@ -33,44 +37,34 @@ function RootPageContent() {
             return;
         }
 
-        try {
-            // Decodificar de base64
-            const decodedValue = atob(decodeURIComponent(orgParam));
-            const [schoolId, portalCode] = decodedValue.split("_");
+        const decoded = decodeOrgParam(orgParam);
 
-            // Validar que existan los valores en el mapa
-            if (schoolId in orgsMap && portalCode in orgsMap[schoolId]) {
-                const portalName = orgsMap[schoolId][portalCode as PortalCode];
-
-                // Guardar en localStorage
-                localStorage.setItem('schoolId', schoolId);
-                localStorage.setItem('portalName', portalName);
-
-                console.log('schoolId', schoolId)
-                console.log('portalName', portalName)
-
-                // Obtener información de la escuela del schoolMap
-                const schoolInfo = schoolMap[schoolId];
-                if (schoolInfo) {
-                    setSchoolInfo(schoolInfo.school_name, schoolInfo.school_image);
-                }
-
-                // Continuar con la lógica de redirección solo si está hidratado
-                // y solo hacer el redirect una vez
-                if (isHydrated) {
-                    if (isAuthenticated) {
-                        router.replace('/notificaciones');
-                    } else {
-                        router.replace('/auth/login');
-                    }
-                }
-            } else {
-                console.error('School ID or Portal Code not found in orgsMap');
-                setHasError(true);
-            }
-        } catch (error) {
-            console.error('Error decoding org param:', error);
+        if (!decoded) {
+            console.error('School ID or Portal Code not found in orgsMap');
             setHasError(true);
+            return;
+        }
+
+        const { schoolId, portalName } = decoded;
+
+        // Guardar en localStorage
+        localStorage.setItem('schoolId', schoolId);
+        localStorage.setItem('portalName', portalName);
+
+        // Obtener información de la escuela del schoolMap
+        const schoolInfo = schoolMap[schoolId];
+        if (schoolInfo) {
+            setSchoolInfo(schoolInfo.school_name, schoolInfo.school_image);
+        }
+
+        // Continuar con la lógica de redirección solo si está hidratado
+        // y solo hacer el redirect una vez
+        if (isHydrated) {
+            if (isAuthenticated) {
+                router.replace('/notificaciones');
+            } else {
+                router.replace('/auth/login');
+            }
         }
     // Solo ejecutar una vez cuando se monta el componente y cuando isHydrated cambia
     // eslint-disable-next-line react-hooks/exhaustive-deps

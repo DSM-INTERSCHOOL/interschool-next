@@ -318,3 +318,41 @@ export const getCurrentTenantPrefix = (): string | null => {
     return `/${PORTAL_CODE_TO_NAME[portalCode]}/${tenantSlug}`;
 };
 
+/**
+ * Decodes the legacy `?org=` query param (base64 of `${schoolId}_${portalCode}`)
+ * into its parts, validating both against orgsMap. Shared by app/page.tsx
+ * (client-side resolution + error UI) and middleware.ts (server-side
+ * redirect) so the two never drift. Returns null on any malformed input or
+ * unknown schoolId/portalCode — callers should treat that as "show the
+ * existing invalid-access error", not throw.
+ */
+export const decodeOrgParam = (
+    orgParam: string
+): { schoolId: string; portalCode: PortalCode; portalName: string } | null => {
+    try {
+        const decoded = atob(decodeURIComponent(orgParam));
+        const [schoolId, portalCode] = decoded.split("_");
+        if (schoolId in orgsMap && portalCode in orgsMap[schoolId]) {
+            return {
+                schoolId,
+                portalCode: portalCode as PortalCode,
+                portalName: orgsMap[schoolId][portalCode as PortalCode],
+            };
+        }
+    } catch {
+        // fall through
+    }
+    return null;
+};
+
+/**
+ * schoolId + portalCode -> `/[portalName]/[tenant]` prefix, without touching
+ * localStorage (unlike getCurrentTenantPrefix) — usable from middleware,
+ * which has no access to the browser's storage.
+ */
+export const tenantPrefixFor = (schoolId: string, portalCode: PortalCode): string | null => {
+    const tenantSlug = SCHOOL_ID_TO_TENANT[schoolId];
+    if (!tenantSlug) return null;
+    return `/${PORTAL_CODE_TO_NAME[portalCode]}/${tenantSlug}`;
+};
+

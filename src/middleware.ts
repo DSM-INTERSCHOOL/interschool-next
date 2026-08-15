@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { resolveTenantRoute } from '@/lib/orgConfig';
+import { resolveTenantRoute, decodeOrgParam, tenantPrefixFor } from '@/lib/orgConfig';
 import { TENANT_BRIDGE_SCHOOL_ID_COOKIE, TENANT_BRIDGE_PORTAL_NAME_COOKIE } from '@/lib/tenantBridge';
 
 // NOTE: auth is enforced client-side only (see components/ProtectedRoute.tsx),
@@ -53,10 +53,33 @@ export function middleware(request: NextRequest) {
   // interschool.mx's homepage. vercel.json's catch-all rewrite to WordPress
   // can't win that collision — Vercel's routing table puts this app's own
   // `/` route ahead of vercel.json rewrites for framework (Next.js)
-  // deployments — so proxy it here instead, where the `org` check can
+  // deployments — so handle both cases here, where the `org` check can
   // actually run before deciding.
-  if (pathname === '/' && !request.nextUrl.searchParams.has('org')) {
-    return NextResponse.rewrite(new URL('/', WORDPRESS_ORIGIN));
+  if (pathname === '/') {
+    const orgParam = request.nextUrl.searchParams.get('org');
+
+    if (orgParam) {
+      // Legacy `?org=` entry point. Resolve it to a real HTTP redirect
+      // instead of the client-side router.replace() this used to rely on
+      // (page loads, decodes org in a useEffect, then soft-navigates) —
+      // that meant no server-side redirect ever happened, so a bookmark of
+      // this URL always re-ran the client resolution instead of landing
+      // directly on the tenant-prefixed login page. `?org=` itself is
+      // dropped since the target is built fresh with no carried-over
+      // search params. Always targets /auth/login (not /notificaciones) —
+      // same reasoning as the bare-tenant-root case below: auth state
+      // isn't knowable server-side, so LoginRedirectHandler (client-side)
+      // bounces an already-authenticated user on from there.
+      const decoded = decodeOrgParam(orgParam);
+      const prefix = decoded && tenantPrefixFor(decoded.schoolId, decoded.portalCode);
+      if (prefix) {
+        return NextResponse.redirect(new URL(`${prefix}/auth/login`, request.url), 301);
+      }
+      // Decode/lookup failed — fall through to app/page.tsx, which still
+      // renders the existing "Acceso no autorizado" error UI unchanged.
+    } else {
+      return NextResponse.rewrite(new URL('/', WORDPRESS_ORIGIN));
+    }
   }
 
   const tenant = resolveTenantPrefix(pathname);
