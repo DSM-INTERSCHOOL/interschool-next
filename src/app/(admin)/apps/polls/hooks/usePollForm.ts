@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter as useRouter } from "@/hooks/useAppRouter";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { useAuthStore } from "@/store/useAuthStore";
 import {

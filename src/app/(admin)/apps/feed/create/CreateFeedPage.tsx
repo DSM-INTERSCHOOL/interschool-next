@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useAppRouter as useRouter } from "@/hooks/useAppRouter";
+import { AppLink as Link } from "@/components/AppLink";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { createFeed } from "@/services/feed.service";

@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import { type ReactNode } from "react";
 
 import { ConfigProvider } from "@/contexts/config";
+import { TenantBridge } from "@/components/TenantBridge";
 import "@/styles/app.css";
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <script type="text/javascript" src="/js/prefetch-config.js"></script>
             </head>
             <body>
+                <TenantBridge />
                 <ConfigProvider>{children}</ConfigProvider>
             </body>
         </html>

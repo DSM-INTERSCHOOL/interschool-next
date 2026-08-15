@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink as Link } from "@/components/AppLink";
 import React, { useState } from "react";
 
 import { FileUploader } from "@/components/forms/FileUploader";
