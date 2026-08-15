@@ -1,9 +1,10 @@
 "use client";
 
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AppLink as Link } from "@/components/AppLink";
 import React, { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useAppRouter as useRouter } from '@/hooks/useAppRouter';
 
 import { ThemeToggleDropdown } from "@/components/ThemeToggleDropdown";
 import { LoadingSpinner } from "@/components/LoadingSpinner";

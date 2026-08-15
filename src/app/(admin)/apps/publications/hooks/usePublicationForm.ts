@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter as useRouter } from "@/hooks/useAppRouter";
 import { IAnnouncementRead, IAttachmentRead, IAttachmentCreate } from "@/interfaces/IAnnouncement";
 import { getById, create, update } from "@/services/announcement.service";
 import * as assignmentService from "@/services/assignment.service";

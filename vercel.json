@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/admin/:path*", "destination": "/admin/:path*" },
+    { "source": "/alumno/:path*", "destination": "/alumno/:path*" },
+    { "source": "/profesor/:path*", "destination": "/profesor/:path*" },
+    { "source": "/:path*", "destination": "https://interschoolmx.wpcomstaging.com/:path*" }
+  ]
+}

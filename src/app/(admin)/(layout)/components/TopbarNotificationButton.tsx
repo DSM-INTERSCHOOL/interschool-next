@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink as Link } from "@/components/AppLink";
 import { useNotifications } from "@/contexts/NotificationsContext";
 
 export const TopbarNotificationButton = () => {

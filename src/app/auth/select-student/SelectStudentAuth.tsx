@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { useRouter } from 'next/navigation';
+import { useAppRouter as useRouter } from '@/hooks/useAppRouter';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getStudentPermissions, type AlumnoInfo } from '@/services/auth.service';
 
