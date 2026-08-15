@@ -183,9 +183,9 @@ export const schoolMap: Record<string, SchoolInfo> = {
 
  export const orgsMap: OrgsMap = {
        "10": {
-            "MT": "https://mt.dmo.interschool.mx",
-            "ST": "https://al.dmo.interschool.mx",
-            "TC": "https://pr.dmo.interschool.mx"
+            "MT": "https://mt.dmo.idsm.xyz",
+            "ST": "https://al.dmo.idsm.xyz",
+            "TC": "https://pr.dmo.idsm.xyz"
         },
         "1000": {
             "MT": "https://mt.celta.interschool.mx",
