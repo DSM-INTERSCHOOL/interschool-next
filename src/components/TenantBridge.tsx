@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { useSchoolStore } from "@/store/useSchoolStore";
 import { schoolMap } from "@/lib/orgConfig";
 import { TENANT_BRIDGE_SCHOOL_ID_COOKIE, TENANT_BRIDGE_PORTAL_NAME_COOKIE } from "@/lib/tenantBridge";
@@ -16,12 +16,21 @@ const readCookie = (name: string): string | null => {
  * existing service that reads getOrgConfig() keeps working unchanged
  * regardless of which flow resolved the tenant. Middleware sets the cookies
  * below when it resolves a /admin|alumno|profesor/:tenant/* request; this
- * component runs on every page and just copies them into localStorage once.
+ * component runs on every page and just copies them into localStorage.
+ *
+ * Uses useLayoutEffect (not useEffect) on purpose: useSchoolStore persists
+ * to localStorage via Zustand's `persist`, and that rehydrates synchronously
+ * from whatever tenant was active last — so on the very first render after
+ * switching tenants (rewriting the URL to a different /portal/tenant), the
+ * store still briefly holds the PREVIOUS tenant's name/logo. A plain effect
+ * fires after paint, so that stale badge would flash on screen for a frame
+ * before snapping to the correct one; useLayoutEffect corrects it before
+ * the browser paints, so the stale value is never actually shown.
  */
 export const TenantBridge = () => {
   const setSchoolInfo = useSchoolStore((s) => s.setSchoolInfo);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const schoolId = readCookie(TENANT_BRIDGE_SCHOOL_ID_COOKIE);
     const portalName = readCookie(TENANT_BRIDGE_PORTAL_NAME_COOKIE);
     if (!schoolId || !portalName) return;
