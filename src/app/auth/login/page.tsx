@@ -13,9 +13,8 @@ import { useHydration } from '@/hooks/useHydration';
 import { SchoolBadge } from "@/components/SchoolBadge";
 
 import { LoginAuth } from "./LoginAuth";
-import { useConfig } from "@/contexts/config";
-import { useSchoolStore } from "@/store/useSchoolStore";
-import { getOrgConfig } from "@/lib/orgConfig";
+import { getOrgConfig, schoolMap } from "@/lib/orgConfig";
+import { useCurrentTenant } from "@/hooks/useCurrentTenant";
 
 const LoginRedirectHandler = () => {
     const { isAuthenticated } = useAuth();
@@ -35,27 +34,37 @@ const LoginRedirectHandler = () => {
     return null; // Este componente no renderiza nada
 };
 
+const PORTAL_LABEL: Record<string, string> = {
+    admin: 'Portal Administración',
+    alumno: 'Portal Alumno',
+    profesor: 'Portal Profesor',
+};
+
 const LoginPageContent = () => {
     const { isAuthenticated } = useAuth();
     const isHydrated = useHydration();
-    const config  =getOrgConfig()
+    // Prefer deriving straight from the URL (see useCurrentTenant) — it's
+    // synchronous and can't race with anything, unlike getOrgConfig(),
+    // which depends on TenantBridge's cookie -> localStorage bridge having
+    // already run and "won" against whatever was persisted from the
+    // previous tenant. Falls back to getOrgConfig() only for the legacy
+    // `?org=` flow, where there's no tenant-prefixed URL to read from.
+    const currentTenant = useCurrentTenant();
+    const config = getOrgConfig();
 
-    // Determinar el nombre del portal
-    const getPortalName = () => {
-        const portalName = config.portalName?.toLowerCase() || '';
+    const schoolInfo = currentTenant ? schoolMap[currentTenant.schoolId] : null;
+    const schoolName = schoolInfo?.school_name;
+    const schoolImage = schoolInfo?.school_image;
 
-        if (portalName.includes('meta') || portalName.includes('mt')) {
-            return 'Portal Administración';
-        } else if (portalName.includes('alumno') || portalName.includes('al')) {
-            return 'Portal Alumno';
-        } else if (portalName.includes('profesor') || portalName.includes('pr')) {
-            return 'Portal Profesor';
-        }
-
-        return config.portalName || 'Portal';
-    };
-
-    const portalName = getPortalName();
+    const portalName = currentTenant
+        ? PORTAL_LABEL[currentTenant.portalSegment] ?? 'Portal'
+        : (() => {
+            const lower = config.portalName?.toLowerCase() || '';
+            if (lower.includes('meta') || lower.includes('mt')) return 'Portal Administración';
+            if (lower.includes('alumno') || lower.includes('al')) return 'Portal Alumno';
+            if (lower.includes('profesor') || lower.includes('pr')) return 'Portal Profesor';
+            return config.portalName || 'Portal';
+        })();
 
     // Durante la hidratación, mostrar un estado de carga
     if (!isHydrated) {
@@ -72,7 +81,7 @@ const LoginPageContent = () => {
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
 
                 <div className="flex items-center justify-center">
-                    <SchoolBadge variant="mobile" />
+                    <SchoolBadge variant="mobile" schoolName={schoolName} schoolImage={schoolImage} />
                 </div>
                 <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-base-content">
                     Iniciar Sesión

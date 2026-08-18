@@ -8,6 +8,15 @@ type Variant = "desktop" | "mobile";
 
 interface SchoolBadgeProps {
   variant?: Variant;
+  /**
+   * Optional override for schoolName/schoolImage, bypassing useSchoolStore.
+   * Pass this when the caller already derived the tenant directly and
+   * synchronously from the URL (see useCurrentTenant) — avoids depending
+   * on TenantBridge's cookie -> localStorage -> store bridge having
+   * already run for this render.
+   */
+  schoolName?: string | null;
+  schoolImage?: string | null;
 }
 
 const styles: Record<Variant, string> = {
@@ -15,10 +24,12 @@ const styles: Record<Variant, string> = {
   mobile: " mt-4 flex items-center justify-center gap-3 rounded-2xl bg-base-100 px-4 py-3 shadow-sm ring-1 ring-slate-200/60",
 };
 
-export const SchoolBadge = ({ variant = "mobile" }: SchoolBadgeProps) => {
+export const SchoolBadge = ({ variant = "mobile", schoolName: schoolNameOverride, schoolImage: schoolImageOverride }: SchoolBadgeProps) => {
   const isHydrated = useHydration();
-  const schoolName = useSchoolStore((state) => state.schoolName);
-  const schoolImage = useSchoolStore((state) => state.schoolImage);
+  const storeSchoolName = useSchoolStore((state) => state.schoolName);
+  const storeSchoolImage = useSchoolStore((state) => state.schoolImage);
+  const schoolName = schoolNameOverride ?? storeSchoolName;
+  const schoolImage = schoolImageOverride ?? storeSchoolImage;
 
   if (!isHydrated || (!schoolName && !schoolImage)) return null;
 
