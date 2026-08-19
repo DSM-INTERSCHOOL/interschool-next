@@ -289,6 +289,8 @@ const SCHOOL_ID_TO_TENANT: Record<string, string> = Object.fromEntries(
     Object.entries(TENANT_TO_SCHOOL_ID).map(([tenant, schoolId]) => [schoolId, tenant])
 );
 
+
+
 // portal code -> URL segment (reverse of PORTAL_NAME_TO_CODE)
 const PORTAL_CODE_TO_NAME: Record<PortalCode, PortalName> = {
     MT: "admin",
