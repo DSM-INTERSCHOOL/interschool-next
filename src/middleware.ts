@@ -46,6 +46,7 @@ function resolveTenantPrefix(pathname: string) {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  console.log(`[middleware] ${request.method} ${pathname}${request.nextUrl.search}`);
 
   // The root path is the one place this Next.js app and the WordPress
   // marketing site collide: `/` is both this app's `?org=`-resolving entry
@@ -72,20 +73,29 @@ export function middleware(request: NextRequest) {
       // bounces an already-authenticated user on from there.
       const decoded = decodeOrgParam(orgParam);
       const prefix = decoded && tenantPrefixFor(decoded.schoolId, decoded.portalCode);
+      console.log(`[middleware] root ?org= decode:`, { orgParam, decoded, prefix });
       if (prefix) {
+        console.log(`[middleware] root ?org= -> 301 redirect to ${prefix}/auth/login`);
         return NextResponse.redirect(new URL(`${prefix}/auth/login`, request.url), 301);
       }
       // Decode/lookup failed — fall through to app/page.tsx, which still
       // renders the existing "Acceso no autorizado" error UI unchanged.
+      console.log(`[middleware] root ?org= decode/lookup FAILED — falling through to app/page.tsx`);
     } else {
+      console.log(`[middleware] root, no ?org= -> proxy to WordPress`);
       return NextResponse.rewrite(new URL('/', WORDPRESS_ORIGIN));
     }
   }
 
   const tenant = resolveTenantPrefix(pathname);
-  if (!tenant) return NextResponse.next();
+  if (!tenant) {
+    console.log(`[middleware] "${pathname}" is not tenant-prefixed -> next()`);
+    return NextResponse.next();
+  }
+  console.log(`[middleware] resolved tenant for "${pathname}":`, tenant);
 
   const withBridgeCookies = (response: NextResponse) => {
+    console.log(`[middleware] setting bridge cookies: schoolId=${tenant.schoolId} portalName=${tenant.portalName}`);
     response.cookies.set(TENANT_BRIDGE_SCHOOL_ID_COOKIE, tenant.schoolId, { path: '/' });
     response.cookies.set(TENANT_BRIDGE_PORTAL_NAME_COOKIE, tenant.portalName, { path: '/' });
     return response;
@@ -97,11 +107,13 @@ export function middleware(request: NextRequest) {
   // already-authenticated user on to /notificaciones itself.
   if (!tenant.logicalPathname) {
     const target = new URL(`${tenant.prefix}/auth/login`, request.url);
+    console.log(`[middleware] bare tenant root -> redirect to ${target.pathname}`);
     return withBridgeCookies(NextResponse.redirect(target));
   }
 
   const rewritten = request.nextUrl.clone();
   rewritten.pathname = tenant.logicalPathname;
+  console.log(`[middleware] rewriting "${pathname}" -> "${rewritten.pathname}"`);
   return withBridgeCookies(NextResponse.rewrite(rewritten));
 }
 

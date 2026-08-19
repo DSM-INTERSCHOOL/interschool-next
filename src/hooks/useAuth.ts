@@ -40,6 +40,7 @@ export const useAuth = () => {
                 Array.isArray(authData.meta_data.alumnos) &&
                 authData.meta_data.alumnos.length > 0;
 
+            console.log(`[useAuth.login] success — school_id=${authData.school_id} person_type=${authData.person_type}`);
             setAuthData(authData);
 
             // Fetch and cache full school config (fire-and-forget)
@@ -80,6 +81,7 @@ export const useAuth = () => {
     };
 
     const logout = () => {
+        console.log(`[useAuth.logout] explicit logout — was authSchoolId=${useAuthStore.getState().schoolId}`);
         // Limpiar cookies de autenticación
         logOutCore();
         clearAuthCookies();
