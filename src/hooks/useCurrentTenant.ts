@@ -39,19 +39,11 @@ export interface CurrentTenant {
 export const useCurrentTenant = (): CurrentTenant | null => {
   const pathname = usePathname();
   const match = pathname.match(TENANT_PATH_RE);
-  if (!match) {
-    console.log(`[useCurrentTenant] pathname="${pathname}" does not match tenant path -> null`);
-    return null;
-  }
+  if (!match) return null;
 
   const [, portalSegment, tenantSlug] = match;
   const resolved = resolveTenantRoute(portalSegment, tenantSlug);
-  if (!resolved) {
-    console.log(`[useCurrentTenant] pathname="${pathname}" matched but resolveTenantRoute failed for portalSegment=${portalSegment} tenantSlug=${tenantSlug} -> null`);
-    return null;
-  }
+  if (!resolved) return null;
 
-  const result = { portalSegment: portalSegment as PortalName, tenantSlug, ...resolved };
-  console.log(`[useCurrentTenant] pathname="${pathname}" ->`, result);
-  return result;
+  return { portalSegment: portalSegment as PortalName, tenantSlug, ...resolved };
 };

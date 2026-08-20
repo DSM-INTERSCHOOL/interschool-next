@@ -24,11 +24,9 @@ const LoginRedirectHandler = () => {
     
 
     useEffect(() => {
-        console.log(`[LoginRedirectHandler] isHydrated=${isHydrated} isAuthenticated=${isAuthenticated}`);
         // Solo redirigir después de la hidratación
         if (isHydrated && isAuthenticated) {
             const redirectTo = searchParams.get('redirectTo') || '/notificaciones';
-            console.log(`[LoginRedirectHandler] BOUNCING away from login page -> router.push("${redirectTo}")`);
             router.push(redirectTo);
         }
     }, [isHydrated, isAuthenticated, router, searchParams]);
