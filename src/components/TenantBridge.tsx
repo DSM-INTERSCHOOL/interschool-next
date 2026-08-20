@@ -66,22 +66,11 @@ export const TenantBridge = () => {
   useLayoutEffect(() => {
     const schoolId = readCookie(TENANT_BRIDGE_SCHOOL_ID_COOKIE);
     const portalName = readCookie(TENANT_BRIDGE_PORTAL_NAME_COOKIE);
-    console.log(`[TenantBridge] mount/run — cookies:`, { schoolId, portalName, allCookies: document.cookie });
-
-    if (!schoolId || !portalName) {
-      console.log(`[TenantBridge] no bridge cookies present — skipping (legacy ?org= flow, or non-tenant page)`);
-      return;
-    }
+    if (!schoolId || !portalName) return;
 
     const previousSchoolId = localStorage.getItem("schoolId");
     const previousPortalName = localStorage.getItem("portalName");
     const authBefore = useAuthStore.getState();
-    console.log(`[TenantBridge] before update:`, {
-      previousSchoolId, previousPortalName,
-      authToken: authBefore.token ? "present" : null,
-      authSchoolId: authBefore.schoolId,
-      authPersonType: authBefore.personType,
-    });
 
     localStorage.setItem("schoolId", schoolId);
     localStorage.setItem("portalName", portalName);
@@ -90,25 +79,18 @@ export const TenantBridge = () => {
     if (schoolInfo) {
       setSchoolInfo(schoolInfo.school_name, schoolInfo.school_image);
     }
-    console.log(`[TenantBridge] wrote localStorage: schoolId=${schoolId} portalName=${portalName}; schoolInfo found=${!!schoolInfo}`);
 
     const tenantChanged =
       (previousSchoolId && previousSchoolId !== schoolId) ||
       (previousPortalName && previousPortalName !== portalName);
-    console.log(`[TenantBridge] tenantChanged=${!!tenantChanged}`);
 
     if (tenantChanged) {
       // Stale session from a different school/portal — drop it so the new
       // tenant's login page actually asks the user to log in, instead of
       // silently reusing (or getting redirected away by) old credentials.
       if (authBefore.token) {
-        console.log(`[TenantBridge] tenant changed with a stale token present (authSchoolId=${authBefore.schoolId}) -> calling authLogout()`);
         authLogout();
-        console.log(`[TenantBridge] after authLogout(): token=`, useAuthStore.getState().token);
-      } else {
-        console.log(`[TenantBridge] tenant changed, no existing token — nothing to clear`);
       }
-      console.log(`[TenantBridge] calling router.refresh()`);
       router.refresh();
     }
   }, [setSchoolInfo, authLogout, router]);
