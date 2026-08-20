@@ -98,6 +98,17 @@ export function middleware(request: NextRequest) {
     console.log(`[middleware] setting bridge cookies: schoolId=${tenant.schoolId} portalName=${tenant.portalName}`);
     response.cookies.set(TENANT_BRIDGE_SCHOOL_ID_COOKIE, tenant.schoolId, { path: '/' });
     response.cookies.set(TENANT_BRIDGE_PORTAL_NAME_COOKIE, tenant.portalName, { path: '/' });
+    // Without this, revisiting the exact same tenant-prefixed URL (e.g.
+    // going admin -> alumno -> profesor -> admin, back to a URL already in
+    // history) can be served by the browser straight from its HTTP cache
+    // or bfcache — no network request, so middleware never re-runs and
+    // never sets fresh bridge cookies, leaving TenantBridge reading
+    // whatever tenant was active last time this exact URL was hit. This
+    // is the confirmed cause of the "switch tenant a few times and it
+    // gets stuck" bug (see DESCRIPCION_BUG.txt: step 4 reads cookies from
+    // step 3's profesor visit despite the URL correctly being /admin/...).
+    // no-store also makes the page ineligible for bfcache.
+    response.headers.set('Cache-Control', 'no-store, must-revalidate');
     return response;
   };
 
