@@ -68,6 +68,7 @@ export default function PublicationsPage() {
     const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
     const [selectedResultsPollId, setSelectedResultsPollId] = useState<string | null>(null);
     const [selectedResultsPollTitle, setSelectedResultsPollTitle] = useState<string | null>(null);
+    const [selectedResultsPollAnonymous, setSelectedResultsPollAnonymous] = useState(false);
     const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
     const [selectedOptionsEventId, setSelectedOptionsEventId] = useState<string | null>(null);
     const [selectedOptionsEventTitle, setSelectedOptionsEventTitle] = useState<string | null>(null);
@@ -269,9 +270,10 @@ export default function PublicationsPage() {
         setStatsType(null);
     };
 
-    const handleViewResults = (pollId: string, pollTitle: string | null | undefined) => {
+    const handleViewResults = (pollId: string, pollTitle: string | null | undefined, anonymous: boolean) => {
         setSelectedResultsPollId(pollId);
         setSelectedResultsPollTitle(pollTitle || null);
+        setSelectedResultsPollAnonymous(anonymous);
         setIsResultsModalOpen(true);
     };
 
@@ -279,6 +281,7 @@ export default function PublicationsPage() {
         setIsResultsModalOpen(false);
         setSelectedResultsPollId(null);
         setSelectedResultsPollTitle(null);
+        setSelectedResultsPollAnonymous(false);
     };
 
     const handleViewOptions = (eventId: string, eventTitle: string | null | undefined) => {
@@ -805,7 +808,7 @@ export default function PublicationsPage() {
                                                         <td>
                                                             <button
                                                                 className="btn btn-ghost btn-xs text-warning"
-                                                                onClick={() => handleViewResults(poll.id, poll.title)}
+                                                                onClick={() => handleViewResults(poll.id, poll.title, poll.anonymous)}
                                                                 disabled={!poll.responded_persons || poll.responded_persons === 0}
                                                                 title={!poll.responded_persons || poll.responded_persons === 0 ? "Sin respuestas aún" : "Ver resultados"}
                                                             >
@@ -936,6 +939,7 @@ export default function PublicationsPage() {
             <PollResultsModal
                 pollId={selectedResultsPollId}
                 pollTitle={selectedResultsPollTitle}
+                anonymous={selectedResultsPollAnonymous}
                 isOpen={isResultsModalOpen}
                 onClose={handleCloseResultsModal}
             />
