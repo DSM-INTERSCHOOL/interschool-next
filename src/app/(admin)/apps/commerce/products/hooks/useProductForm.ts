@@ -21,9 +21,11 @@ export interface ProductFormData {
   type: ProductType;
   status: ProductStatus;
   discount: string;
+  track_inventory: boolean;
   tax: boolean;
   tax_base: string;
   product_sat_id: number | "";
+  top_category_id: number | "";
   clave_unidad_medida_sat: string;
   objeto_imp: ObjetoImp;
   color_ids: number[];
@@ -42,9 +44,11 @@ const emptyFormData: ProductFormData = {
   type: "SINGLE",
   status: "ACTIVO",
   discount: "0",
+  track_inventory: true,
   tax: false,
   tax_base: "",
   product_sat_id: "",
+  top_category_id: "",
   clave_unidad_medida_sat: "",
   objeto_imp: "01",
   color_ids: [],
@@ -86,9 +90,11 @@ export const useProductForm = (productId?: number) => {
           type: product.type,
           status: product.status,
           discount: String(product.discount),
+          track_inventory: product.track_inventory,
           tax: product.tax,
           tax_base: product.tax_base !== null ? String(product.tax_base) : "",
           product_sat_id: product.product_sat_id ?? "",
+          top_category_id: product.top_category_id ?? "",
           clave_unidad_medida_sat: product.clave_unidad_medida_sat ?? "",
           objeto_imp: product.objeto_imp ?? "01",
           color_ids: product.color_ids,
@@ -179,9 +185,12 @@ export const useProductForm = (productId?: number) => {
         type: formData.type,
         status: formData.status,
         discount: Number(formData.discount) || 0,
+        track_inventory: formData.track_inventory,
         tax: formData.tax,
         tax_base: formData.tax_base !== "" ? Number(formData.tax_base) : undefined,
         product_sat_id: formData.product_sat_id !== "" ? Number(formData.product_sat_id) : undefined,
+        top_category_id:
+          formData.top_category_id !== "" ? Number(formData.top_category_id) : undefined,
         clave_unidad_medida_sat: formData.clave_unidad_medida_sat.trim() || undefined,
         objeto_imp: formData.objeto_imp,
       };

@@ -5,6 +5,8 @@ import { getOrgConfig } from "@/lib/orgConfig";
 import { ProductFormData } from "../hooks";
 import { ProductSatRead } from "@/interfaces/IProductSat";
 import { getProductSats } from "@/services/productSat.service";
+import { TopCategoryRead } from "@/interfaces/ITopCategory";
+import { getTopCategories } from "@/services/topCategory.service";
 
 const UNIDAD_MEDIDA_OPTIONS = ["ACT", "E48", "H87"];
 
@@ -15,12 +17,16 @@ interface ProductBasicFieldsProps {
 
 export function ProductBasicFields({ formData, updateFormField }: ProductBasicFieldsProps) {
   const [productSats, setProductSats] = useState<ProductSatRead[]>([]);
+  const [topCategories, setTopCategories] = useState<TopCategoryRead[]>([]);
 
   useEffect(() => {
     const { schoolId } = getOrgConfig();
     getProductSats({ schoolId })
       .then(setProductSats)
       .catch(() => setProductSats([]));
+    getTopCategories({ schoolId })
+      .then(setTopCategories)
+      .catch(() => setTopCategories([]));
   }, []);
 
   return (
@@ -104,6 +110,26 @@ export function ProductBasicFields({ formData, updateFormField }: ProductBasicFi
 
       <div className="form-control">
         <label className="label">
+          <span className="label-text">Clasificador</span>
+        </label>
+        <select
+          className="select select-bordered w-full"
+          value={formData.top_category_id}
+          onChange={(e) =>
+            updateFormField("top_category_id", e.target.value ? Number(e.target.value) : "")
+          }
+        >
+          <option value="">Sin clasificador</option>
+          {topCategories.map((topCategory) => (
+            <option key={topCategory.id} value={topCategory.id}>
+              {topCategory.description}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-control">
+        <label className="label">
           <span className="label-text">Descuento (%)</span>
         </label>
         <input
@@ -114,6 +140,21 @@ export function ProductBasicFields({ formData, updateFormField }: ProductBasicFi
           value={formData.discount}
           onChange={(e) => updateFormField("discount", e.target.value)}
         />
+      </div>
+
+      <div className="form-control">
+        <label className="label cursor-pointer justify-start gap-3">
+          <input
+            type="checkbox"
+            className="checkbox"
+            checked={formData.track_inventory}
+            onChange={(e) => updateFormField("track_inventory", e.target.checked)}
+          />
+          <span className="label-text">Controla inventario</span>
+        </label>
+        <p className="text-sm text-base-content/60">
+          Si está activo, la venta de este producto se controla contra existencias.
+        </p>
       </div>
 
       <div className="form-control">

@@ -31,9 +31,11 @@ export interface ProductCreate {
   type: ProductType;
   status?: ProductStatus;
   discount: number;
+  track_inventory: boolean;
   tax: boolean;
   tax_base?: number;
   product_sat_id?: number;
+  top_category_id?: number;
   thumbnail?: string;
   clave_unidad_medida_sat?: string;
   objeto_imp?: ObjetoImp;
@@ -63,9 +65,11 @@ export interface ProductRead {
   type: ProductType;
   status: ProductStatus;
   discount: number;
+  track_inventory: boolean;
   tax: boolean;
   tax_base: number | null;
   product_sat_id: number | null;
+  top_category_id: number | null;
   thumbnail: string | null;
   clave_unidad_medida_sat: string | null;
   objeto_imp: ObjetoImp | null;

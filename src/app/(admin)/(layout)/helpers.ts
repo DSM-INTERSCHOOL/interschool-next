@@ -67,6 +67,7 @@ export const adminMenuItems: ISidebarMenuItem[] = [
     //     label: "Catálogo",
     //     children: [
     //         { id: "apps-commerce-products", label: "Productos", url: "/apps/commerce/products" },
+    //         { id: "apps-commerce-top-categories", label: "Clasificadores", url: "/apps/commerce/top-categories" },
     //         { id: "apps-commerce-categories", label: "Categorías", url: "/apps/commerce/categories" },
     //         { id: "apps-commerce-colors", label: "Colores", url: "/apps/commerce/colors" },
     //         { id: "apps-commerce-sizes", label: "Tallas", url: "/apps/commerce/sizes" },
