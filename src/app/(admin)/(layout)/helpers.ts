@@ -76,6 +76,17 @@ export const adminMenuItems: ISidebarMenuItem[] = [
     //     ],
     // },
     // {
+    //     id: "apps-commerce-inventory",
+    //     icon: "lucide--boxes",
+    //     label: "Inventario",
+    //     children: [
+    //         { id: "apps-commerce-inventory-list", label: "Existencias", url: "/apps/commerce/inventory" },
+    //         { id: "apps-commerce-inventory-entrada", label: "Entrada", url: "/apps/commerce/inventory/entrada" },
+    //         { id: "apps-commerce-inventory-salida", label: "Salida", url: "/apps/commerce/inventory/salida" },
+    //         { id: "apps-commerce-inventory-transferencia", label: "Transferencia", url: "/apps/commerce/inventory/transferencia" },
+    //     ],
+    // },
+    // {
     //     id: "apps-file-manager",
     //     icon: "lucide--server",
     //     label: "File Manager",
