@@ -60,6 +60,7 @@ export default function SalidaFormPage() {
           sizes={catalogs.sizes}
           inventories={catalogs.inventories}
           stockWarehouses={[{ label: "Almacén", warehouseId }]}
+          showLastCost
           loading={catalogs.loading}
           onAddLine={addLine}
           onRemoveLine={removeLine}

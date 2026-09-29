@@ -1,5 +1,6 @@
 export { useInventoryList } from "./useInventoryList";
 export { useMovementCatalogs } from "./useMovementCatalogs";
+export { useLastCost } from "./useLastCost";
 export { useMovementLines } from "./useMovementLines";
 export type { MovementLine } from "./useMovementLines";
 export { useEntradaForm } from "./useEntradaForm";

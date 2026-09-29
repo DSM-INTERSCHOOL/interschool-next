@@ -86,6 +86,7 @@ export default function TransferenciaFormPage() {
             { label: "Origen", warehouseId: warehouseOrigenId },
             { label: "Destino", warehouseId: warehouseDestinoId },
           ]}
+          showLastCost
           loading={catalogs.loading}
           onAddLine={addLine}
           onRemoveLine={removeLine}

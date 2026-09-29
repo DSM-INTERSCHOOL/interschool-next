@@ -1,12 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ProductRead } from "@/interfaces/IProduct";
 import { ColorRead } from "@/interfaces/IColor";
 import { SizeRead } from "@/interfaces/ISize";
 import { InventoryRead } from "@/interfaces/IInventory";
 import { ProductSearchSelect } from "../../components";
-import { MovementLine } from "../hooks";
+import { MovementLine, useLastCost } from "../hooks";
 
 export interface StockWarehouse {
   label: string;
@@ -21,6 +22,10 @@ interface MovementLineItemsEditorProps {
   inventories: InventoryRead[];
   stockWarehouses: StockWarehouse[];
   loading: boolean;
+  // Salida/Transferencia only: entrada is where a *new* cost gets
+  // established, so surfacing the previous one there would be misleading;
+  // for outgoing movements it's a genuinely useful default.
+  showLastCost?: boolean;
   onAddLine: () => void;
   onRemoveLine: (index: number) => void;
   onUpdateLine: (index: number, field: keyof MovementLine, value: string) => void;
@@ -56,10 +61,21 @@ export function MovementLineItemsEditor({
   inventories,
   stockWarehouses,
   loading,
+  showLastCost = false,
   onAddLine,
   onRemoveLine,
   onUpdateLine,
 }: MovementLineItemsEditorProps) {
+  const lastCost = useLastCost();
+
+  useEffect(() => {
+    if (!showLastCost) return;
+    for (const line of lines) {
+      if (line.product_id !== "") lastCost.ensureHistory(Number(line.product_id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showLastCost, lines.map((line) => line.product_id).join(",")]);
+
   if (loading) {
     return <LoadingSpinner size="sm" message="Cargando catálogos..." />;
   }
@@ -136,6 +152,21 @@ export function MovementLineItemsEditor({
                     value={line.costo}
                     onChange={(e) => onUpdateLine(index, "costo", e.target.value)}
                   />
+                  {showLastCost &&
+                    (() => {
+                      const last = lastCost.findLastCost(line.product_id, line.color_id, line.size_id);
+                      if (last === null) return null;
+                      return (
+                        <button
+                          type="button"
+                          className="mt-1 block text-xs text-base-content/60 hover:text-primary hover:underline"
+                          onClick={() => onUpdateLine(index, "costo", String(last))}
+                          title="Usar el último costo registrado"
+                        >
+                          Último: ${last.toFixed(2)}
+                        </button>
+                      );
+                    })()}
                 </td>
                 <td>
                   <div className="flex flex-col gap-1">

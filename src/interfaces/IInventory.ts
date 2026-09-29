@@ -44,3 +44,20 @@ export interface KardexRead {
   person_internal_id: string;
   created: string | null;
 }
+
+export interface ProductKardexRead {
+  id: number;
+  school_id: number;
+  type: string;
+  origin: string;
+  notes: string | null;
+  available: number;
+  warehouse_id: number;
+  product_id: number;
+  quantity: number;
+  color_id: number | null;
+  size_id: number | null;
+  costo: number | null;
+  kardex_id: number | null;
+  created: string | null;
+}
