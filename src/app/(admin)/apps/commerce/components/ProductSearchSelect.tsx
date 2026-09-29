@@ -43,7 +43,12 @@ export function ProductSearchSelect({ products, value, onChange, placeholder }: 
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
 
-  const selectedProduct = products.find((product) => product.id === value) ?? null;
+  // String-compared, not strict === : callers that store this in generic
+  // form-line state (see MovementLineItemsEditor) round-trip the id through
+  // a plain string (every other <select> in that table is native, so the
+  // browser does this coercion for free; this component has to do it
+  // itself), so `value` can arrive as either the number or its string form.
+  const selectedProduct = products.find((product) => String(product.id) === String(value)) ?? null;
 
   useEffect(() => setMounted(true), []);
 
@@ -152,7 +157,7 @@ export function ProductSearchSelect({ products, value, onChange, placeholder }: 
                   <button
                     type="button"
                     onClick={() => handleSelect(product)}
-                    className={product.id === value ? "active" : ""}
+                    className={String(product.id) === String(value) ? "active" : ""}
                   >
                     {product.title}
                     {product.product_key && (
