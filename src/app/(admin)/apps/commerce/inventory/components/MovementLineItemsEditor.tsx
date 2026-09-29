@@ -4,6 +4,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ProductRead } from "@/interfaces/IProduct";
 import { ColorRead } from "@/interfaces/IColor";
 import { SizeRead } from "@/interfaces/ISize";
+import { ProductSearchSelect } from "../../components";
 import { MovementLine } from "../hooks";
 
 interface MovementLineItemsEditorProps {
@@ -37,7 +38,7 @@ export function MovementLineItemsEditor({
         <table className="table table-zebra">
           <thead>
             <tr>
-              <th className="min-w-[220px]">Producto</th>
+              <th className="min-w-[260px]">Producto</th>
               <th>Color</th>
               <th>Talla</th>
               <th className="w-28">Cantidad</th>
@@ -49,18 +50,11 @@ export function MovementLineItemsEditor({
             {lines.map((line, index) => (
               <tr key={index}>
                 <td>
-                  <select
-                    className="select select-bordered select-sm w-full"
+                  <ProductSearchSelect
+                    products={products}
                     value={line.product_id}
-                    onChange={(e) => onUpdateLine(index, "product_id", e.target.value)}
-                  >
-                    <option value="">Selecciona un producto</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.title}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(productId) => onUpdateLine(index, "product_id", productId.toString())}
+                  />
                 </td>
                 <td>
                   <select
