@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ProductRead } from "@/interfaces/IProduct";
 import { ColorRead } from "@/interfaces/IColor";
@@ -67,6 +67,12 @@ export function MovementLineItemsEditor({
   onUpdateLine,
 }: MovementLineItemsEditorProps) {
   const lastCost = useLastCost();
+  // Tracks, per line index, the product/color/size combo we already
+  // auto-filled the cost for -- so we apply the last cost once per
+  // selection change and then leave the field alone if the user edits it
+  // by hand (re-running on every render, since findLastCost's result only
+  // becomes available once the async history fetch resolves).
+  const autoFilledKeyRef = useRef<Map<number, string>>(new Map());
 
   useEffect(() => {
     if (!showLastCost) return;
@@ -75,6 +81,18 @@ export function MovementLineItemsEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showLastCost, lines.map((line) => line.product_id).join(",")]);
+
+  useEffect(() => {
+    if (!showLastCost) return;
+    lines.forEach((line, index) => {
+      const key = `${line.product_id}:${line.color_id}:${line.size_id}`;
+      if (autoFilledKeyRef.current.get(index) === key) return;
+      const last = lastCost.findLastCost(line.product_id, line.color_id, line.size_id);
+      if (last === null) return;
+      autoFilledKeyRef.current.set(index, key);
+      onUpdateLine(index, "costo", String(last));
+    });
+  });
 
   if (loading) {
     return <LoadingSpinner size="sm" message="Cargando catálogos..." />;
@@ -152,21 +170,6 @@ export function MovementLineItemsEditor({
                     value={line.costo}
                     onChange={(e) => onUpdateLine(index, "costo", e.target.value)}
                   />
-                  {showLastCost &&
-                    (() => {
-                      const last = lastCost.findLastCost(line.product_id, line.color_id, line.size_id);
-                      if (last === null) return null;
-                      return (
-                        <button
-                          type="button"
-                          className="mt-1 block text-xs text-base-content/60 hover:text-primary hover:underline"
-                          onClick={() => onUpdateLine(index, "costo", String(last))}
-                          title="Usar el último costo registrado"
-                        >
-                          Último: ${last.toFixed(2)}
-                        </button>
-                      );
-                    })()}
                 </td>
                 <td>
                   <div className="flex flex-col gap-1">
