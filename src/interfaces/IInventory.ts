@@ -57,7 +57,7 @@ export interface ProductKardexRead {
   quantity: number;
   color_id: number | null;
   size_id: number | null;
-  costo: number | null;
+  costo: string | null; // Decimal -> FastAPI serializes as a string, not a number
   kardex_id: number | null;
   created: string | null;
 }

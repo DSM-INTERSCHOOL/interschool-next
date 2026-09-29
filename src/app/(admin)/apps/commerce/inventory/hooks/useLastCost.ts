@@ -47,7 +47,7 @@ export const useLastCost = () => {
         (sizeId === "" ? line.size_id === null : String(line.size_id) === String(sizeId)) &&
         line.costo !== null
     );
-    return match ? match.costo : null;
+    return match ? Number(match.costo) : null;
   };
 
   return { ensureHistory, findLastCost };
