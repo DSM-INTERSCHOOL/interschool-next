@@ -81,6 +81,11 @@ export default function TransferenciaFormPage() {
           products={catalogs.products}
           colors={catalogs.colors}
           sizes={catalogs.sizes}
+          inventories={catalogs.inventories}
+          stockWarehouses={[
+            { label: "Origen", warehouseId: warehouseOrigenId },
+            { label: "Destino", warehouseId: warehouseDestinoId },
+          ]}
           loading={catalogs.loading}
           onAddLine={addLine}
           onRemoveLine={removeLine}

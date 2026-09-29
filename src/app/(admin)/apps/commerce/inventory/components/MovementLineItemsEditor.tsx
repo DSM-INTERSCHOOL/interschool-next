@@ -4,25 +4,57 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ProductRead } from "@/interfaces/IProduct";
 import { ColorRead } from "@/interfaces/IColor";
 import { SizeRead } from "@/interfaces/ISize";
+import { InventoryRead } from "@/interfaces/IInventory";
 import { ProductSearchSelect } from "../../components";
 import { MovementLine } from "../hooks";
+
+export interface StockWarehouse {
+  label: string;
+  warehouseId: number | "";
+}
 
 interface MovementLineItemsEditorProps {
   lines: MovementLine[];
   products: ProductRead[];
   colors: ColorRead[];
   sizes: SizeRead[];
+  inventories: InventoryRead[];
+  stockWarehouses: StockWarehouse[];
   loading: boolean;
   onAddLine: () => void;
   onRemoveLine: (index: number) => void;
   onUpdateLine: (index: number, field: keyof MovementLine, value: string) => void;
 }
 
+// null means "no inventory row for this exact product/warehouse/color/size
+// combination", which is a valid, meaningful state (this variant has never
+// been stocked there) -- always rendered as "0", not left blank, so it
+// reads as a real answer rather than a still-loading placeholder.
+const findStock = (
+  inventories: InventoryRead[],
+  productId: number | "",
+  warehouseId: number | "",
+  colorId: number | "",
+  sizeId: number | ""
+): number | null => {
+  if (productId === "" || warehouseId === "") return null;
+  const row = inventories.find(
+    (inventory) =>
+      String(inventory.product_id) === String(productId) &&
+      String(inventory.warehouse_id) === String(warehouseId) &&
+      (colorId === "" ? inventory.color_id === null : String(inventory.color_id) === String(colorId)) &&
+      (sizeId === "" ? inventory.size_id === null : String(inventory.size_id) === String(sizeId))
+  );
+  return row ? row.quantity : 0;
+};
+
 export function MovementLineItemsEditor({
   lines,
   products,
   colors,
   sizes,
+  inventories,
+  stockWarehouses,
   loading,
   onAddLine,
   onRemoveLine,
@@ -43,6 +75,7 @@ export function MovementLineItemsEditor({
               <th>Talla</th>
               <th className="w-28">Cantidad</th>
               <th className="w-32">Costo</th>
+              <th className="min-w-[140px]">Stock actual</th>
               <th></th>
             </tr>
           </thead>
@@ -103,6 +136,33 @@ export function MovementLineItemsEditor({
                     value={line.costo}
                     onChange={(e) => onUpdateLine(index, "costo", e.target.value)}
                   />
+                </td>
+                <td>
+                  <div className="flex flex-col gap-1">
+                    {stockWarehouses.map((warehouse) => {
+                      const stock = findStock(
+                        inventories,
+                        line.product_id,
+                        warehouse.warehouseId,
+                        line.color_id,
+                        line.size_id
+                      );
+                      return (
+                        <div key={warehouse.label} className="flex items-center gap-1 text-xs">
+                          {stockWarehouses.length > 1 && (
+                            <span className="text-base-content/60">{warehouse.label}:</span>
+                          )}
+                          {stock === null ? (
+                            <span className="text-base-content/40">—</span>
+                          ) : (
+                            <span className={`badge badge-sm ${stock > 0 ? "badge-ghost" : "badge-warning"}`}>
+                              {stock}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </td>
                 <td>
                   <button
