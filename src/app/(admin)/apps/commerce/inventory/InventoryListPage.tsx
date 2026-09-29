@@ -31,26 +31,34 @@ export default function InventoryListPage() {
   const sizeDescription = (id: number | null) =>
     id === null ? "—" : catalogs.sizes.find((s) => s.id === id)?.description ?? `#${id}`;
 
-  // Every inventariable product's variants (derived from its actual priced
-  // combinations, same source the price matrix itself builds from), cross-
-  // referenced against the selected warehouse's inventory rows -- a variant
-  // with no matching row genuinely has never been stocked there, so it
-  // reads as 0 rather than being left out of the list.
+  // Every inventariable product's variants, derived the same way the price
+  // matrix derives its required cells: the cross product of the product's
+  // own selected colors x sizes (falling back to one dimension, or a single
+  // flat variant when neither is set) -- not product.prices, which can be
+  // incomplete for products that predate pricing or were seeded outside the
+  // form. Cross-referenced against the selected warehouse's inventory rows;
+  // a variant with no matching row genuinely has never been stocked there,
+  // so it reads as 0 rather than being left out of the list.
   const rows = useMemo<StockRow[]>(() => {
     if (warehouseId === "") return [];
     const result: StockRow[] = [];
     for (const product of catalogs.products) {
       if (!product.track_inventory) continue;
-      const variants = new Map<string, { colorId: number | null; sizeId: number | null }>();
-      for (const price of product.prices) {
-        const colorId = price.color_id ?? null;
-        const sizeId = price.size_id ?? null;
-        variants.set(`${colorId}:${sizeId}`, { colorId, sizeId });
+      const variants: { colorId: number | null; sizeId: number | null }[] = [];
+      if (product.color_ids.length > 0 && product.size_ids.length > 0) {
+        for (const colorId of product.color_ids) {
+          for (const sizeId of product.size_ids) {
+            variants.push({ colorId, sizeId });
+          }
+        }
+      } else if (product.color_ids.length > 0) {
+        for (const colorId of product.color_ids) variants.push({ colorId, sizeId: null });
+      } else if (product.size_ids.length > 0) {
+        for (const sizeId of product.size_ids) variants.push({ colorId: null, sizeId });
+      } else {
+        variants.push({ colorId: null, sizeId: null });
       }
-      if (variants.size === 0) {
-        variants.set("null:null", { colorId: null, sizeId: null });
-      }
-      for (const { colorId, sizeId } of variants.values()) {
+      for (const { colorId, sizeId } of variants) {
         const inventory = catalogs.inventories.find(
           (inv) =>
             inv.product_id === product.id &&
