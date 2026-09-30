@@ -8,6 +8,7 @@ import { useMovementCatalogs } from "./hooks";
 
 interface StockRow {
   productId: number;
+  productKey: string | null;
   productTitle: string;
   colorId: number | null;
   sizeId: number | null;
@@ -68,6 +69,7 @@ export default function InventoryListPage() {
         );
         result.push({
           productId: product.id,
+          productKey: product.product_key,
           productTitle: product.title,
           colorId,
           sizeId,
@@ -155,6 +157,7 @@ export default function InventoryListPage() {
                       <thead>
                         <tr>
                           <th>ID</th>
+                          <th>Clave</th>
                           <th>Producto</th>
                           <th>Color</th>
                           <th>Talla</th>
@@ -165,6 +168,7 @@ export default function InventoryListPage() {
                         {rows.map((row) => (
                           <tr key={`${row.productId}:${row.colorId}:${row.sizeId}`}>
                             <td className="text-base-content/60">{row.productId}</td>
+                            <td>{row.productKey ?? "—"}</td>
                             <td>{row.productTitle}</td>
                             <td>{colorDescription(row.colorId)}</td>
                             <td>{sizeDescription(row.sizeId)}</td>
