@@ -156,7 +156,6 @@ export default function InventoryListPage() {
                     <table className="table table-zebra w-full">
                       <thead>
                         <tr>
-                          <th>ID</th>
                           <th>Clave</th>
                           <th>Producto</th>
                           <th>Color</th>
@@ -167,7 +166,6 @@ export default function InventoryListPage() {
                       <tbody>
                         {rows.map((row) => (
                           <tr key={`${row.productId}:${row.colorId}:${row.sizeId}`}>
-                            <td className="text-base-content/60">{row.productId}</td>
                             <td>{row.productKey ?? "—"}</td>
                             <td>{row.productTitle}</td>
                             <td>{colorDescription(row.colorId)}</td>

@@ -95,7 +95,6 @@ export default function ProductsListPage() {
                   <thead>
                     <tr>
                       <th></th>
-                      <th>ID</th>
                       <th>Clave</th>
                       <th>Título</th>
                       <th>Tipo</th>
@@ -120,7 +119,6 @@ export default function ProductsListPage() {
                             </div>
                           )}
                         </td>
-                        <td className="text-base-content/60">{product.id}</td>
                         <td>{product.product_key ?? "—"}</td>
                         <td>
                           <div className="font-medium">{product.title}</div>
