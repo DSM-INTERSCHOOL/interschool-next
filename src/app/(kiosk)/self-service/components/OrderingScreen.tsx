@@ -3,11 +3,12 @@ import { ProductRead } from "@/interfaces/IProduct";
 import { ColorRead } from "@/interfaces/IColor";
 import { SizeRead } from "@/interfaces/ISize";
 import { TopCategoryRead } from "@/interfaces/ITopCategory";
-import { useCart } from "../hooks";
+import { useCart, useCheckout } from "../hooks";
 import { ALL_CATEGORIES, CategoryRail } from "./CategoryRail";
 import { ProductGrid } from "./ProductGrid";
 import { ProductPickerModal } from "./ProductPickerModal";
 import { CartPanel } from "./CartPanel";
+import { ConfirmationScreen } from "./ConfirmationScreen";
 
 interface OrderingScreenProps {
   categories: TopCategoryRead[];
@@ -21,12 +22,17 @@ export function OrderingScreen({ categories, products, colors, sizes, onCancel }
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
   const [pickerProduct, setPickerProduct] = useState<ProductRead | null>(null);
   const cart = useCart();
+  const checkout = useCheckout();
 
   const visibleProducts = useMemo(() => {
     if (selectedCategory === ALL_CATEGORIES) return products;
     const categoryId = Number(selectedCategory);
     return products.filter((product) => product.top_category_id === categoryId);
   }, [products, selectedCategory]);
+
+  if (checkout.placedOrder) {
+    return <ConfirmationScreen order={checkout.placedOrder} onNewOrder={onCancel} />;
+  }
 
   return (
     <div className="flex h-screen w-full">
@@ -44,6 +50,9 @@ export function OrderingScreen({ categories, products, colors, sizes, onCancel }
         onUpdateQuantity={cart.updateQuantity}
         onRemove={cart.removeLine}
         onCancel={onCancel}
+        onCheckout={() => checkout.submit(cart.lines)}
+        checkingOut={checkout.status === "submitting"}
+        checkoutError={checkout.error}
       />
 
       {pickerProduct && (
