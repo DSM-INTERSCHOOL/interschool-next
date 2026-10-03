@@ -8,9 +8,13 @@ export interface ProductPriceInput {
   color_id?: number;
 }
 
-export interface ProductPrice extends ProductPriceInput {
+// Read-side: price comes back from the Decimal column as a JSON string, not
+// a number (same as e.g. ProductKardexRead.costo) -- only true for reads,
+// writes via ProductPriceInput still send a plain number.
+export interface ProductPrice extends Omit<ProductPriceInput, "price"> {
   id: number;
   product_id: number;
+  price: string;
 }
 
 export interface ProductPicture {

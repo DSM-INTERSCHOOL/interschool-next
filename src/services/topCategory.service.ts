@@ -1,5 +1,5 @@
 import commerceApi from "./commerceApi";
-import { TopCategoryCreate, TopCategoryRead, TopCategoryUpdate } from "@/interfaces/ITopCategory";
+import { OrderMode, TopCategoryCreate, TopCategoryRead, TopCategoryUpdate } from "@/interfaces/ITopCategory";
 
 interface ServiceArgs {
   schoolId: string | number | null;
@@ -7,6 +7,10 @@ interface ServiceArgs {
 
 interface TopCategoryArgs extends ServiceArgs {
   topCategoryId: number;
+}
+
+interface OrderModeArgs extends ServiceArgs {
+  orderMode: OrderMode;
 }
 
 export const getTopCategories = async ({ schoolId }: ServiceArgs): Promise<TopCategoryRead[]> => {
@@ -46,4 +50,27 @@ export const updateTopCategory = async ({
 
 export const deleteTopCategory = async ({ schoolId, topCategoryId }: TopCategoryArgs): Promise<void> => {
   await commerceApi.delete(`/schools/${schoolId}/top-categories/${topCategoryId}`);
+};
+
+export const getTopCategoryIdsForOrderMode = async ({
+  schoolId,
+  orderMode,
+}: OrderModeArgs): Promise<number[]> => {
+  const response = await commerceApi.get<number[]>(
+    `/schools/${schoolId}/top-categories/order-modes/${orderMode}`
+  );
+  return response.data;
+};
+
+// Full replace, not incremental -- same semantics as a product's color_ids/size_ids.
+export const setTopCategoryIdsForOrderMode = async ({
+  schoolId,
+  orderMode,
+  topCategoryIds,
+}: OrderModeArgs & { topCategoryIds: number[] }): Promise<number[]> => {
+  const response = await commerceApi.put<number[]>(
+    `/schools/${schoolId}/top-categories/order-modes/${orderMode}`,
+    { top_category_ids: topCategoryIds }
+  );
+  return response.data;
 };

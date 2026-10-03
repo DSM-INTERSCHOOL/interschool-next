@@ -1,3 +1,7 @@
+// The two general ways an order can be placed (src.catalog.constants on
+// the backend) -- gates which top_category(s) are orderable in each mode.
+export type OrderMode = "SELF_SERVICE" | "OPERATOR";
+
 export interface TopCategoryRead {
   id: number;
   school_id: number;
