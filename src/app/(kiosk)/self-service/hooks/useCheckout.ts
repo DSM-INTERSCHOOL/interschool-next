@@ -1,27 +1,33 @@
 import { useState } from "react";
 import { getOrgConfig } from "@/lib/orgConfig";
-import { OrderRead } from "@/interfaces/IOrder";
-import { createOrder, createOrderDetail, updateOrder } from "@/services/order.service";
+import { OrderRead, PaymentInstructionsRead, PaymentMethod } from "@/interfaces/IOrder";
+import { checkoutOrder, createOrder, createOrderDetail } from "@/services/order.service";
 import { CartLine } from "./useCart";
 
-type Status = "idle" | "submitting" | "error";
+// start: nothing submitted yet.
+// creatingOrder: posting the order + its line items (still PENDING).
+// choosingPayment: order exists -- waiting for the customer to pick
+//   VENTANILLA or SPEI.
+// submittingPayment: posting the chosen payment_method.
+// done: checkout endpoint returned instructions to show.
+// error: something failed; `order` (if already created) is kept so a
+//   payment-method retry doesn't recreate the order from scratch.
+type Phase = "start" | "creatingOrder" | "choosingPayment" | "submittingPayment" | "done" | "error";
 
 export const useCheckout = () => {
-  const [status, setStatus] = useState<Status>("idle");
+  const [phase, setPhase] = useState<Phase>("start");
   const [error, setError] = useState<string | null>(null);
-  const [placedOrder, setPlacedOrder] = useState<OrderRead | null>(null);
+  const [order, setOrder] = useState<OrderRead | null>(null);
+  const [instructions, setInstructions] = useState<PaymentInstructionsRead | null>(null);
 
-  const submit = async (lines: CartLine[]) => {
-    setStatus("submitting");
+  const createOrderWithDetails = async (lines: CartLine[]) => {
+    setPhase("creatingOrder");
     setError(null);
     try {
       const { schoolId } = getOrgConfig();
-      // Fresh per checkout attempt -- reusing one across retries would make
-      // the backend's get_or_create_pending_for_session return the SAME
-      // (already-PLACED) order instead of a new one.
       const sessionId = window.crypto.randomUUID();
 
-      const order = await createOrder({
+      const newOrder = await createOrder({
         schoolId,
         dto: { session_id: sessionId, description: "Autoservicio" },
       });
@@ -31,7 +37,7 @@ export const useCheckout = () => {
           createOrderDetail({
             schoolId,
             dto: {
-              order_id: order.id,
+              order_id: newOrder.id,
               product_id: line.productId,
               amount: line.quantity,
               color: line.colorLabel ?? undefined,
@@ -42,27 +48,39 @@ export const useCheckout = () => {
         )
       );
 
-      const placed = await updateOrder({
-        schoolId,
-        orderId: order.id,
-        dto: { status: "PLACED" },
-      });
-
-      setPlacedOrder(placed);
-      setStatus("idle");
-      return placed;
+      setOrder(newOrder);
+      setPhase("choosingPayment");
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || "No se pudo enviar la orden");
-      setStatus("error");
-      return null;
+      setPhase("error");
+    }
+  };
+
+  const choosePaymentMethod = async (paymentMethod: PaymentMethod) => {
+    if (!order) return;
+    setPhase("submittingPayment");
+    setError(null);
+    try {
+      const { schoolId } = getOrgConfig();
+      const result = await checkoutOrder({
+        schoolId,
+        orderId: order.id,
+        dto: { payment_method: paymentMethod },
+      });
+      setInstructions(result);
+      setPhase("done");
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || "No se pudo procesar el pago");
+      setPhase("error");
     }
   };
 
   const reset = () => {
-    setStatus("idle");
+    setPhase("start");
     setError(null);
-    setPlacedOrder(null);
+    setOrder(null);
+    setInstructions(null);
   };
 
-  return { status, error, placedOrder, submit, reset };
+  return { phase, error, order, instructions, createOrderWithDetails, choosePaymentMethod, reset };
 };

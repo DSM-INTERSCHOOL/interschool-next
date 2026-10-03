@@ -1,5 +1,13 @@
 import commerceApi from "./commerceApi";
-import { OrderCreate, OrderDetailCreate, OrderDetailRead, OrderRead, OrderUpdate } from "@/interfaces/IOrder";
+import {
+  CheckoutRequest,
+  OrderCreate,
+  OrderDetailCreate,
+  OrderDetailRead,
+  OrderRead,
+  OrderUpdate,
+  PaymentInstructionsRead,
+} from "@/interfaces/IOrder";
 
 interface ServiceArgs {
   schoolId: string | number | null;
@@ -31,5 +39,20 @@ export const createOrderDetail = async ({
   dto,
 }: ServiceArgs & { dto: OrderDetailCreate }): Promise<OrderDetailRead> => {
   const response = await commerceApi.post<OrderDetailRead>(`/schools/${schoolId}/order-details`, dto);
+  return response.data;
+};
+
+// Sets the order's payment_method and marks it PLACED, returning what to
+// show the customer -- for VENTANILLA just the total/order number, for
+// SPEI the client's CLABE (looked up server-side from `person`).
+export const checkoutOrder = async ({
+  schoolId,
+  orderId,
+  dto,
+}: OrderArgs & { dto: CheckoutRequest }): Promise<PaymentInstructionsRead> => {
+  const response = await commerceApi.post<PaymentInstructionsRead>(
+    `/schools/${schoolId}/orders/${orderId}/checkout`,
+    dto
+  );
   return response.data;
 };

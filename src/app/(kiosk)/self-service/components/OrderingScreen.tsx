@@ -8,6 +8,7 @@ import { ALL_CATEGORIES, CategoryRail } from "./CategoryRail";
 import { ProductGrid } from "./ProductGrid";
 import { ProductPickerModal } from "./ProductPickerModal";
 import { CartPanel } from "./CartPanel";
+import { PaymentMethodScreen } from "./PaymentMethodScreen";
 import { ConfirmationScreen } from "./ConfirmationScreen";
 
 interface OrderingScreenProps {
@@ -30,8 +31,22 @@ export function OrderingScreen({ categories, products, colors, sizes, onCancel }
     return products.filter((product) => product.top_category_id === categoryId);
   }, [products, selectedCategory]);
 
-  if (checkout.placedOrder) {
-    return <ConfirmationScreen order={checkout.placedOrder} onNewOrder={onCancel} />;
+  if (checkout.phase === "done" && checkout.instructions) {
+    return <ConfirmationScreen instructions={checkout.instructions} onNewOrder={onCancel} />;
+  }
+
+  // Order already exists (still PENDING) -- show the payment-method
+  // screen until it's placed, including while retrying after an error on
+  // the checkout step itself (order stays put, no need to recreate it).
+  if (checkout.order) {
+    return (
+      <PaymentMethodScreen
+        total={Number(checkout.order.total)}
+        submitting={checkout.phase === "submittingPayment"}
+        error={checkout.error}
+        onChoose={checkout.choosePaymentMethod}
+      />
+    );
   }
 
   return (
@@ -50,8 +65,8 @@ export function OrderingScreen({ categories, products, colors, sizes, onCancel }
         onUpdateQuantity={cart.updateQuantity}
         onRemove={cart.removeLine}
         onCancel={onCancel}
-        onCheckout={() => checkout.submit(cart.lines)}
-        checkingOut={checkout.status === "submitting"}
+        onCheckout={() => checkout.createOrderWithDetails(cart.lines)}
+        checkingOut={checkout.phase === "creatingOrder"}
         checkoutError={checkout.error}
       />
 

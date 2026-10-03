@@ -1,5 +1,6 @@
 export type OrderStatus = "PENDING" | "PLACED" | "COMPLETED" | "PARTIALLY_DISPATCHED" | "PAID" | "CANCELLED";
 export type DeliveryMethod = "COLLECTION" | "DELIVERY";
+export type PaymentMethod = "VENTANILLA" | "SPEI";
 
 export interface CollectionOptions {
   date?: string;
@@ -62,6 +63,7 @@ export interface OrderRead {
   created_by_person_internal_id: string | null;
   session_id: string;
   delivery_method: DeliveryMethod | null;
+  payment_method: PaymentMethod | null;
   status: OrderStatus | null;
   description: string;
   total: string;
@@ -89,4 +91,16 @@ export interface OrderDetailCreate {
   price: number; // write side: Pydantic accepts a plain number for Decimal
   discount?: number;
   discount_type?: "importe" | "porcentaje";
+}
+
+export interface CheckoutRequest {
+  payment_method: PaymentMethod;
+}
+
+export interface PaymentInstructionsRead {
+  payment_method: PaymentMethod;
+  id_orden: number;
+  total: string; // Decimal -> string
+  message: string;
+  clabe: string | null; // SPEI only
 }
