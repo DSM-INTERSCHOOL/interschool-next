@@ -1,5 +1,6 @@
 export { StartScreen } from "./StartScreen";
 export { OrderingScreen } from "./OrderingScreen";
+export { PickupNameScreen } from "./PickupNameScreen";
 export { PaymentMethodScreen } from "./PaymentMethodScreen";
 export { ConfirmationScreen } from "./ConfirmationScreen";
 export { CategoryRail, ALL_CATEGORIES } from "./CategoryRail";

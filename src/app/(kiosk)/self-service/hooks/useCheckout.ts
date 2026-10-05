@@ -20,7 +20,7 @@ export const useCheckout = () => {
   const [order, setOrder] = useState<OrderRead | null>(null);
   const [instructions, setInstructions] = useState<PaymentInstructionsRead | null>(null);
 
-  const createOrderWithDetails = async (lines: CartLine[]) => {
+  const createOrderWithDetails = async (lines: CartLine[], pickupName: string) => {
     setPhase("creatingOrder");
     setError(null);
     try {
@@ -29,7 +29,12 @@ export const useCheckout = () => {
 
       const newOrder = await createOrder({
         schoolId,
-        dto: { session_id: sessionId, description: "Autoservicio" },
+        dto: {
+          session_id: sessionId,
+          description: "Autoservicio",
+          delivery_method: "COLLECTION",
+          collection_options: { collected_by: pickupName },
+        },
       });
 
       await Promise.all(

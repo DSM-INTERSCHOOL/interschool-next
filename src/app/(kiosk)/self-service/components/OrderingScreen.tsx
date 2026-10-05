@@ -8,6 +8,7 @@ import { ALL_CATEGORIES, CategoryRail } from "./CategoryRail";
 import { ProductGrid } from "./ProductGrid";
 import { ProductPickerModal } from "./ProductPickerModal";
 import { CartPanel } from "./CartPanel";
+import { PickupNameScreen } from "./PickupNameScreen";
 import { PaymentMethodScreen } from "./PaymentMethodScreen";
 import { ConfirmationScreen } from "./ConfirmationScreen";
 
@@ -22,6 +23,7 @@ interface OrderingScreenProps {
 export function OrderingScreen({ categories, products, colors, sizes, onCancel }: OrderingScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
   const [pickerProduct, setPickerProduct] = useState<ProductRead | null>(null);
+  const [showPickupScreen, setShowPickupScreen] = useState(false);
   const cart = useCart();
   const checkout = useCheckout();
 
@@ -49,6 +51,18 @@ export function OrderingScreen({ categories, products, colors, sizes, onCancel }
     );
   }
 
+  if (showPickupScreen) {
+    return (
+      <PickupNameScreen
+        total={cart.total}
+        submitting={checkout.phase === "creatingOrder"}
+        error={checkout.error}
+        onBack={() => setShowPickupScreen(false)}
+        onSubmit={(pickupName) => checkout.createOrderWithDetails(cart.lines, pickupName)}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen w-full">
       <div className="flex min-w-0 flex-1 flex-col">
@@ -65,9 +79,7 @@ export function OrderingScreen({ categories, products, colors, sizes, onCancel }
         onUpdateQuantity={cart.updateQuantity}
         onRemove={cart.removeLine}
         onCancel={onCancel}
-        onCheckout={() => checkout.createOrderWithDetails(cart.lines)}
-        checkingOut={checkout.phase === "creatingOrder"}
-        checkoutError={checkout.error}
+        onProceedToPickup={() => setShowPickupScreen(true)}
       />
 
       {pickerProduct && (

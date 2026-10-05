@@ -6,9 +6,7 @@ interface CartPanelProps {
   onUpdateQuantity: (key: string, quantity: number) => void;
   onRemove: (key: string) => void;
   onCancel: () => void;
-  onCheckout: () => void;
-  checkingOut: boolean;
-  checkoutError: string | null;
+  onProceedToPickup: () => void;
 }
 
 export function CartPanel({
@@ -17,9 +15,7 @@ export function CartPanel({
   onUpdateQuantity,
   onRemove,
   onCancel,
-  onCheckout,
-  checkingOut,
-  checkoutError,
+  onProceedToPickup,
 }: CartPanelProps) {
   return (
     <div className="flex h-full w-full max-w-sm flex-col border-l border-base-300 bg-base-100">
@@ -87,23 +83,13 @@ export function CartPanel({
           <span>Total</span>
           <span>${total.toFixed(2)}</span>
         </div>
-        {checkoutError && (
-          <div className="alert alert-error mb-3 text-sm">
-            <span className="iconify lucide--alert-circle size-5"></span>
-            <span>{checkoutError}</span>
-          </div>
-        )}
         <button
           type="button"
-          onClick={onCheckout}
-          disabled={lines.length === 0 || checkingOut}
+          onClick={onProceedToPickup}
+          disabled={lines.length === 0}
           className="btn btn-primary btn-lg h-auto w-full rounded-2xl py-4 text-xl"
         >
-          {checkingOut ? (
-            <span className="loading loading-spinner loading-md"></span>
-          ) : (
-            "Finalizar pedido"
-          )}
+          Finalizar pedido
         </button>
       </div>
     </div>
