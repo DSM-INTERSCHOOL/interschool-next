@@ -22,6 +22,11 @@ interface OrderingScreenProps {
   // and selected before reaching this screen. Undefined for guest
   // checkout.
   clientPersonInternalId: string | undefined;
+  // Display-only: who to show as "cliente activo" in the header.
+  // OPERATOR mode sets this (the searched/selected client's name);
+  // self-service leaves it unset -- there's nothing to disambiguate when
+  // the logged-in person is always both the submitter and the client.
+  clientLabel?: string;
   onCancel: () => void;
 }
 
@@ -31,6 +36,7 @@ export function OrderingScreen({
   colors,
   sizes,
   clientPersonInternalId,
+  clientLabel,
   onCancel,
 }: OrderingScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
@@ -82,6 +88,12 @@ export function OrderingScreen({
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between border-b border-base-300 bg-base-100 px-4 py-3">
           <h1 className="text-2xl font-bold">Nueva Orden</h1>
+          {clientLabel && (
+            <div className="badge badge-lg badge-outline gap-2 py-4">
+              <span className="iconify lucide--user-round size-4"></span>
+              Cliente: {clientLabel}
+            </div>
+          )}
         </div>
         <CategoryRail categories={categories} selected={selectedCategory} onSelect={setSelectedCategory} />
         <ProductGrid products={visibleProducts} onSelect={setPickerProduct} />

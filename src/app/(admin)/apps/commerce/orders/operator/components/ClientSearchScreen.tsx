@@ -6,9 +6,24 @@ interface ClientSearchScreenProps {
   onSkip: () => void;
 }
 
-const fullName = (person: CommercePersonRead) =>
+export const fullName = (person: CommercePersonRead) =>
   [person.given_name, person.paternal_name, person.maternal_name].filter(Boolean).join(" ") ||
   person.person_internal_id;
+
+// person.type is a denormalized copy of interschool-core's PersonType
+// (ACADEMIC | TEACHER | STUDENT | RELATIVE | USER | EMPLOYEE) -- labeled
+// here for display, falling back to the raw value for anything not in
+// this list rather than hiding it.
+const PERSON_TYPE_LABELS: Record<string, string> = {
+  STUDENT: "Estudiante",
+  TEACHER: "Profesor",
+  RELATIVE: "Familiar",
+  USER: "Usuario",
+  ACADEMIC: "Académico",
+  EMPLOYEE: "Empleado",
+};
+
+export const typeLabel = (type: string | null) => (type ? PERSON_TYPE_LABELS[type] ?? type : null);
 
 export function ClientSearchScreen({ onSelect, onSkip }: ClientSearchScreenProps) {
   const { query, setQuery, results, loading, error } = usePersonSearch();
@@ -54,9 +69,15 @@ export function ClientSearchScreen({ onSelect, onSkip }: ClientSearchScreenProps
                 >
                   <div className="flex items-center gap-3">
                     <span className="iconify lucide--user-round size-8 text-primary"></span>
-                    <div>
-                      <p className="text-lg font-semibold">{fullName(person)}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-lg font-semibold">{fullName(person)}</p>
+                        {typeLabel(person.type) && (
+                          <span className="badge badge-ghost badge-sm">{typeLabel(person.type)}</span>
+                        )}
+                      </div>
                       {person.email && <p className="text-sm text-base-content/60">{person.email}</p>}
+                      <p className="text-sm text-base-content/50">ID: {person.person_internal_id}</p>
                     </div>
                   </div>
                 </button>

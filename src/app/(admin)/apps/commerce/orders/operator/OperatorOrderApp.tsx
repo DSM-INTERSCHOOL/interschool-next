@@ -5,7 +5,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CommercePersonRead } from "@/interfaces/ICommercePerson";
 import { useCatalogForOrderMode } from "../shared/hooks";
 import { OrderingScreen } from "../shared/components";
-import { ClientSearchScreen } from "./components/ClientSearchScreen";
+import { ClientSearchScreen, fullName } from "./components/ClientSearchScreen";
 
 type View = "client-search" | "ordering";
 
@@ -64,6 +64,7 @@ export function OperatorOrderApp() {
       colors={colors}
       sizes={sizes}
       clientPersonInternalId={client?.person_internal_id}
+      clientLabel={client ? fullName(client) : undefined}
       onCancel={backToClientSearch}
     />
   );
