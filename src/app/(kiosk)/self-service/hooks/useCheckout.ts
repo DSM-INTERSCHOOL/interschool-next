@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { useAuthStore } from "@/store/useAuthStore";
 import { OrderRead, PaymentInstructionsRead, PaymentMethod } from "@/interfaces/IOrder";
 import { checkoutOrder, createOrder, createOrderDetail } from "@/services/order.service";
 import { CartLine } from "./useCart";
@@ -26,6 +27,13 @@ export const useCheckout = () => {
     try {
       const { schoolId } = getOrgConfig();
       const sessionId = window.crypto.randomUUID();
+      // Self-service: the logged-in person is both who's placing the
+      // order and who it's for. created_by_person_internal_id is always
+      // derived server-side from the bearer token, never client-settable
+      // -- sending person_internal_id explicitly here (rather than
+      // relying on the backend's own fallback-to-token default) is what
+      // makes the two end up equal, deliberately, not by coincidence.
+      const personInternalId = useAuthStore.getState().personInternalId ?? undefined;
 
       const newOrder = await createOrder({
         schoolId,
@@ -34,6 +42,7 @@ export const useCheckout = () => {
           description: "Autoservicio",
           delivery_method: "COLLECTION",
           collection_options: { collected_by: pickupName },
+          person_internal_id: personInternalId,
         },
       });
 
