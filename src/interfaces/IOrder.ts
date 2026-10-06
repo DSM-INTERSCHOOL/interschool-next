@@ -2,6 +2,15 @@ export type OrderStatus = "PENDING" | "PLACED" | "COMPLETED" | "PARTIALLY_DISPAT
 export type DeliveryMethod = "COLLECTION" | "DELIVERY";
 export type PaymentMethod = "VENTANILLA" | "SPEI";
 
+export const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
+  { value: "PENDING", label: "Pendiente" },
+  { value: "PLACED", label: "Colocada" },
+  { value: "PARTIALLY_DISPATCHED", label: "Parcialmente Entregada" },
+  { value: "COMPLETED", label: "Completada" },
+  { value: "PAID", label: "Pagada" },
+  { value: "CANCELLED", label: "Cancelada" },
+];
+
 export interface CollectionOptions {
   date?: string;
   collection_point?: string;

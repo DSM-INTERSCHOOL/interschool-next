@@ -17,6 +17,16 @@ interface OrderArgs extends ServiceArgs {
   orderId: number;
 }
 
+export const getOrders = async ({
+  schoolId,
+  filters,
+}: ServiceArgs & { filters?: string }): Promise<OrderRead[]> => {
+  const response = await commerceApi.get<OrderRead[]>(`/schools/${schoolId}/orders`, {
+    params: filters ? { filters } : undefined,
+  });
+  return response.data;
+};
+
 export const createOrder = async ({
   schoolId,
   dto,
