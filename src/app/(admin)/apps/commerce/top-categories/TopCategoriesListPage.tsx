@@ -36,15 +36,21 @@ export default function TopCategoriesListPage() {
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
               <h2 className="card-title text-2xl">
                 <span className="iconify lucide--layout-grid size-6"></span>
                 Catálogo de Clasificadores
               </h2>
-              <Link href="/apps/commerce/top-categories/create" className="btn btn-primary">
-                <span className="iconify lucide--plus size-5"></span>
-                Nuevo Clasificador
-              </Link>
+              <div className="flex gap-2">
+                <Link href="/apps/commerce/top-categories/order-modes" className="btn btn-outline">
+                  <span className="iconify lucide--toggle-right size-5"></span>
+                  Modos de Venta
+                </Link>
+                <Link href="/apps/commerce/top-categories/create" className="btn btn-primary">
+                  <span className="iconify lucide--plus size-5"></span>
+                  Nuevo Clasificador
+                </Link>
+              </div>
             </div>
 
             <p className="text-base-content/60 text-sm mb-4">

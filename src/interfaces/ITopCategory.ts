@@ -2,6 +2,11 @@
 // the backend) -- gates which top_category(s) are orderable in each mode.
 export type OrderMode = "SELF_SERVICE" | "OPERATOR";
 
+export const ORDER_MODES: { value: OrderMode; label: string }[] = [
+  { value: "SELF_SERVICE", label: "Autoservicio" },
+  { value: "OPERATOR", label: "Operador" },
+];
+
 export interface TopCategoryRead {
   id: number;
   school_id: number;
