@@ -18,7 +18,7 @@ export function ClientSearchScreen({ onSelect, onSkip }: ClientSearchScreenProps
       <div className="flex w-full max-w-xl flex-col items-center gap-2 text-center">
         <span className="iconify lucide--user-search size-14 text-primary"></span>
         <h1 className="text-3xl font-bold">Buscar cliente</h1>
-        <p className="text-base-content/60">Busca por nombre o correo para iniciar la orden</p>
+        <p className="text-base-content/60">Busca por nombre, correo o ID para iniciar la orden</p>
       </div>
 
       <div className="relative w-full max-w-xl">
@@ -26,7 +26,7 @@ export function ClientSearchScreen({ onSelect, onSkip }: ClientSearchScreenProps
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Nombre o correo del cliente"
+          placeholder="Nombre, correo o ID del cliente"
           autoFocus
           className="input input-bordered input-lg h-auto w-full rounded-2xl px-6 py-4 text-xl"
         />
