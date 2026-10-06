@@ -4,12 +4,26 @@ interface PaymentMethodScreenProps {
   total: number;
   submitting: boolean;
   error: string | null;
+  clientLabel?: string;
   onChoose: (method: PaymentMethod) => void;
 }
 
-export function PaymentMethodScreen({ total, submitting, error, onChoose }: PaymentMethodScreenProps) {
+export function PaymentMethodScreen({
+  total,
+  submitting,
+  error,
+  clientLabel,
+  onChoose,
+}: PaymentMethodScreenProps) {
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-10 overflow-y-auto bg-base-200 p-8">
+      {clientLabel && (
+        <div className="badge badge-lg badge-outline absolute right-4 top-4 gap-2 py-4">
+          <span className="iconify lucide--user-round size-4"></span>
+          Cliente: {clientLabel}
+        </div>
+      )}
+
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-3xl font-bold">¿Cómo quieres pagar?</h1>
         <p className="text-xl text-base-content/60">Total a pagar: ${total.toFixed(2)}</p>

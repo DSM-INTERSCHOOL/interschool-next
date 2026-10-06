@@ -64,6 +64,7 @@ export function OrderingScreen({
         total={Number(checkout.order.total)}
         submitting={checkout.phase === "submittingPayment"}
         error={checkout.error}
+        clientLabel={clientLabel}
         onChoose={checkout.choosePaymentMethod}
       />
     );
@@ -75,6 +76,7 @@ export function OrderingScreen({
         total={cart.total}
         submitting={checkout.phase === "creatingOrder"}
         error={checkout.error}
+        clientLabel={clientLabel}
         onBack={() => setShowPickupScreen(false)}
         onSubmit={(pickupName) =>
           checkout.createOrderWithDetails(cart.lines, pickupName, clientPersonInternalId)

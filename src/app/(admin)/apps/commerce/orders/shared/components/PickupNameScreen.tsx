@@ -4,11 +4,19 @@ interface PickupNameScreenProps {
   total: number;
   submitting: boolean;
   error: string | null;
+  clientLabel?: string;
   onBack: () => void;
   onSubmit: (pickupName: string) => void;
 }
 
-export function PickupNameScreen({ total, submitting, error, onBack, onSubmit }: PickupNameScreenProps) {
+export function PickupNameScreen({
+  total,
+  submitting,
+  error,
+  clientLabel,
+  onBack,
+  onSubmit,
+}: PickupNameScreenProps) {
   const [name, setName] = useState("");
   const ready = name.trim().length > 0;
 
@@ -23,6 +31,13 @@ export function PickupNameScreen({ total, submitting, error, onBack, onSubmit }:
         <span className="iconify lucide--arrow-left size-5"></span>
         Regresar
       </button>
+
+      {clientLabel && (
+        <div className="badge badge-lg badge-outline absolute right-4 top-4 gap-2 py-4">
+          <span className="iconify lucide--user-round size-4"></span>
+          Cliente: {clientLabel}
+        </div>
+      )}
 
       <div className="flex flex-col items-center gap-2 text-center">
         <span className="iconify lucide--user size-16 text-primary"></span>
