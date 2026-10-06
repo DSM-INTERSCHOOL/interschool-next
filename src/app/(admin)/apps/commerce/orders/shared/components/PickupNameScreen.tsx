@@ -21,7 +21,7 @@ export function PickupNameScreen({
   const ready = name.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto bg-base-200 p-8">
+    <div className="relative flex h-[75vh] min-h-[32rem] w-full flex-col items-center justify-center gap-8 overflow-y-auto rounded-2xl border border-base-300 bg-base-200 p-8">
       <button
         type="button"
         onClick={onBack}

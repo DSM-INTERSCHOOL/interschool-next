@@ -10,33 +10,22 @@ type View = "start" | "ordering";
 
 export function SelfServiceOrderApp() {
   const [view, setView] = useState<View>("start");
-  const { schoolId, categories, products, colors, sizes, loading, error } =
-    useCatalogForOrderMode("SELF_SERVICE");
+  const { categories, products, colors, sizes, loading, error } = useCatalogForOrderMode("SELF_SERVICE");
   const personInternalId = useAuthStore((state) => state.personInternalId);
 
   if (loading) {
-    return <LoadingSpinner fullScreen message="Cargando..." />;
-  }
-
-  if (!schoolId) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <span className="iconify lucide--monitor-off size-16 text-base-content/40"></span>
-        <h1 className="text-2xl font-bold">Dispositivo no configurado</h1>
-        <p className="max-w-md text-base-content/60">
-          Este equipo necesita iniciar sesión una vez desde el panel de administración antes de
-          poder usarse como terminal de autoservicio.
-        </p>
+      <div className="flex justify-center py-16">
+        <LoadingSpinner message="Cargando..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <span className="iconify lucide--alert-circle size-16 text-error"></span>
-        <h1 className="text-2xl font-bold">No se pudo cargar el catálogo</h1>
-        <p className="max-w-md text-base-content/60">{error}</p>
+      <div className="alert alert-error">
+        <span className="iconify lucide--alert-circle size-6"></span>
+        <div>{error}</div>
       </div>
     );
   }
@@ -47,12 +36,12 @@ export function SelfServiceOrderApp() {
 
   if (categories.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
+      <div className="flex flex-col items-center gap-4 py-16 text-center">
         <span className="iconify lucide--layout-grid size-16 text-base-content/40"></span>
-        <h1 className="text-2xl font-bold">Sin categorías disponibles</h1>
+        <h2 className="text-xl font-bold">Sin categorías disponibles</h2>
         <p className="max-w-md text-base-content/60">
           Ninguna categoría principal está habilitada para autoservicio todavía. Configúralas desde
-          Categorías Principales en el panel de administración.
+          Categorías Principales.
         </p>
         <button type="button" onClick={() => setView("start")} className="btn btn-outline mt-2">
           Volver

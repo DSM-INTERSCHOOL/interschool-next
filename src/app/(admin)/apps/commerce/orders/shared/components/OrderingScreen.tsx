@@ -86,7 +86,7 @@ export function OrderingScreen({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex bg-base-100">
+    <div className="flex h-[75vh] min-h-[32rem] w-full overflow-hidden rounded-2xl border border-base-300 bg-base-100">
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between border-b border-base-300 bg-base-100 px-4 py-3">
           <h1 className="text-2xl font-bold">Nueva Orden</h1>

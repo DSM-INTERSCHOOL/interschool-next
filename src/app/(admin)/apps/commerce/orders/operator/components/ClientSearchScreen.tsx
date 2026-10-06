@@ -29,7 +29,7 @@ export function ClientSearchScreen({ onSelect, onSkip }: ClientSearchScreenProps
   const { query, setQuery, results, loading, error } = usePersonSearch();
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center gap-6 overflow-y-auto bg-base-200 p-8">
+    <div className="flex h-[75vh] min-h-[32rem] w-full flex-col items-center gap-6 overflow-y-auto rounded-2xl border border-base-300 bg-base-200 p-8">
       <div className="flex w-full max-w-xl flex-col items-center gap-2 text-center">
         <span className="iconify lucide--user-search size-14 text-primary"></span>
         <h1 className="text-3xl font-bold">Buscar cliente</h1>

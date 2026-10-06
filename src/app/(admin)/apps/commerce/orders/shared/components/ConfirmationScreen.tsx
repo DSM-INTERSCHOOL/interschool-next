@@ -7,7 +7,7 @@ interface ConfirmationScreenProps {
 
 export function ConfirmationScreen({ instructions, onNewOrder }: ConfirmationScreenProps) {
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6 overflow-y-auto bg-gradient-to-br from-success to-success/70 p-8 text-center text-success-content">
+    <div className="flex h-[75vh] min-h-[32rem] w-full flex-col items-center justify-center gap-6 overflow-y-auto rounded-2xl bg-gradient-to-br from-success to-success/70 p-8 text-center text-success-content">
       <span className="iconify lucide--circle-check-big size-24"></span>
       <h1 className="text-4xl font-bold">¡Gracias por tu orden!</h1>
 

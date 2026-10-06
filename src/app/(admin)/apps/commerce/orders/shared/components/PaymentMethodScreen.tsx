@@ -16,7 +16,7 @@ export function PaymentMethodScreen({
   onChoose,
 }: PaymentMethodScreenProps) {
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-10 overflow-y-auto bg-base-200 p-8">
+    <div className="relative flex h-[75vh] min-h-[32rem] w-full flex-col items-center justify-center gap-10 overflow-y-auto rounded-2xl border border-base-300 bg-base-200 p-8">
       {clientLabel && (
         <div className="badge badge-lg badge-outline absolute right-4 top-4 gap-2 py-4">
           <span className="iconify lucide--user-round size-4"></span>
