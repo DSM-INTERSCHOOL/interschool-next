@@ -1,4 +1,2 @@
-export { useSelfServiceCatalog } from "./useSelfServiceCatalog";
-export { useCart, cartLineKey } from "./useCart";
-export type { CartLine } from "./useCart";
-export { useCheckout } from "./useCheckout";
+export { useCatalogForOrderMode, useCart, cartLineKey, useCheckout } from "@/app/(admin)/apps/commerce/orders/shared/hooks";
+export type { CartLine } from "@/app/(admin)/apps/commerce/orders/shared/hooks";

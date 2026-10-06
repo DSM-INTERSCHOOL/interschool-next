@@ -17,10 +17,22 @@ interface OrderingScreenProps {
   products: ProductRead[];
   colors: ColorRead[];
   sizes: SizeRead[];
+  // The client the order is for. Self-service passes the logged-in
+  // person's own id; OPERATOR mode passes whichever client was searched
+  // and selected before reaching this screen. Undefined for guest
+  // checkout.
+  clientPersonInternalId: string | undefined;
   onCancel: () => void;
 }
 
-export function OrderingScreen({ categories, products, colors, sizes, onCancel }: OrderingScreenProps) {
+export function OrderingScreen({
+  categories,
+  products,
+  colors,
+  sizes,
+  clientPersonInternalId,
+  onCancel,
+}: OrderingScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
   const [pickerProduct, setPickerProduct] = useState<ProductRead | null>(null);
   const [showPickupScreen, setShowPickupScreen] = useState(false);
@@ -58,13 +70,15 @@ export function OrderingScreen({ categories, products, colors, sizes, onCancel }
         submitting={checkout.phase === "creatingOrder"}
         error={checkout.error}
         onBack={() => setShowPickupScreen(false)}
-        onSubmit={(pickupName) => checkout.createOrderWithDetails(cart.lines, pickupName)}
+        onSubmit={(pickupName) =>
+          checkout.createOrderWithDetails(cart.lines, pickupName, clientPersonInternalId)
+        }
       />
     );
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="fixed inset-0 z-40 flex bg-base-100">
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between border-b border-base-300 bg-base-100 px-4 py-3">
           <h1 className="text-2xl font-bold">Nueva Orden</h1>

@@ -9,7 +9,7 @@ interface PaymentMethodScreenProps {
 
 export function PaymentMethodScreen({ total, submitting, error, onChoose }: PaymentMethodScreenProps) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-10 bg-base-200 p-8">
+    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-10 overflow-y-auto bg-base-200 p-8">
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-3xl font-bold">¿Cómo quieres pagar?</h1>
         <p className="text-xl text-base-content/60">Total a pagar: ${total.toFixed(2)}</p>

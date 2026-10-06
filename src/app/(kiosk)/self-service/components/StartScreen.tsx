@@ -4,7 +4,7 @@ interface StartScreenProps {
 
 export function StartScreen({ onStart }: StartScreenProps) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-10 bg-gradient-to-br from-primary to-primary-focus p-8 text-primary-content">
+    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-10 overflow-y-auto bg-gradient-to-br from-primary to-primary-focus p-8 text-primary-content">
       <div className="flex flex-col items-center gap-3 text-center">
         <span className="iconify lucide--utensils-crossed size-20"></span>
         <h1 className="text-5xl font-bold">Bienvenido</h1>

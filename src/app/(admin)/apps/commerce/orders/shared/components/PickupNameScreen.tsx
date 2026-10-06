@@ -13,7 +13,7 @@ export function PickupNameScreen({ total, submitting, error, onBack, onSubmit }:
   const ready = name.trim().length > 0;
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center gap-8 bg-base-200 p-8">
+    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto bg-base-200 p-8">
       <button
         type="button"
         onClick={onBack}
