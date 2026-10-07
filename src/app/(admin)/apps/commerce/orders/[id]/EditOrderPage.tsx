@@ -113,52 +113,72 @@ export default function EditOrderPage({ orderId }: EditOrderPageProps) {
         </div>
       )}
 
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Datos de la orden</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Referencia</span>
-              </label>
+      {!locked && (
+        <div className="card bg-base-100 shadow">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Agregar artículo</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+              <select
+                className="select select-bordered select-sm w-full"
+                value={newProductId}
+                onChange={(e) => {
+                  setNewProductId(e.target.value ? Number(e.target.value) : "");
+                  setNewColorId("");
+                  setNewSizeId("");
+                }}
+              >
+                <option value="">Selecciona un producto</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select select-bordered select-sm w-full"
+                value={newColorId}
+                disabled={newColorOptions.length === 0}
+                onChange={(e) => setNewColorId(e.target.value ? Number(e.target.value) : "")}
+              >
+                <option value="">{newColorOptions.length ? "Color" : "— sin color —"}</option>
+                {newColorOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.description}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select select-bordered select-sm w-full"
+                value={newSizeId}
+                disabled={newSizeOptions.length === 0}
+                onChange={(e) => setNewSizeId(e.target.value ? Number(e.target.value) : "")}
+              >
+                <option value="">{newSizeOptions.length ? "Talla" : "— sin talla —"}</option>
+                {newSizeOptions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.description}
+                  </option>
+                ))}
+              </select>
               <input
-                type="text"
-                className="input input-bordered w-full"
-                value={referenceValue}
-                disabled={locked}
-                onChange={(e) => setReference(e.target.value)}
+                type="number"
+                min={1}
+                className="input input-bordered input-sm w-full"
+                value={newAmount}
+                onChange={(e) => setNewAmount(Number(e.target.value) || 1)}
               />
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={!newLineReady || actionLoading}
+                onClick={handleAddLine}
+              >
+                {newPrice !== null ? `Agregar · $${newPrice.toFixed(2)}` : "Agregar"}
+              </button>
             </div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Recoge</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={collectedByValue}
-                disabled={locked}
-                onChange={(e) => setCollectedBy(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="card-actions justify-end mt-2">
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              disabled={locked || actionLoading || (reference === null && collectedBy === null)}
-              onClick={() =>
-                saveOrderInfo({
-                  reference: referenceValue,
-                  collection_options: { collected_by: collectedByValue },
-                })
-              }
-            >
-              Guardar
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="card bg-base-100 shadow">
         <div className="card-body">
@@ -236,70 +256,53 @@ export default function EditOrderPage({ orderId }: EditOrderPageProps) {
             Total: ${Number(order.total).toFixed(2)}
           </div>
 
-          {!locked && (
-            <>
-              <div className="divider">Agregar artículo</div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-                <select
-                  className="select select-bordered select-sm w-full"
-                  value={newProductId}
-                  onChange={(e) => {
-                    setNewProductId(e.target.value ? Number(e.target.value) : "");
-                    setNewColorId("");
-                    setNewSizeId("");
-                  }}
-                >
-                  <option value="">Selecciona un producto</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="select select-bordered select-sm w-full"
-                  value={newColorId}
-                  disabled={newColorOptions.length === 0}
-                  onChange={(e) => setNewColorId(e.target.value ? Number(e.target.value) : "")}
-                >
-                  <option value="">{newColorOptions.length ? "Color" : "— sin color —"}</option>
-                  {newColorOptions.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.description}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="select select-bordered select-sm w-full"
-                  value={newSizeId}
-                  disabled={newSizeOptions.length === 0}
-                  onChange={(e) => setNewSizeId(e.target.value ? Number(e.target.value) : "")}
-                >
-                  <option value="">{newSizeOptions.length ? "Talla" : "— sin talla —"}</option>
-                  {newSizeOptions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.description}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min={1}
-                  className="input input-bordered input-sm w-full"
-                  value={newAmount}
-                  onChange={(e) => setNewAmount(Number(e.target.value) || 1)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  disabled={!newLineReady || actionLoading}
-                  onClick={handleAddLine}
-                >
-                  {newPrice !== null ? `Agregar · $${newPrice.toFixed(2)}` : "Agregar"}
-                </button>
-              </div>
-            </>
-          )}
+        </div>
+      </div>
+
+      <div className="card bg-base-100 shadow">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Datos de la orden</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Referencia</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={referenceValue}
+                disabled={locked}
+                onChange={(e) => setReference(e.target.value)}
+              />
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Recoge</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={collectedByValue}
+                disabled={locked}
+                onChange={(e) => setCollectedBy(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="card-actions justify-end mt-2">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              disabled={locked || actionLoading || (reference === null && collectedBy === null)}
+              onClick={() =>
+                saveOrderInfo({
+                  reference: referenceValue,
+                  collection_options: { collected_by: collectedByValue },
+                })
+              }
+            >
+              Guardar
+            </button>
+          </div>
         </div>
       </div>
     </div>
