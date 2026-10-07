@@ -249,11 +249,16 @@ export default function EditOrderPage({ orderId }: EditOrderPageProps) {
                   </tr>
                 )}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={5} className="text-right text-lg font-bold">
+                    Total
+                  </td>
+                  <td className="text-right text-lg font-bold">${Number(order.total).toFixed(2)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
-          </div>
-
-          <div className="flex justify-end text-xl font-bold mt-2">
-            Total: ${Number(order.total).toFixed(2)}
           </div>
 
         </div>
