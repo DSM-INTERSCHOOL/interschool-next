@@ -3,7 +3,7 @@
 import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { ORDER_STATUSES, OrderStatus } from "@/interfaces/IOrder";
+import { ORDER_STATUSES, OrderRead, OrderStatus } from "@/interfaces/IOrder";
 import { ORDER_MODES } from "@/interfaces/ITopCategory";
 import { useOrdersList } from "./hooks";
 
@@ -47,6 +47,19 @@ export default function OrdersListPage() {
   } = useOrdersList();
 
   const hasFilters = Boolean(status || createdBy || startDate || endDate);
+
+  // order_mode is only populated for orders created after that field
+  // existed. For older rows it's null -- fall back to inferring from
+  // whether the client and the person who placed it are the same person,
+  // same rule the field itself was introduced to stop relying on for new
+  // orders (an operator selling to themselves is indistinguishable this
+  // way, but there's no better signal available for legacy data).
+  const orderModeLabel = (order: OrderRead) => {
+    const mode =
+      order.order_mode ??
+      (order.person_internal_id === order.created_by_person_internal_id ? "SELF_SERVICE" : "OPERATOR");
+    return ORDER_MODES.find((m) => m.value === mode)?.label ?? mode;
+  };
 
   const clientDisplay = (personInternalId: string | null) => {
     if (!personInternalId) return "—";
@@ -201,14 +214,7 @@ export default function OrdersListPage() {
                         <td className="text-right font-medium">${Number(order.total).toFixed(2)}</td>
                         <td>{order.created_by_person_internal_id ?? "—"}</td>
                         <td>
-                          {order.order_mode ? (
-                            <span className="badge badge-ghost badge-sm">
-                              {ORDER_MODES.find((m) => m.value === order.order_mode)?.label ??
-                                order.order_mode}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
+                          <span className="badge badge-ghost badge-sm">{orderModeLabel(order)}</span>
                         </td>
                       </tr>
                     ))}
