@@ -4,6 +4,7 @@ import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ORDER_STATUSES, OrderStatus } from "@/interfaces/IOrder";
+import { ORDER_MODES } from "@/interfaces/ITopCategory";
 import { useOrdersList } from "./hooks";
 
 const STATUS_BADGE: Record<OrderStatus, string> = {
@@ -20,15 +21,12 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   SPEI: "SPEI",
 };
 
+// dd/MM/yyyy HH:mm, in the viewer's own local time.
 const formatDateTime = (value: string | null) => {
   if (!value) return "—";
-  return new Date(value).toLocaleString("es-MX", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = new Date(value);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
 export default function OrdersListPage() {
@@ -36,6 +34,7 @@ export default function OrdersListPage() {
     orders,
     loading,
     error,
+    personsById,
     status,
     setStatus,
     createdBy,
@@ -48,6 +47,15 @@ export default function OrdersListPage() {
   } = useOrdersList();
 
   const hasFilters = Boolean(status || createdBy || startDate || endDate);
+
+  const clientDisplay = (personInternalId: string | null) => {
+    if (!personInternalId) return "—";
+    const person = personsById.get(personInternalId);
+    const name = person
+      ? [person.given_name, person.paternal_name, person.maternal_name].filter(Boolean).join(" ")
+      : null;
+    return name ? `${personInternalId} - ${name}` : personInternalId;
+  };
 
   return (
     <>
@@ -165,32 +173,43 @@ export default function OrdersListPage() {
                   <thead>
                     <tr>
                       <th>Orden</th>
+                      <th>Fecha</th>
                       <th>Estatus</th>
                       <th>Cliente</th>
-                      <th>Levantada por</th>
                       <th>Recoge</th>
                       <th>Pago</th>
                       <th className="text-right">Total</th>
-                      <th>Fecha</th>
+                      <th>Levantada por</th>
+                      <th>Modo</th>
                     </tr>
                   </thead>
                   <tbody>
                     {orders.map((order) => (
                       <tr key={order.id}>
-                        <td className="font-medium">#{order.id_orden}</td>
+                        <td className="font-medium">{order.id_orden}</td>
+                        <td className="text-sm text-base-content/60">{formatDateTime(order.created)}</td>
                         <td>
                           <span className={`badge badge-sm ${STATUS_BADGE[order.status ?? "PENDING"]}`}>
                             {ORDER_STATUSES.find((s) => s.value === order.status)?.label ?? order.status}
                           </span>
                         </td>
-                        <td>{order.person_internal_id ?? "—"}</td>
-                        <td>{order.created_by_person_internal_id ?? "—"}</td>
+                        <td>{clientDisplay(order.person_internal_id)}</td>
                         <td>{order.collected_by ?? "—"}</td>
                         <td>
                           {order.payment_method ? PAYMENT_METHOD_LABELS[order.payment_method] : "—"}
                         </td>
                         <td className="text-right font-medium">${Number(order.total).toFixed(2)}</td>
-                        <td className="text-sm text-base-content/60">{formatDateTime(order.created)}</td>
+                        <td>{order.created_by_person_internal_id ?? "—"}</td>
+                        <td>
+                          {order.order_mode ? (
+                            <span className="badge badge-ghost badge-sm">
+                              {ORDER_MODES.find((m) => m.value === order.order_mode)?.label ??
+                                order.order_mode}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

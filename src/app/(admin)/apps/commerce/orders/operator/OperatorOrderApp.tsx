@@ -65,6 +65,7 @@ export function OperatorOrderApp() {
       sizes={sizes}
       clientPersonInternalId={client?.person_internal_id}
       clientLabel={client ? fullName(client) : undefined}
+      orderMode="OPERATOR"
       onCancel={backToClientSearch}
     />
   );

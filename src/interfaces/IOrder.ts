@@ -1,3 +1,5 @@
+import { OrderMode } from "./ITopCategory";
+
 export type OrderStatus = "PENDING" | "PLACED" | "COMPLETED" | "PARTIALLY_DISPATCHED" | "PAID" | "CANCELLED";
 export type DeliveryMethod = "COLLECTION" | "DELIVERY";
 export type PaymentMethod = "VENTANILLA" | "SPEI";
@@ -33,6 +35,9 @@ export interface OrderCreate {
   // Only honored when the caller is staff (ADMIN/CASHIER); ignored for a
   // plain shopper's own token and for guest checkout.
   person_internal_id?: string;
+  // Which order-entry flow is creating this order -- set explicitly, not
+  // inferred server-side.
+  order_mode?: OrderMode;
 }
 
 export interface OrderUpdate {
@@ -70,6 +75,7 @@ export interface OrderRead {
   id_orden: number;
   person_internal_id: string | null;
   created_by_person_internal_id: string | null;
+  order_mode: OrderMode | null;
   session_id: string;
   delivery_method: DeliveryMethod | null;
   payment_method: PaymentMethod | null;

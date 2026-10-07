@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { OrderRead, PaymentInstructionsRead, PaymentMethod } from "@/interfaces/IOrder";
+import { OrderMode } from "@/interfaces/ITopCategory";
 import { checkoutOrder, createOrder, createOrderDetail } from "@/services/order.service";
 import { CartLine } from "./useCart";
 
@@ -23,7 +24,8 @@ export const useCheckout = () => {
   const createOrderWithDetails = async (
     lines: CartLine[],
     pickupName: string,
-    clientPersonInternalId: string | undefined
+    clientPersonInternalId: string | undefined,
+    orderMode: OrderMode
   ) => {
     setPhase("creatingOrder");
     setError(null);
@@ -46,6 +48,7 @@ export const useCheckout = () => {
           // these two only match for self-service by deliberate choice,
           // not because the backend forces it.
           person_internal_id: clientPersonInternalId,
+          order_mode: orderMode,
         },
       });
 

@@ -60,6 +60,7 @@ export function SelfServiceOrderApp() {
       // order and who it's for -- see the shared useCheckout hook's own
       // note on why this is a deliberate choice, not a backend default.
       clientPersonInternalId={personInternalId ?? undefined}
+      orderMode="SELF_SERVICE"
       onCancel={() => setView("start")}
     />
   );

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ProductRead } from "@/interfaces/IProduct";
 import { ColorRead } from "@/interfaces/IColor";
 import { SizeRead } from "@/interfaces/ISize";
-import { TopCategoryRead } from "@/interfaces/ITopCategory";
+import { OrderMode, TopCategoryRead } from "@/interfaces/ITopCategory";
 import { useCart, useCheckout } from "../hooks";
 import { ALL_CATEGORIES, CategoryRail } from "./CategoryRail";
 import { ProductGrid } from "./ProductGrid";
@@ -27,6 +27,7 @@ interface OrderingScreenProps {
   // self-service leaves it unset -- there's nothing to disambiguate when
   // the logged-in person is always both the submitter and the client.
   clientLabel?: string;
+  orderMode: OrderMode;
   onCancel: () => void;
 }
 
@@ -37,6 +38,7 @@ export function OrderingScreen({
   sizes,
   clientPersonInternalId,
   clientLabel,
+  orderMode,
   onCancel,
 }: OrderingScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
@@ -79,7 +81,7 @@ export function OrderingScreen({
         clientLabel={clientLabel}
         onBack={() => setShowPickupScreen(false)}
         onSubmit={(pickupName) =>
-          checkout.createOrderWithDetails(cart.lines, pickupName, clientPersonInternalId)
+          checkout.createOrderWithDetails(cart.lines, pickupName, clientPersonInternalId, orderMode)
         }
       />
     );

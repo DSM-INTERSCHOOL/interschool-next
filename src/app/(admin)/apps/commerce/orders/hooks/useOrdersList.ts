@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { OrderRead, OrderStatus } from "@/interfaces/IOrder";
+import { CommercePersonRead } from "@/interfaces/ICommercePerson";
 import { getOrders } from "@/services/order.service";
+import { getCommercePersons } from "@/services/commercePerson.service";
 
 const DEBOUNCE_MS = 300;
 
@@ -23,6 +25,18 @@ export const useOrdersList = () => {
   const [orders, setOrders] = useState<OrderRead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [personsById, setPersonsById] = useState<Map<string, CommercePersonRead>>(new Map());
+
+  // Fetched once, not re-fetched per filter change -- just a lookup for
+  // displaying a client's name next to their id in the table.
+  useEffect(() => {
+    const { schoolId } = getOrgConfig();
+    getCommercePersons({ schoolId })
+      .then((persons) => setPersonsById(new Map(persons.map((p) => [p.person_internal_id, p]))))
+      .catch(() => {
+        // Non-critical: the table still shows the id if the name lookup fails.
+      });
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -57,6 +71,7 @@ export const useOrdersList = () => {
     orders,
     loading,
     error,
+    personsById,
     status,
     setStatus,
     createdBy,
