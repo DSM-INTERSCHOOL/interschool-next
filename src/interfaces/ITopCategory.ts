@@ -3,8 +3,8 @@
 export type OrderMode = "SELF_SERVICE" | "OPERATOR";
 
 export const ORDER_MODES: { value: OrderMode; label: string }[] = [
-  { value: "SELF_SERVICE", label: "Autoservicio" },
-  { value: "OPERATOR", label: "Operador" },
+  { value: "SELF_SERVICE", label: "AS" },
+  { value: "OPERATOR", label: "OP" },
 ];
 
 export interface TopCategoryRead {
