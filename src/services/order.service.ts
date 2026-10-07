@@ -4,6 +4,7 @@ import {
   OrderCreate,
   OrderDetailCreate,
   OrderDetailRead,
+  OrderDetailUpdate,
   OrderRead,
   OrderUpdate,
   PaymentInstructionsRead,
@@ -24,6 +25,11 @@ export const getOrders = async ({
   const response = await commerceApi.get<OrderRead[]>(`/schools/${schoolId}/orders`, {
     params: filters ? { filters } : undefined,
   });
+  return response.data;
+};
+
+export const getOrder = async ({ schoolId, orderId }: OrderArgs): Promise<OrderRead> => {
+  const response = await commerceApi.get<OrderRead>(`/schools/${schoolId}/orders/${orderId}`);
   return response.data;
 };
 
@@ -49,6 +55,33 @@ export const createOrderDetail = async ({
   dto,
 }: ServiceArgs & { dto: OrderDetailCreate }): Promise<OrderDetailRead> => {
   const response = await commerceApi.post<OrderDetailRead>(`/schools/${schoolId}/order-details`, dto);
+  return response.data;
+};
+
+interface OrderDetailArgs extends ServiceArgs {
+  detailId: number;
+}
+
+export const updateOrderDetail = async ({
+  schoolId,
+  detailId,
+  dto,
+}: OrderDetailArgs & { dto: OrderDetailUpdate }): Promise<OrderDetailRead> => {
+  const response = await commerceApi.put<OrderDetailRead>(
+    `/schools/${schoolId}/order-details/${detailId}`,
+    dto
+  );
+  return response.data;
+};
+
+export const deleteOrderDetail = async ({ schoolId, detailId }: OrderDetailArgs): Promise<void> => {
+  await commerceApi.delete(`/schools/${schoolId}/order-details/${detailId}`);
+};
+
+// Restores inventory for any tracked lines if the order had already been
+// placed; no-op (for inventory) if it was still PENDING.
+export const cancelOrder = async ({ schoolId, orderId }: OrderArgs): Promise<OrderRead> => {
+  const response = await commerceApi.post<OrderRead>(`/schools/${schoolId}/orders/${orderId}/cancel`);
   return response.data;
 };
 

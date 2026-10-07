@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { OrderRead, OrderStatus } from "@/interfaces/IOrder";
 import { CommercePersonRead } from "@/interfaces/ICommercePerson";
@@ -38,27 +38,27 @@ export const useOrdersList = () => {
       });
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const load = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-          const { schoolId } = getOrgConfig();
-          const filters = buildFilters(status, createdBy, startDate, endDate);
-          const data = await getOrders({ schoolId, filters: filters || undefined });
-          setOrders(data);
-        } catch (err: any) {
-          setError(err.response?.data?.detail || err.message || "Error al cargar las órdenes");
-        } finally {
-          setLoading(false);
-        }
-      };
-      load();
-    }, DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { schoolId } = getOrgConfig();
+      const filters = buildFilters(status, createdBy, startDate, endDate);
+      const data = await getOrders({ schoolId, filters: filters || undefined });
+      setOrders(data);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || "Error al cargar las órdenes");
+    } finally {
+      setLoading(false);
+    }
   }, [status, createdBy, startDate, endDate]);
+
+  // Debounced: filter changes (especially typing in createdBy) shouldn't
+  // fire a request per keystroke.
+  useEffect(() => {
+    const timer = setTimeout(load, DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [load]);
 
   const clearFilters = () => {
     setStatus("");
@@ -81,5 +81,8 @@ export const useOrdersList = () => {
     endDate,
     setEndDate,
     clearFilters,
+    // Immediate, undebounced re-fetch with the current filters -- for
+    // refreshing the list after an action like cancelling an order.
+    reload: load,
   };
 };

@@ -1,11 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
+import { getOrgConfig } from "@/lib/orgConfig";
 import { ORDER_STATUSES, OrderRead, OrderStatus } from "@/interfaces/IOrder";
 import { ORDER_MODES } from "@/interfaces/ITopCategory";
+import { cancelOrder } from "@/services/order.service";
 import { useOrdersList } from "./hooks";
+
+// A cancelled order is a dead end either way; everything else can still
+// be edited or cancelled from here.
+const isActionable = (status: OrderStatus | null) => status !== "CANCELLED";
 
 const STATUS_BADGE: Record<OrderStatus, string> = {
   PENDING: "badge-ghost",
@@ -44,9 +52,30 @@ export default function OrdersListPage() {
     endDate,
     setEndDate,
     clearFilters,
+    reload,
   } = useOrdersList();
 
+  const [cancelTarget, setCancelTarget] = useState<OrderRead | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
   const hasFilters = Boolean(status || createdBy || startDate || endDate);
+
+  const handleCancel = async () => {
+    if (!cancelTarget) return;
+    try {
+      setCancelLoading(true);
+      setCancelError(null);
+      const { schoolId } = getOrgConfig();
+      await cancelOrder({ schoolId, orderId: cancelTarget.id });
+      setCancelTarget(null);
+      await reload();
+    } catch (err: any) {
+      setCancelError(err.response?.data?.detail || err.message || "No se pudo cancelar la orden");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
 
   // order_mode is only populated for orders created after that field
   // existed. For older rows it's null -- fall back to inferring from
@@ -161,6 +190,13 @@ export default function OrdersListPage() {
               </div>
             </div>
 
+            {cancelError && (
+              <div className="alert alert-error mb-4">
+                <span className="iconify lucide--alert-circle size-6"></span>
+                <div>{cancelError}</div>
+              </div>
+            )}
+
             {loading ? (
               <div className="flex justify-center py-16">
                 <LoadingSpinner message="Cargando órdenes..." />
@@ -194,6 +230,7 @@ export default function OrdersListPage() {
                       <th>Pago</th>
                       <th className="text-right">Total</th>
                       <th>Levantada por</th>
+                      <th className="text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -216,6 +253,32 @@ export default function OrdersListPage() {
                         </td>
                         <td className="text-right font-medium">${Number(order.total).toFixed(2)}</td>
                         <td>{order.created_by_person_internal_id ?? "—"}</td>
+                        <td>
+                          <div className="flex justify-end gap-1">
+                            {isActionable(order.status) ? (
+                              <Link
+                                href={`/apps/commerce/orders/${order.id}`}
+                                className="btn btn-ghost btn-xs"
+                                title="Editar"
+                              >
+                                <span className="iconify lucide--pencil size-4"></span>
+                              </Link>
+                            ) : (
+                              <button type="button" className="btn btn-ghost btn-xs" disabled title="Editar">
+                                <span className="iconify lucide--pencil size-4"></span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs text-error"
+                              title="Cancelar"
+                              disabled={!isActionable(order.status)}
+                              onClick={() => setCancelTarget(order)}
+                            >
+                              <span className="iconify lucide--ban size-4"></span>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -225,6 +288,16 @@ export default function OrdersListPage() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={cancelTarget !== null}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={handleCancel}
+        title="Cancelar orden"
+        message="¿Estás seguro de que deseas cancelar esta orden? Si ya había sido colocada, el inventario se restaurará."
+        itemName={cancelTarget ? `Orden #${cancelTarget.id_orden}` : null}
+        loading={cancelLoading}
+      />
     </>
   );
 }

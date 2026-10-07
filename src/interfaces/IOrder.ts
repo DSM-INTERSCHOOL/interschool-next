@@ -108,6 +108,16 @@ export interface OrderDetailCreate {
   discount_type?: "importe" | "porcentaje";
 }
 
+export interface OrderDetailUpdate {
+  amount?: number;
+  color?: string;
+  size?: string;
+  status?: string;
+  price?: number;
+  discount?: number;
+  discount_type?: "importe" | "porcentaje";
+}
+
 export interface CheckoutRequest {
   payment_method: PaymentMethod;
 }
