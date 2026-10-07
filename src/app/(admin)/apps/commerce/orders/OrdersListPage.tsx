@@ -187,13 +187,13 @@ export default function OrdersListPage() {
                     <tr>
                       <th>Orden</th>
                       <th>Fecha</th>
+                      <th>Modo</th>
                       <th>Estatus</th>
                       <th>Cliente</th>
                       <th>Recoge</th>
                       <th>Pago</th>
                       <th className="text-right">Total</th>
                       <th>Levantada por</th>
-                      <th>Modo</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -201,6 +201,9 @@ export default function OrdersListPage() {
                       <tr key={order.id}>
                         <td className="font-medium">{order.id_orden}</td>
                         <td className="text-sm text-base-content/60">{formatDateTime(order.created)}</td>
+                        <td>
+                          <span className="badge badge-ghost badge-sm">{orderModeLabel(order)}</span>
+                        </td>
                         <td>
                           <span className={`badge badge-sm ${STATUS_BADGE[order.status ?? "PENDING"]}`}>
                             {ORDER_STATUSES.find((s) => s.value === order.status)?.label ?? order.status}
@@ -213,9 +216,6 @@ export default function OrdersListPage() {
                         </td>
                         <td className="text-right font-medium">${Number(order.total).toFixed(2)}</td>
                         <td>{order.created_by_person_internal_id ?? "—"}</td>
-                        <td>
-                          <span className="badge badge-ghost badge-sm">{orderModeLabel(order)}</span>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
