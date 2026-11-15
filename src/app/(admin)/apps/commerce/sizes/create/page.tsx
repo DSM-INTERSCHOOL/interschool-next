@@ -11,12 +11,6 @@ export default function CreateSizePage() {
     <>
       <PageTitle
         title="Crear Talla"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Tallas", path: "/apps/commerce/sizes" },
-          { label: "Crear", active: true },
-        ]}
       />
       <div className="mt-6">
         <SizeFormPage />

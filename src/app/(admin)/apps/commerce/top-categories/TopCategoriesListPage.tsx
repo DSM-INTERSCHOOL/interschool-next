@@ -21,7 +21,7 @@ export default function TopCategoriesListPage() {
       await removeTopCategory(deleteId);
       setDeleteId(null);
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || "Error al eliminar el clasificador");
+      alert(err.response?.data?.detail || err.message || "Error al eliminar la categoría");
     } finally {
       setDeleteLoading(false);
     }
@@ -30,17 +30,12 @@ export default function TopCategoriesListPage() {
   return (
     <>
       <PageTitle
-        title="Clasificadores"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Clasificadores", active: true }]}
+        title="Categorías"
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
-              <h2 className="card-title text-2xl">
-                <span className="iconify lucide--layout-grid size-6"></span>
-                Catálogo de Clasificadores
-              </h2>
+            <div className="flex flex-wrap justify-end items-center gap-2 mb-4">
               <div className="flex gap-2">
                 <Link href="/apps/commerce/top-categories/order-modes" className="btn btn-outline">
                   <span className="iconify lucide--toggle-right size-5"></span>
@@ -48,19 +43,19 @@ export default function TopCategoriesListPage() {
                 </Link>
                 <Link href="/apps/commerce/top-categories/create" className="btn btn-primary">
                   <span className="iconify lucide--plus size-5"></span>
-                  Nuevo Clasificador
+                  Nueva Categoría
                 </Link>
               </div>
             </div>
 
             <p className="text-base-content/60 text-sm mb-4">
               Agrupación de alto nivel para los productos (Ej. Alimentos y Bebidas, Uniformes, Útiles). A
-              diferencia de las categorías, cada producto pertenece a un solo clasificador.
+              diferencia de los clasificadores, cada producto pertenece a una sola categoría.
             </p>
 
             {loading ? (
               <div className="flex justify-center py-16">
-                <LoadingSpinner message="Cargando clasificadores..." />
+                <LoadingSpinner message="Cargando categorías..." />
               </div>
             ) : error ? (
               <div className="alert alert-error">
@@ -70,11 +65,11 @@ export default function TopCategoriesListPage() {
             ) : topCategories.length === 0 ? (
               <div className="text-center py-16">
                 <span className="iconify lucide--layout-grid size-24 text-base-content/20 mb-4"></span>
-                <h3 className="text-xl font-medium text-base-content mb-2">No hay clasificadores</h3>
-                <p className="text-base-content/60 mb-6">Crea tu primer clasificador para comenzar</p>
+                <h3 className="text-xl font-medium text-base-content mb-2">No hay categorías</h3>
+                <p className="text-base-content/60 mb-6">Crea tu primera categoría para comenzar</p>
                 <Link href="/apps/commerce/top-categories/create" className="btn btn-primary btn-sm">
                   <span className="iconify lucide--plus size-4"></span>
-                  Crear clasificador
+                  Crear categoría
                 </Link>
               </div>
             ) : (
@@ -122,8 +117,8 @@ export default function TopCategoriesListPage() {
         isOpen={deleteId !== null}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Eliminar clasificador"
-        message="¿Estás seguro de que deseas eliminar este clasificador?"
+        title="Eliminar categoría"
+        message="¿Estás seguro de que deseas eliminar esta categoría?"
         itemName={topCategoryToDelete?.description}
         loading={deleteLoading}
       />

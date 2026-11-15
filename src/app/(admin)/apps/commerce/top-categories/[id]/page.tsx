@@ -14,13 +14,7 @@ export default function EditTopCategoryPage({ params }: EditTopCategoryPageProps
   return (
     <>
       <PageTitle
-        title="Editar Clasificador"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Clasificadores", path: "/apps/commerce/top-categories" },
-          { label: "Editar", active: true },
-        ]}
+        title="Editar Categoría"
       />
       <div className="mt-6">
         <TopCategoryFormPage topCategoryId={Number(id)} />

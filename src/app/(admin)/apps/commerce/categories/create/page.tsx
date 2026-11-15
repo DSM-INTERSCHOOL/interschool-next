@@ -3,20 +3,14 @@ import { PageTitle } from "@/components/PageTitle";
 import CategoryFormPage from "../CategoryFormPage";
 
 export const metadata: Metadata = {
-  title: "Crear Categoría - Interschool",
+  title: "Crear Clasificador - Interschool",
 };
 
 export default function CreateCategoryPage() {
   return (
     <>
       <PageTitle
-        title="Crear Categoría"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Categorías", path: "/apps/commerce/categories" },
-          { label: "Crear", active: true },
-        ]}
+        title="Crear Clasificador"
       />
       <div className="mt-6">
         <CategoryFormPage />

@@ -7,6 +7,10 @@ interface CartPanelProps {
   onRemove: (key: string) => void;
   onCancel: () => void;
   onProceedToPickup: () => void;
+  // null = not stock-tracked (no cap) -- a line's quantity is the full
+  // amount being bought, so this is checked directly against it (unlike
+  // ProductPickerModal's getRemainingStock, which nets out the cart).
+  getAvailableQty: (productId: number, colorId: number | null, sizeId: number | null) => number | null;
 }
 
 export function CartPanel({
@@ -16,6 +20,7 @@ export function CartPanel({
   onRemove,
   onCancel,
   onProceedToPickup,
+  getAvailableQty,
 }: CartPanelProps) {
   return (
     <div className="flex h-full w-full max-w-sm flex-col border-l border-base-300 bg-base-100">
@@ -37,43 +42,49 @@ export function CartPanel({
       ) : (
         <div className="flex-1 overflow-y-auto p-4">
           <ul className="flex flex-col gap-4">
-            {lines.map((line) => (
-              <li key={line.key} className="flex gap-3">
-                <div className="flex-1">
-                  <p className="font-semibold">{line.title}</p>
-                  {(line.colorLabel || line.sizeLabel) && (
-                    <p className="text-sm text-base-content/60">
-                      {[line.colorLabel, line.sizeLabel].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  <div className="mt-2 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onUpdateQuantity(line.key, line.quantity - 1)}
-                      className="btn btn-circle btn-xs"
-                    >
-                      <span className="iconify lucide--minus size-3"></span>
-                    </button>
-                    <span className="w-6 text-center font-medium">{line.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => onUpdateQuantity(line.key, line.quantity + 1)}
-                      className="btn btn-circle btn-xs"
-                    >
-                      <span className="iconify lucide--plus size-3"></span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onRemove(line.key)}
-                      className="btn btn-ghost btn-xs ml-auto text-error"
-                    >
-                      <span className="iconify lucide--trash-2 size-4"></span>
-                    </button>
+            {lines.map((line) => {
+              const availableQty = getAvailableQty(line.productId, line.colorId, line.sizeId);
+              const atStockLimit = availableQty !== null && line.quantity >= availableQty;
+              return (
+                <li key={line.key} className="flex gap-3">
+                  <div className="flex-1">
+                    <p className="font-semibold">{line.title}</p>
+                    {(line.colorLabel || line.sizeLabel) && (
+                      <p className="text-sm text-base-content/60">
+                        {[line.colorLabel, line.sizeLabel].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {atStockLimit && <p className="text-xs text-warning">Límite de existencias alcanzado</p>}
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuantity(line.key, line.quantity - 1)}
+                        className="btn btn-circle btn-xs"
+                      >
+                        <span className="iconify lucide--minus size-3"></span>
+                      </button>
+                      <span className="w-6 text-center font-medium">{line.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuantity(line.key, line.quantity + 1)}
+                        className="btn btn-circle btn-xs"
+                        disabled={atStockLimit}
+                      >
+                        <span className="iconify lucide--plus size-3"></span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRemove(line.key)}
+                        className="btn btn-ghost btn-xs ml-auto text-error"
+                      >
+                        <span className="iconify lucide--trash-2 size-4"></span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <span className="font-semibold">${(line.unitPrice * line.quantity).toFixed(2)}</span>
-              </li>
-            ))}
+                  <span className="font-semibold">${(line.unitPrice * line.quantity).toFixed(2)}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

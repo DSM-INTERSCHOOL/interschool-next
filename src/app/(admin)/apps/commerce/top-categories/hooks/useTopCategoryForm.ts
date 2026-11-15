@@ -25,7 +25,7 @@ export const useTopCategoryForm = (topCategoryId?: number) => {
         const topCategory = await getTopCategory({ schoolId, topCategoryId });
         setFormData({ description: topCategory.description });
       } catch (err: any) {
-        setError(err.response?.data?.detail || err.message || "Error al cargar el clasificador");
+        setError(err.response?.data?.detail || err.message || "Error al cargar la categoría");
       } finally {
         setLoading(false);
       }
@@ -63,7 +63,7 @@ export const useTopCategoryForm = (topCategoryId?: number) => {
       }
       router.push("/apps/commerce/top-categories");
     } catch (err: any) {
-      setSaveError(err.response?.data?.detail || err.message || "Error al guardar el clasificador");
+      setSaveError(err.response?.data?.detail || err.message || "Error al guardar la categoría");
     } finally {
       setSaveLoading(false);
     }

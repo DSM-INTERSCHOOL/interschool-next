@@ -1,6 +1,7 @@
 import commerceApi from "./commerceApi";
 import {
   CheckoutRequest,
+  DispatchRequest,
   OrderCreate,
   OrderDetailCreate,
   OrderDetailRead,
@@ -9,6 +10,7 @@ import {
   OrderUpdate,
   PaymentInstructionsRead,
 } from "@/interfaces/IOrder";
+import { ProductAvailabilityRead } from "@/interfaces/IProduct";
 
 interface ServiceArgs {
   schoolId: string | number | null;
@@ -96,6 +98,35 @@ export const checkoutOrder = async ({
   const response = await commerceApi.post<PaymentInstructionsRead>(
     `/schools/${schoolId}/orders/${orderId}/checkout`,
     dto
+  );
+  return response.data;
+};
+
+// ADMIN/CASHIER only. Records delivery of some or all of an order's line
+// items (OrderDetail.dispatched) -- doesn't touch inventory, since stock
+// was already deducted at checkout. Moves the order to PARTIALLY_DISPATCHED
+// or COMPLETED as lines are fully delivered.
+export const dispatchOrder = async ({
+  schoolId,
+  orderId,
+  dto,
+}: OrderArgs & { dto: DispatchRequest }): Promise<OrderRead> => {
+  const response = await commerceApi.post<OrderRead>(`/schools/${schoolId}/orders/${orderId}/dispatch`, dto);
+  return response.data;
+};
+
+// Same auth as the product catalog itself. Lets order entry (self-service/
+// operator) validate/cap a quantity before it's added to the cart, instead
+// of only discovering a shortfall at checkout.
+export const getProductAvailability = async ({
+  schoolId,
+  productId,
+  orderMode,
+}: ServiceArgs & { productId: number; orderMode?: string }): Promise<ProductAvailabilityRead> => {
+  const params = new URLSearchParams();
+  if (orderMode) params.append("order_mode", orderMode);
+  const response = await commerceApi.get<ProductAvailabilityRead>(
+    `/schools/${schoolId}/products/${productId}/availability?${params.toString()}`
   );
   return response.data;
 };

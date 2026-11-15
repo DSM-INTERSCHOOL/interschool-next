@@ -16,7 +16,7 @@ export const useTopCategories = () => {
       const data = await getTopCategories({ schoolId });
       setTopCategories(data);
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || "Error al cargar los clasificadores");
+      setError(err.response?.data?.detail || err.message || "Error al cargar las categorías");
     } finally {
       setLoading(false);
     }

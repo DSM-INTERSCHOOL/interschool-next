@@ -33,16 +33,11 @@ export default function ProductsListPage() {
     <>
       <PageTitle
         title="Productos"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Productos", active: true }]}
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-              <h2 className="card-title text-2xl">
-                <span className="iconify lucide--package size-6"></span>
-                Catálogo de Productos
-              </h2>
+            <div className="flex flex-wrap justify-end items-center gap-4 mb-4">
               <Link href="/apps/commerce/products/create" className="btn btn-primary">
                 <span className="iconify lucide--plus size-5"></span>
                 Nuevo Producto

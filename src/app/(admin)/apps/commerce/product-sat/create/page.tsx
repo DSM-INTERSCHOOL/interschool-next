@@ -11,12 +11,6 @@ export default function CreateProductSatPage() {
     <>
       <PageTitle
         title="Crear Código SAT"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Códigos SAT", path: "/apps/commerce/product-sat" },
-          { label: "Crear", active: true },
-        ]}
       />
       <div className="mt-6">
         <ProductSatFormPage />

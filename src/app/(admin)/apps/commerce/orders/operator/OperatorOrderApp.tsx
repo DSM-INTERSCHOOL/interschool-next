@@ -6,6 +6,7 @@ import { CommercePersonRead } from "@/interfaces/ICommercePerson";
 import { useCatalogForOrderMode } from "../shared/hooks";
 import { OrderingScreen } from "../shared/components";
 import { ClientSearchScreen, fullName } from "./components/ClientSearchScreen";
+import { useSaleWarehouseLabel } from "./hooks/useSaleWarehouseLabel";
 
 type View = "client-search" | "ordering";
 
@@ -13,6 +14,7 @@ export function OperatorOrderApp() {
   const [view, setView] = useState<View>("client-search");
   const [client, setClient] = useState<CommercePersonRead | null>(null);
   const { categories, products, colors, sizes, loading, error } = useCatalogForOrderMode("OPERATOR");
+  const warehouseLabel = useSaleWarehouseLabel();
 
   const startOrdering = (selected: CommercePersonRead | null) => {
     setClient(selected);
@@ -65,6 +67,7 @@ export function OperatorOrderApp() {
       sizes={sizes}
       clientPersonInternalId={client?.person_internal_id}
       clientLabel={client ? fullName(client) : undefined}
+      warehouseLabel={warehouseLabel ?? undefined}
       orderMode="OPERATOR"
       onCancel={backToClientSearch}
     />

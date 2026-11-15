@@ -15,12 +15,6 @@ export default function EditColorPage({ params }: EditColorPageProps) {
     <>
       <PageTitle
         title="Editar Color"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Colores", path: "/apps/commerce/colors" },
-          { label: "Editar", active: true },
-        ]}
       />
       <div className="mt-6">
         <ColorFormPage colorId={Number(id)} />

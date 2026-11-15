@@ -15,12 +15,6 @@ export default function EditSizePage({ params }: EditSizePageProps) {
     <>
       <PageTitle
         title="Editar Talla"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Tallas", path: "/apps/commerce/sizes" },
-          { label: "Editar", active: true },
-        ]}
       />
       <div className="mt-6">
         <SizeFormPage sizeId={Number(id)} />

@@ -1,0 +1,1 @@
+export { useFacturasHistorial } from "./useFacturasHistorial";

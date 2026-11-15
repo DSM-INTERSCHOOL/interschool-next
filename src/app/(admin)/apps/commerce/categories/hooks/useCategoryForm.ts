@@ -25,7 +25,7 @@ export const useCategoryForm = (categoryId?: number) => {
         const category = await getCategory({ schoolId, categoryId });
         setFormData({ description: category.description });
       } catch (err: any) {
-        setError(err.response?.data?.detail || err.message || "Error al cargar la categoría");
+        setError(err.response?.data?.detail || err.message || "Error al cargar el clasificador");
       } finally {
         setLoading(false);
       }
@@ -60,7 +60,7 @@ export const useCategoryForm = (categoryId?: number) => {
       }
       router.push("/apps/commerce/categories");
     } catch (err: any) {
-      setSaveError(err.response?.data?.detail || err.message || "Error al guardar la categoría");
+      setSaveError(err.response?.data?.detail || err.message || "Error al guardar el clasificador");
     } finally {
       setSaveLoading(false);
     }

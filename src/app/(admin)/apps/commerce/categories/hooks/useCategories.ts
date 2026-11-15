@@ -16,7 +16,7 @@ export const useCategories = () => {
       const data = await getCategories({ schoolId });
       setCategories(data);
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || "Error al cargar las categorías");
+      setError(err.response?.data?.detail || err.message || "Error al cargar los clasificadores");
     } finally {
       setLoading(false);
     }

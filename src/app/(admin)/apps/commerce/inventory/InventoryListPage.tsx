@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { PrintButton, PrintSection } from "@/components/PrintSection";
 import { useMovementCatalogs } from "./hooks";
 
 interface StockRow {
@@ -87,16 +88,11 @@ export default function InventoryListPage() {
     <>
       <PageTitle
         title="Inventario"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Inventario", active: true }]}
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-              <h2 className="card-title text-2xl">
-                <span className="iconify lucide--boxes size-6"></span>
-                Existencias
-              </h2>
+            <div className="flex flex-wrap justify-end items-center gap-4 mb-4">
               <div className="flex flex-wrap gap-2">
                 <Link href="/apps/commerce/inventory/entrada" className="btn btn-primary btn-sm">
                   <span className="iconify lucide--arrow-down-to-line size-4"></span>
@@ -109,6 +105,18 @@ export default function InventoryListPage() {
                 <Link href="/apps/commerce/inventory/transferencia" className="btn btn-outline btn-sm">
                   <span className="iconify lucide--arrow-left-right size-4"></span>
                   Transferencia
+                </Link>
+                <Link href="/apps/commerce/inventory/captura" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--clipboard-list size-4"></span>
+                  Captura
+                </Link>
+                <Link href="/apps/commerce/inventory/producto-kardex" className="btn btn-ghost btn-sm">
+                  <span className="iconify lucide--history size-4"></span>
+                  Producto Kardex
+                </Link>
+                <Link href="/apps/commerce/inventory/kardex-almacen" className="btn btn-ghost btn-sm">
+                  <span className="iconify lucide--warehouse size-4"></span>
+                  Kardex de Almacén
                 </Link>
               </div>
             </div>
@@ -130,17 +138,20 @@ export default function InventoryListPage() {
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {catalogs.warehouses.map((warehouse) => (
-                    <button
-                      key={warehouse.id}
-                      type="button"
-                      className={`btn btn-sm ${warehouseId === warehouse.id ? "btn-primary" : "btn-outline"}`}
-                      onClick={() => setWarehouseId(warehouse.id)}
-                    >
-                      {warehouse.description}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {catalogs.warehouses.map((warehouse) => (
+                      <button
+                        key={warehouse.id}
+                        type="button"
+                        className={`btn btn-sm ${warehouseId === warehouse.id ? "btn-primary" : "btn-outline"}`}
+                        onClick={() => setWarehouseId(warehouse.id)}
+                      >
+                        {warehouse.description}
+                      </button>
+                    ))}
+                  </div>
+                  <PrintButton title="Inventario" disabled={rows.length === 0} />
                 </div>
 
                 {rows.length === 0 ? (
@@ -161,22 +172,35 @@ export default function InventoryListPage() {
                           <th>Color</th>
                           <th>Talla</th>
                           <th className="text-right">Existencia</th>
+                          <th></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {rows.map((row) => (
-                          <tr key={`${row.productId}:${row.colorId}:${row.sizeId}`}>
-                            <td>{row.productKey ?? "—"}</td>
-                            <td>{row.productTitle}</td>
-                            <td>{colorDescription(row.colorId)}</td>
-                            <td>{sizeDescription(row.sizeId)}</td>
-                            <td className="text-right font-medium">
-                              <span className={`badge ${row.quantity > 0 ? "badge-ghost" : "badge-warning"}`}>
-                                {row.quantity}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                        {rows.map((row) => {
+                          const movementsHref =
+                            `/apps/commerce/inventory/producto-kardex?product_id=${row.productId}` +
+                            `&warehouse_id=${warehouseId}` +
+                            (row.colorId !== null ? `&color_id=${row.colorId}` : "") +
+                            (row.sizeId !== null ? `&size_id=${row.sizeId}` : "");
+                          return (
+                            <tr key={`${row.productId}:${row.colorId}:${row.sizeId}`}>
+                              <td>{row.productKey ?? "—"}</td>
+                              <td>{row.productTitle}</td>
+                              <td>{colorDescription(row.colorId)}</td>
+                              <td>{sizeDescription(row.sizeId)}</td>
+                              <td className="text-right font-medium">
+                                <span className={`badge ${row.quantity > 0 ? "badge-ghost" : "badge-warning"}`}>
+                                  {row.quantity}
+                                </span>
+                              </td>
+                              <td>
+                                <Link href={movementsHref} className="btn btn-ghost btn-xs" title="Ver producto kardex">
+                                  <span className="iconify lucide--history size-4"></span>
+                                </Link>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -186,6 +210,40 @@ export default function InventoryListPage() {
           </div>
         </div>
       </div>
+
+      {rows.length > 0 && (
+        <PrintSection
+          title="Inventario"
+          meta={
+            warehouseId !== ""
+              ? [{ label: "Almacén", value: catalogs.warehouses.find((w) => w.id === warehouseId)?.description ?? "" }]
+              : []
+          }
+        >
+          <table className="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Clave</th>
+                <th>Producto</th>
+                <th>Color</th>
+                <th>Talla</th>
+                <th className="text-right">Existencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={`${row.productId}:${row.colorId}:${row.sizeId}`}>
+                  <td>{row.productKey ?? "—"}</td>
+                  <td>{row.productTitle}</td>
+                  <td>{colorDescription(row.colorId)}</td>
+                  <td>{sizeDescription(row.sizeId)}</td>
+                  <td className="text-right font-medium">{row.quantity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </PrintSection>
+      )}
     </>
   );
 }

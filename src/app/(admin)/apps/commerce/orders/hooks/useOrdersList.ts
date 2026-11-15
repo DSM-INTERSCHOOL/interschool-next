@@ -7,6 +7,13 @@ import { getCommercePersons } from "@/services/commercePerson.service";
 
 const DEBOUNCE_MS = 300;
 
+const todayLocalDate = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
 const buildFilters = (status: OrderStatus | "", createdBy: string, startDate: string, endDate: string) => {
   const clauses: string[] = [];
   if (status) clauses.push(`status::eq::${status}`);
@@ -20,8 +27,8 @@ const buildFilters = (status: OrderStatus | "", createdBy: string, startDate: st
 export const useOrdersList = () => {
   const [status, setStatus] = useState<OrderStatus | "">("");
   const [createdBy, setCreatedBy] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(todayLocalDate);
+  const [endDate, setEndDate] = useState(todayLocalDate);
   const [orders, setOrders] = useState<OrderRead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +70,8 @@ export const useOrdersList = () => {
   const clearFilters = () => {
     setStatus("");
     setCreatedBy("");
-    setStartDate("");
-    setEndDate("");
+    setStartDate(todayLocalDate());
+    setEndDate(todayLocalDate());
   };
 
   return {

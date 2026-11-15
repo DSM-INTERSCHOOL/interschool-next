@@ -13,6 +13,21 @@ export const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
   { value: "CANCELLED", label: "Cancelada" },
 ];
 
+// Used by the Cobros (payment collection) screen. `status` doubles as both
+// a payment milestone (PENDING/PLACED/PAID) and a fulfillment milestone
+// (PARTIALLY_DISPATCHED/COMPLETED) -- once dispatch starts on an already-
+// paid order, status moves on to one of those and never says PAID again,
+// even though it's still fully paid. So "not yet paid" can't be read as
+// "status != PAID": PENDING/PLACED are the only statuses an order can have
+// before payment (see DISPATCHABLE_STATUSES below for the mutually
+// exclusive paid-but-undelivered set Entregas uses).
+export const COLLECTIBLE_STATUSES: OrderStatus[] = ["PENDING", "PLACED"];
+
+// Used by the Entregas (delivery) screen: an order can have items dispatched
+// against it once it's been paid, through to (but not including) having
+// everything already delivered.
+export const DISPATCHABLE_STATUSES: OrderStatus[] = ["PAID", "PARTIALLY_DISPATCHED"];
+
 export interface CollectionOptions {
   date?: string;
   collection_point?: string;
@@ -56,6 +71,9 @@ export interface OrderDetailRead {
   school_id: number;
   order_id: number;
   product_id: number;
+  // The product's current title, joined server-side -- null only if the
+  // product was deleted after this line was created.
+  product_title: string | null;
   amount: number;
   color: string | null;
   size: string | null;
@@ -122,10 +140,29 @@ export interface CheckoutRequest {
   payment_method: PaymentMethod;
 }
 
-export interface PaymentInstructionsRead {
-  payment_method: PaymentMethod;
+// What ConfirmationScreen actually needs to display -- satisfied by the
+// backend's PaymentInstructionsRead (VENTANILLA/SPEI, via checkout()) and
+// also by a client-built confirmation for a SALDO payment (via
+// realizarPago(), which returns a differently-shaped TransactionResult,
+// not a PaymentInstructionsRead).
+export interface PaymentConfirmation {
   id_orden: number;
   total: string; // Decimal -> string
   message: string;
   clabe: string | null; // SPEI only
+  bank: string | null; // SPEI + CLABE única only
+  owner_name: string | null; // SPEI + CLABE única only
+}
+
+export interface PaymentInstructionsRead extends PaymentConfirmation {
+  payment_method: PaymentMethod;
+}
+
+export interface DispatchLine {
+  detail_id: number;
+  quantity: number;
+}
+
+export interface DispatchRequest {
+  lines: DispatchLine[];
 }

@@ -11,12 +11,6 @@ export default function CreateWarehousePage() {
     <>
       <PageTitle
         title="Crear Almacén"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Almacenes", path: "/apps/commerce/warehouses" },
-          { label: "Crear", active: true },
-        ]}
       />
       <div className="mt-6">
         <WarehouseFormPage />

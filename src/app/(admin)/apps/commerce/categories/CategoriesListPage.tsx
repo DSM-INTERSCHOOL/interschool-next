@@ -21,7 +21,7 @@ export default function CategoriesListPage() {
       await removeCategory(deleteId);
       setDeleteId(null);
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || "Error al eliminar la categoría");
+      alert(err.response?.data?.detail || err.message || "Error al eliminar el clasificador");
     } finally {
       setDeleteLoading(false);
     }
@@ -30,26 +30,21 @@ export default function CategoriesListPage() {
   return (
     <>
       <PageTitle
-        title="Categorías"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Categorías", active: true }]}
+        title="Clasificadores"
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="card-title text-2xl">
-                <span className="iconify lucide--tag size-6"></span>
-                Catálogo de Categorías
-              </h2>
+            <div className="flex justify-end items-center mb-4">
               <Link href="/apps/commerce/categories/create" className="btn btn-primary">
                 <span className="iconify lucide--plus size-5"></span>
-                Nueva Categoría
+                Nuevo Clasificador
               </Link>
             </div>
 
             {loading ? (
               <div className="flex justify-center py-16">
-                <LoadingSpinner message="Cargando categorías..." />
+                <LoadingSpinner message="Cargando clasificadores..." />
               </div>
             ) : error ? (
               <div className="alert alert-error">
@@ -59,11 +54,11 @@ export default function CategoriesListPage() {
             ) : categories.length === 0 ? (
               <div className="text-center py-16">
                 <span className="iconify lucide--tag size-24 text-base-content/20 mb-4"></span>
-                <h3 className="text-xl font-medium text-base-content mb-2">No hay categorías</h3>
-                <p className="text-base-content/60 mb-6">Crea tu primera categoría para comenzar</p>
+                <h3 className="text-xl font-medium text-base-content mb-2">No hay clasificadores</h3>
+                <p className="text-base-content/60 mb-6">Crea tu primer clasificador para comenzar</p>
                 <Link href="/apps/commerce/categories/create" className="btn btn-primary btn-sm">
                   <span className="iconify lucide--plus size-4"></span>
-                  Crear categoría
+                  Crear clasificador
                 </Link>
               </div>
             ) : (
@@ -111,8 +106,8 @@ export default function CategoriesListPage() {
         isOpen={deleteId !== null}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Eliminar categoría"
-        message="¿Estás seguro de que deseas eliminar esta categoría?"
+        title="Eliminar clasificador"
+        message="¿Estás seguro de que deseas eliminar este clasificador?"
         itemName={categoryToDelete?.description}
         loading={deleteLoading}
       />

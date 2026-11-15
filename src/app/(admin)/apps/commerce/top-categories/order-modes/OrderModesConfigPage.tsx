@@ -3,8 +3,16 @@
 import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { ORDER_MODES } from "@/interfaces/ITopCategory";
+import { OrderMode, ORDER_MODES } from "@/interfaces/ITopCategory";
 import { useOrderModesConfig } from "./hooks";
+
+// Full names for this table's column headers -- ORDER_MODES.label itself
+// stays "AS"/"OP" since that's also used for a compact per-row badge in
+// OrdersListPage.tsx, where the full word wouldn't fit.
+const ORDER_MODE_TABLE_LABELS: Record<OrderMode, string> = {
+  SELF_SERVICE: "Autoservicio",
+  OPERATOR: "Operador",
+};
 
 export default function OrderModesConfigPage() {
   const { categories, enabled, loading, error, saving, saveError, dirty, toggle, save, discard } =
@@ -14,25 +22,15 @@ export default function OrderModesConfigPage() {
     <>
       <PageTitle
         title="Modos de Venta"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Clasificadores", path: "/apps/commerce/top-categories" },
-          { label: "Modos de Venta", active: true },
-        ]}
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
               <div>
-                <h2 className="card-title text-2xl">
-                  <span className="iconify lucide--toggle-right size-6"></span>
-                  Modos de Venta
-                </h2>
                 <p className="text-base-content/60 text-sm mt-1">
-                  Define qué clasificadores están disponibles para cada forma de levantar órdenes.
-                  Un clasificador sin marcar en un modo no aparece ahí -- por ejemplo, Uniformes
+                  Define qué categorías están disponibles para cada forma de levantar órdenes.
+                  Una categoría sin marcar en un modo no aparece ahí -- por ejemplo, Uniformes
                   puede ofrecerse solo por Operador, no en autoservicio.
                 </p>
               </div>
@@ -55,14 +53,14 @@ export default function OrderModesConfigPage() {
               <div className="text-center py-16">
                 <span className="iconify lucide--layout-grid size-24 text-base-content/20 mb-4"></span>
                 <h3 className="text-xl font-medium text-base-content mb-2">
-                  Sin clasificadores
+                  Sin categorías
                 </h3>
                 <p className="text-base-content/60 mb-6">
-                  Crea al menos un clasificador para poder configurar sus modos de venta
+                  Crea al menos una categoría para poder configurar sus modos de venta
                 </p>
                 <Link href="/apps/commerce/top-categories/create" className="btn btn-primary btn-sm">
                   <span className="iconify lucide--plus size-4"></span>
-                  Nuevo Clasificador
+                  Nueva Categoría
                 </Link>
               </div>
             ) : (
@@ -78,10 +76,10 @@ export default function OrderModesConfigPage() {
                   <table className="table table-zebra w-full">
                     <thead>
                       <tr>
-                        <th>Clasificador</th>
+                        <th>Categoría</th>
                         {ORDER_MODES.map((mode) => (
                           <th key={mode.value} className="text-center">
-                            {mode.label}
+                            {ORDER_MODE_TABLE_LABELS[mode.value]}
                           </th>
                         ))}
                       </tr>

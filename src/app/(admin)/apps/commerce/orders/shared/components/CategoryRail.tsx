@@ -14,7 +14,7 @@ export function CategoryRail({ categories, selected, onSelect }: CategoryRailPro
       <button
         type="button"
         onClick={() => onSelect(ALL_CATEGORIES)}
-        className={`btn btn-lg h-auto shrink-0 rounded-2xl px-8 py-4 text-lg font-semibold ${
+        className={`btn btn-sm h-auto shrink-0 rounded-xl px-4 py-2 font-semibold ${
           selected === ALL_CATEGORIES ? "btn-primary" : "btn-outline"
         }`}
       >
@@ -25,7 +25,7 @@ export function CategoryRail({ categories, selected, onSelect }: CategoryRailPro
           key={category.id}
           type="button"
           onClick={() => onSelect(String(category.id))}
-          className={`btn btn-lg h-auto shrink-0 rounded-2xl px-8 py-4 text-lg font-semibold ${
+          className={`btn btn-sm h-auto shrink-0 rounded-xl px-4 py-2 font-semibold ${
             selected === String(category.id) ? "btn-primary" : "btn-outline"
           }`}
         >

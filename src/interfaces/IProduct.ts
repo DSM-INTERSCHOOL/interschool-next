@@ -87,6 +87,21 @@ export interface ProductRead {
   sub_products: ProductSubProductInput[];
 }
 
+export interface VariantAvailability {
+  color_id: number | null;
+  size_id: number | null;
+  quantity: number;
+}
+
+// What's actually sellable right now, per color/size variant, in the
+// school's for-sale warehouse. track_inventory=false means there's no cap
+// to apply at all (variants is always empty in that case).
+export interface ProductAvailabilityRead {
+  product_id: number;
+  track_inventory: boolean;
+  variants: VariantAvailability[];
+}
+
 export interface ProductPictureAdded {
   id: number;
   path: string;

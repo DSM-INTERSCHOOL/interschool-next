@@ -15,12 +15,6 @@ export default function EditWarehousePage({ params }: EditWarehousePageProps) {
     <>
       <PageTitle
         title="Editar Almacén"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Almacenes", path: "/apps/commerce/warehouses" },
-          { label: "Editar", active: true },
-        ]}
       />
       <div className="mt-6">
         <WarehouseFormPage warehouseId={Number(id)} />

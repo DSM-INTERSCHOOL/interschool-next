@@ -31,16 +31,11 @@ export default function ProductSatListPage() {
     <>
       <PageTitle
         title="Códigos SAT"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Códigos SAT", active: true }]}
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="card-title text-2xl">
-                <span className="iconify lucide--file-text size-6"></span>
-                Catálogo de Códigos SAT
-              </h2>
+            <div className="flex justify-end items-center mb-4">
               <Link href="/apps/commerce/product-sat/create" className="btn btn-primary">
                 <span className="iconify lucide--plus size-5"></span>
                 Nuevo Código SAT

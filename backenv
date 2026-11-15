@@ -1,0 +1,6 @@
+NEXT_PUBLIC_API_COMMUNICATION_URL=https://apis.idsm.xyz
+NEXT_PUBLIC_API_BASE_URL=https://apis.idsm.xyz
+NEXT_PUBLIC_API_COURSE_URL=https://apis.idsm.xyz/schools
+NEXT_PUBLIC_API_CONSULTATION_URL=https://apis.idsm.xyz/schools
+NEXT_PUBLIC_API_CATALOGS_URL=http://cudec-testing.interschool-services.com.mx:8888
+NEXT_PUBLIC_API_COMMERCE_ORIGIN=http://localhost:8091

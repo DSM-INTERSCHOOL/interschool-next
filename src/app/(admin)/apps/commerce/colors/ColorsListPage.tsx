@@ -31,16 +31,11 @@ export default function ColorsListPage() {
     <>
       <PageTitle
         title="Colores"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Colores", active: true }]}
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="card-title text-2xl">
-                <span className="iconify lucide--palette size-6"></span>
-                Catálogo de Colores
-              </h2>
+            <div className="flex justify-end items-center mb-4">
               <Link href="/apps/commerce/colors/create" className="btn btn-primary">
                 <span className="iconify lucide--plus size-5"></span>
                 Nuevo Color

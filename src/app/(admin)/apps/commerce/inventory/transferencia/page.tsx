@@ -11,12 +11,6 @@ export default function TransferenciaPage() {
     <>
       <PageTitle
         title="Transferencia de Inventario"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Inventario", path: "/apps/commerce/inventory" },
-          { label: "Transferencia", active: true },
-        ]}
       />
       <div className="mt-6">
         <TransferenciaFormPage />

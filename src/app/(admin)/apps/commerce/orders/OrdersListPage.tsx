@@ -4,12 +4,14 @@ import { useState } from "react";
 import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { PrintButton, PrintSection } from "@/components/PrintSection";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { ORDER_STATUSES, OrderRead, OrderStatus } from "@/interfaces/IOrder";
 import { ORDER_MODES } from "@/interfaces/ITopCategory";
 import { cancelOrder } from "@/services/order.service";
 import { useOrdersList } from "./hooks";
+import { FacturarModal } from "./components";
 
 // A cancelled order is a dead end either way; everything else can still
 // be edited or cancelled from here.
@@ -58,6 +60,7 @@ export default function OrdersListPage() {
   const [cancelTarget, setCancelTarget] = useState<OrderRead | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [facturarTarget, setFacturarTarget] = useState<OrderRead | null>(null);
 
   const hasFilters = Boolean(status || createdBy || startDate || endDate);
 
@@ -103,16 +106,11 @@ export default function OrdersListPage() {
     <>
       <PageTitle
         title="Órdenes"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Órdenes", active: true }]}
       />
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-              <h2 className="card-title text-2xl">
-                <span className="iconify lucide--receipt size-6"></span>
-                Órdenes
-              </h2>
+            <div className="flex flex-wrap justify-end items-center gap-4 mb-4">
               <div className="flex flex-wrap gap-2">
                 <Link href="/apps/commerce/orders/self-service" className="btn btn-primary btn-sm">
                   <span className="iconify lucide--monitor size-4"></span>
@@ -121,6 +119,46 @@ export default function OrdersListPage() {
                 <Link href="/apps/commerce/orders/operator" className="btn btn-secondary btn-sm">
                   <span className="iconify lucide--user-round size-4"></span>
                   Venta por Operador
+                </Link>
+                <Link href="/apps/commerce/cobros" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--credit-card size-4"></span>
+                  Cobros
+                </Link>
+                <Link href="/apps/commerce/entregas" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--package-check size-4"></span>
+                  Entregas
+                </Link>
+                <Link href="/apps/commerce/prepago" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--wallet size-4"></span>
+                  Prepago
+                </Link>
+                <Link href="/apps/commerce/devoluciones" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--undo-2 size-4"></span>
+                  Devoluciones y Cambios
+                </Link>
+                <Link href="/apps/commerce/caja" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--landmark size-4"></span>
+                  Caja
+                </Link>
+                <Link href="/apps/commerce/recibos" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--receipt-text size-4"></span>
+                  Recibos
+                </Link>
+                <Link href="/apps/commerce/facturas" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--file-text size-4"></span>
+                  Facturas
+                </Link>
+                <Link href="/apps/commerce/reportes" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--bar-chart-3 size-4"></span>
+                  Reportes
+                </Link>
+                <Link href="/apps/commerce/persons" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--users size-4"></span>
+                  Clientes
+                </Link>
+                <Link href="/apps/commerce/configuracion" className="btn btn-outline btn-sm">
+                  <span className="iconify lucide--settings size-4"></span>
+                  Configuración
                 </Link>
               </div>
             </div>
@@ -188,6 +226,10 @@ export default function OrdersListPage() {
                   Limpiar filtros
                 </button>
               </div>
+            </div>
+
+            <div className="flex justify-end mb-4">
+              <PrintButton title="Órdenes" disabled={loading || !!error} />
             </div>
 
             {cancelError && (
@@ -277,6 +319,15 @@ export default function OrdersListPage() {
                             >
                               <span className="iconify lucide--ban size-4"></span>
                             </button>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs"
+                              title={order.has_invoice ? "Orden ya facturada" : "Facturar"}
+                              disabled={!order.paid || order.has_invoice}
+                              onClick={() => setFacturarTarget(order)}
+                            >
+                              <span className="iconify lucide--file-text size-4"></span>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -289,6 +340,50 @@ export default function OrdersListPage() {
         </div>
       </div>
 
+      {!loading && !error && (
+        <PrintSection
+          title="Órdenes"
+          meta={[
+            ...(startDate || endDate ? [{ label: "Periodo", value: `${startDate || "—"} al ${endDate || "—"}` }] : []),
+            ...(status
+              ? [{ label: "Estatus", value: ORDER_STATUSES.find((s) => s.value === status)?.label ?? status }]
+              : []),
+            ...(createdBy ? [{ label: "Usuario que levanta la orden", value: createdBy }] : []),
+          ]}
+        >
+          <table className="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Orden</th>
+                <th>Fecha</th>
+                <th>Modo</th>
+                <th>Estatus</th>
+                <th>Cliente</th>
+                <th>Recoge</th>
+                <th>Pago</th>
+                <th className="text-right">Total</th>
+                <th>Levantada por</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td className="font-medium">{order.id_orden}</td>
+                  <td className="text-sm">{formatDateTime(order.created)}</td>
+                  <td>{orderModeLabel(order)}</td>
+                  <td>{ORDER_STATUSES.find((s) => s.value === order.status)?.label ?? order.status}</td>
+                  <td>{clientDisplay(order.person_internal_id)}</td>
+                  <td>{order.collected_by ?? "—"}</td>
+                  <td>{order.payment_method ? PAYMENT_METHOD_LABELS[order.payment_method] : "—"}</td>
+                  <td className="text-right font-medium">${Number(order.total).toFixed(2)}</td>
+                  <td>{order.created_by_person_internal_id ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </PrintSection>
+      )}
+
       <DeleteConfirmationModal
         isOpen={cancelTarget !== null}
         onClose={() => setCancelTarget(null)}
@@ -298,6 +393,14 @@ export default function OrdersListPage() {
         itemName={cancelTarget ? `Orden #${cancelTarget.id_orden}` : null}
         loading={cancelLoading}
       />
+
+      {facturarTarget && (
+        <FacturarModal
+          order={facturarTarget}
+          onClose={() => setFacturarTarget(null)}
+          onSuccess={() => reload()}
+        />
+      )}
     </>
   );
 }

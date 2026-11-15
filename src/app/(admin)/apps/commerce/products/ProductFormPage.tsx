@@ -4,10 +4,11 @@ import { AppLink as Link } from "@/components/AppLink";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
   ProductBasicFields,
+  ProductCategoryFields,
   ProductPictureManager,
+  ProductTypeFields,
+  SatFieldsSection,
   SingleProductFields,
-  SubProductPicker,
-  TaxFieldsSection,
 } from "./components";
 import { useProductForm } from "./hooks";
 
@@ -43,49 +44,64 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="card bg-base-100 shadow-lg">
-        <div className="card-body">
+        <div className="card-body gap-6">
           {error && (
-            <div className="alert alert-error mb-4">
+            <div className="alert alert-error">
               <span className="iconify lucide--alert-circle size-6"></span>
               <div>{error}</div>
             </div>
           )}
           {saveError && (
-            <div className="alert alert-error mb-4">
+            <div className="alert alert-error">
               <span className="iconify lucide--alert-circle size-6"></span>
               <div>{saveError}</div>
             </div>
           )}
 
-          <ProductBasicFields formData={formData} updateFormField={updateFormField} />
+          <div className="rounded-xl border border-base-300 p-4">
+            <p className="mb-3 font-semibold">Información general</p>
+            <ProductBasicFields formData={formData} updateFormField={updateFormField} />
+          </div>
 
-          <div className="divider"></div>
-          <TaxFieldsSection formData={formData} updateFormField={updateFormField} />
-
-          <div className="divider"></div>
-          {formData.type === "SINGLE" ? (
-            <SingleProductFields
-              colorIds={formData.color_ids}
-              sizeIds={formData.size_ids}
-              categoryIds={formData.category_ids}
-              onColorsChange={(ids) => updateFormField("color_ids", ids)}
-              onSizesChange={(ids) => updateFormField("size_ids", ids)}
-              onCategoriesChange={(ids) => updateFormField("category_ids", ids)}
-              priceRows={priceMatrix.rows}
-              onPriceChange={priceMatrix.setCellValue}
-            />
-          ) : (
-            <SubProductPicker
-              candidates={subProductCatalog.candidates}
-              loading={subProductCatalog.loading}
-              error={subProductCatalog.error}
+          <div className="rounded-xl border border-base-300 p-4">
+            <p className="mb-3 font-semibold">Tipo</p>
+            <ProductTypeFields
+              formData={formData}
+              updateFormField={updateFormField}
+              subProductCandidates={subProductCatalog.candidates}
+              subProductsLoading={subProductCatalog.loading}
+              subProductsError={subProductCatalog.error}
               subProducts={subProducts}
-              onAdd={addSubProduct}
-              onRemove={removeSubProduct}
+              onAddSubProduct={addSubProduct}
+              onRemoveSubProduct={removeSubProduct}
             />
+          </div>
+
+          <div className="rounded-xl border border-base-300 p-4">
+            <p className="mb-3 font-semibold">Categoría y Clasificador</p>
+            <ProductCategoryFields formData={formData} updateFormField={updateFormField} />
+          </div>
+
+          <div className="rounded-xl border border-base-300 p-4">
+            <p className="mb-3 font-semibold">Datos fiscales (SAT)</p>
+            <SatFieldsSection formData={formData} updateFormField={updateFormField} />
+          </div>
+
+          {formData.type === "SINGLE" && (
+            <div className="rounded-xl border border-base-300 p-4">
+              <p className="mb-3 font-semibold">Variantes y precios</p>
+              <SingleProductFields
+                colorIds={formData.color_ids}
+                sizeIds={formData.size_ids}
+                onColorsChange={(ids) => updateFormField("color_ids", ids)}
+                onSizesChange={(ids) => updateFormField("size_ids", ids)}
+                priceRows={priceMatrix.rows}
+                onPriceChange={priceMatrix.setCellValue}
+              />
+            </div>
           )}
 
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="flex justify-end gap-2">
             <Link href="/apps/commerce/products" className="btn btn-ghost">
               Cancelar
             </Link>

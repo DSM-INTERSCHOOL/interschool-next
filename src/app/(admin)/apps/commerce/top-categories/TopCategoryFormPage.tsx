@@ -15,7 +15,7 @@ export default function TopCategoryFormPage({ topCategoryId }: TopCategoryFormPa
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <LoadingSpinner message="Cargando clasificador..." />
+        <LoadingSpinner message="Cargando categoría..." />
       </div>
     );
   }

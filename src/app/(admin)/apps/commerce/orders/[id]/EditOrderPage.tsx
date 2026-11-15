@@ -198,10 +198,9 @@ export default function EditOrderPage({ orderId }: EditOrderPageProps) {
               </thead>
               <tbody>
                 {order.details.map((detail) => {
-                  const product = products.find((p) => p.id === detail.product_id);
                   return (
                     <tr key={detail.id}>
-                      <td>{product?.title ?? `Producto #${detail.product_id}`}</td>
+                      <td>{detail.product_title ?? `Producto #${detail.product_id}`}</td>
                       <td>{detail.color ?? "—"}</td>
                       <td>{detail.size ?? "—"}</td>
                       <td>

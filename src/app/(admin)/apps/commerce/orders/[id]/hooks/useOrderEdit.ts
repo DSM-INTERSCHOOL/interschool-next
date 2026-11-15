@@ -14,6 +14,7 @@ import {
   updateOrder,
   updateOrderDetail,
 } from "@/services/order.service";
+import { useRefetchOnFocus } from "@/hooks/useRefetchOnFocus";
 
 export const useOrderEdit = (orderId: number) => {
   const [order, setOrder] = useState<OrderRead | null>(null);
@@ -54,6 +55,10 @@ export const useOrderEdit = (orderId: number) => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
+
+  // Reloaded on window focus (see useRefetchOnFocus) so a product created
+  // elsewhere becomes addable here without a hard refresh.
+  useRefetchOnFocus(load);
 
   const runAction = async (action: () => Promise<void>) => {
     try {

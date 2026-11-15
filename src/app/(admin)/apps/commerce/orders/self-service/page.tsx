@@ -6,7 +6,6 @@ export default function Page() {
     <>
       <PageTitle
         title="Autoservicio"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Autoservicio", active: true }]}
       />
       <div className="mt-6">
         <SelfServiceOrderApp />

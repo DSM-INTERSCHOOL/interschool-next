@@ -11,12 +11,6 @@ export default function CreateColorPage() {
     <>
       <PageTitle
         title="Crear Color"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Colores", path: "/apps/commerce/colors" },
-          { label: "Crear", active: true },
-        ]}
       />
       <div className="mt-6">
         <ColorFormPage />

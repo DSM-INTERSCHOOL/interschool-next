@@ -14,13 +14,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
   return (
     <>
       <PageTitle
-        title="Editar Categoría"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Categorías", path: "/apps/commerce/categories" },
-          { label: "Editar", active: true },
-        ]}
+        title="Editar Clasificador"
       />
       <div className="mt-6">
         <CategoryFormPage categoryId={Number(id)} />

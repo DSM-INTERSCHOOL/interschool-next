@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { ProductRead, ProductStatus, ProductType } from "@/interfaces/IProduct";
 import { deleteProduct, getProducts } from "@/services/product.service";
+import { useRefetchOnFocus } from "@/hooks/useRefetchOnFocus";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<ProductRead[]>([]);
@@ -33,6 +34,8 @@ export const useProducts = () => {
     loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeFilter, statusFilter]);
+
+  useRefetchOnFocus(loadProducts);
 
   const removeProduct = async (productId: number) => {
     const { schoolId } = getOrgConfig();

@@ -6,7 +6,6 @@ export default function Page() {
     <>
       <PageTitle
         title="Venta por Operador"
-        items={[{ label: "Apps" }, { label: "Comercio" }, { label: "Venta por Operador", active: true }]}
       />
       <div className="mt-6">
         <OperatorOrderApp />

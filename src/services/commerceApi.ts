@@ -3,11 +3,14 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { getDeviceId } from "@/lib/deviceId";
 
+// No default Content-Type here on purpose: axios already sets
+// "application/json" automatically for a plain-object body, and a
+// hardcoded default would otherwise clobber the multipart boundary axios
+// needs to set itself for a FormData body (e.g. uploadProductPicture) --
+// with it present, the file part never actually reaches the backend, which
+// then rejects the request with a validation error instead.
 const commerceApi = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_COMMERCE_ORIGIN}/commerce/v1`,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Interceptor para agregar el token, x-url-origin y x-device-id a todas las peticiones

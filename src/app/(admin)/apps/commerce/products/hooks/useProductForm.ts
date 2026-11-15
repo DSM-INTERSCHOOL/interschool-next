@@ -90,7 +90,9 @@ export const useProductForm = (productId?: number) => {
           type: product.type,
           status: product.status,
           discount: String(product.discount),
-          track_inventory: product.track_inventory,
+          // Clamp a legacy/edge-case KIT that somehow has this set --
+          // matches the same rule updateFormField enforces going forward.
+          track_inventory: product.type === "KIT" ? false : product.track_inventory,
           tax: product.tax,
           tax_base: product.tax_base !== null ? String(product.tax_base) : "",
           product_sat_id: product.product_sat_id ?? "",
@@ -137,6 +139,12 @@ export const useProductForm = (productId?: number) => {
         } else {
           next.tax_base = "";
         }
+      }
+      // A KIT has no inventory row of its own -- its stock is whatever its
+      // sub-products' own stock allows, so "controla inventario" has
+      // nothing to check against.
+      if (field === "type" && value === "KIT") {
+        next.track_inventory = false;
       }
       return next;
     });
@@ -193,11 +201,16 @@ export const useProductForm = (productId?: number) => {
           formData.top_category_id !== "" ? Number(formData.top_category_id) : undefined,
         clave_unidad_medida_sat: formData.clave_unidad_medida_sat.trim() || undefined,
         objeto_imp: formData.objeto_imp,
+        category_ids: formData.category_ids,
       };
 
+      // color_ids/size_ids are variants -- meaningless for a KIT, which has
+      // no price matrix of its own. category_ids is just a tag, same idea
+      // as top_category_id above it -- applies to a product regardless of
+      // type, so it's never cleared here.
       const variantPayload = isSingle
-        ? { color_ids: formData.color_ids, size_ids: formData.size_ids, category_ids: formData.category_ids }
-        : { color_ids: [], size_ids: [], category_ids: [] };
+        ? { color_ids: formData.color_ids, size_ids: formData.size_ids }
+        : { color_ids: [], size_ids: [] };
 
       const subProductsPayload: ProductSubProductInput[] = !isSingle
         ? subProducts.map(({ sub_product_id, quantity }) => ({ sub_product_id, quantity }))

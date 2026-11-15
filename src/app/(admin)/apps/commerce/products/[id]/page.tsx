@@ -15,12 +15,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     <>
       <PageTitle
         title="Editar Producto"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Productos", path: "/apps/commerce/products" },
-          { label: "Editar", active: true },
-        ]}
       />
       <div className="mt-6">
         <ProductFormPage productId={Number(id)} />

@@ -15,7 +15,7 @@ export default function CategoryFormPage({ categoryId }: CategoryFormPageProps) 
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <LoadingSpinner message="Cargando categoría..." />
+        <LoadingSpinner message="Cargando clasificador..." />
       </div>
     );
   }

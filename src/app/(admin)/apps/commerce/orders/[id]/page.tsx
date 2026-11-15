@@ -15,12 +15,6 @@ export default function Page({ params }: EditOrderRouteProps) {
     <>
       <PageTitle
         title="Editar Orden"
-        items={[
-          { label: "Apps" },
-          { label: "Comercio" },
-          { label: "Órdenes", path: "/apps/commerce/orders" },
-          { label: "Editar", active: true },
-        ]}
       />
       <div className="mt-6">
         <EditOrderPage orderId={Number(id)} />
