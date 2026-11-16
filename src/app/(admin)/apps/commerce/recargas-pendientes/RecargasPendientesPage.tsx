@@ -9,7 +9,8 @@ import { CommercePersonRead } from "@/interfaces/ICommercePerson";
 import { PendingPaymentRead } from "@/interfaces/ITransaction";
 import { usePendingTopups } from "./hooks";
 
-const fullName = (person: CommercePersonRead | undefined, personInternalId: string) => {
+const fullName = (person: CommercePersonRead | undefined, personInternalId: string | null) => {
+  if (!personInternalId) return "Público en general";
   if (!person) return personInternalId;
   const name = [person.given_name, person.paternal_name, person.maternal_name].filter(Boolean).join(" ");
   return name ? `${personInternalId} - ${name}` : personInternalId;
@@ -109,7 +110,10 @@ export default function RecargasPendientesPage() {
                       <tr key={topup.id}>
                         <td className="text-sm text-base-content/60">{formatDateTime(topup.created)}</td>
                         <td>{concepto(topup)}</td>
-                        <td>{fullName(personsById.get(topup.person_internal_id), topup.person_internal_id)}</td>
+                        <td>{fullName(
+                            topup.person_internal_id ? personsById.get(topup.person_internal_id) : undefined,
+                            topup.person_internal_id
+                          )}</td>
                         <td className="text-right font-medium">${Number(topup.amount).toFixed(2)}</td>
                         <td>
                           <div className="flex justify-end gap-2">
