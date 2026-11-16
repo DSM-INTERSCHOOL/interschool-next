@@ -56,6 +56,36 @@ export const adminMenuItems: ISidebarMenuItem[] = [
     //         },
     //     ],
     // },
+    // Real Commerce API integration (not the dead apps/ecommerce template
+    // above) -- commented out because the live sidebar is built from
+    // buildSidebarMenuFromPermisos(permisos), not this array (see Sidebar.tsx);
+    // these routes need a corresponding interschool-core permisos entry to
+    // actually appear in nav. Until then they're reachable by direct URL.
+    // {
+    //     id: "apps-commerce",
+    //     icon: "lucide--store",
+    //     label: "Catálogo",
+    //     children: [
+    //         { id: "apps-commerce-products", label: "Productos", url: "/apps/commerce/products" },
+    //         { id: "apps-commerce-top-categories", label: "Categorías", url: "/apps/commerce/top-categories" },
+    //         { id: "apps-commerce-categories", label: "Clasificadores", url: "/apps/commerce/categories" },
+    //         { id: "apps-commerce-colors", label: "Colores", url: "/apps/commerce/colors" },
+    //         { id: "apps-commerce-sizes", label: "Tallas", url: "/apps/commerce/sizes" },
+    //         { id: "apps-commerce-warehouses", label: "Almacenes", url: "/apps/commerce/warehouses" },
+    //         { id: "apps-commerce-product-sat", label: "Códigos SAT", url: "/apps/commerce/product-sat" },
+    //     ],
+    // },
+    // {
+    //     id: "apps-commerce-inventory",
+    //     icon: "lucide--boxes",
+    //     label: "Inventario",
+    //     children: [
+    //         { id: "apps-commerce-inventory-list", label: "Existencias", url: "/apps/commerce/inventory" },
+    //         { id: "apps-commerce-inventory-entrada", label: "Entrada", url: "/apps/commerce/inventory/entrada" },
+    //         { id: "apps-commerce-inventory-salida", label: "Salida", url: "/apps/commerce/inventory/salida" },
+    //         { id: "apps-commerce-inventory-transferencia", label: "Transferencia", url: "/apps/commerce/inventory/transferencia" },
+    //     ],
+    // },
     // {
     //     id: "apps-file-manager",
     //     icon: "lucide--server",

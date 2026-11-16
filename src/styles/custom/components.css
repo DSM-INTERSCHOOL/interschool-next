@@ -61,6 +61,12 @@
     @apply text-base-content/80 cursor-pointer;
 }
 
+/* daisyUI v5 dropped .form-control; this restores the label-above-field
+   stacking with spacing that the rest of the app's markup still assumes. */
+.form-control {
+    @apply flex flex-col gap-1;
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
