@@ -122,6 +122,13 @@ export default function PersonsListPage() {
                         <td>
                           <div className="flex justify-end gap-1">
                             <Link
+                              href={`/apps/commerce/persons/estado-cuenta?person_id=${encodeURIComponent(person.person_internal_id)}`}
+                              className="btn btn-ghost btn-xs"
+                              title="Estado de cuenta"
+                            >
+                              <span className="iconify lucide--receipt-text size-4"></span>
+                            </Link>
+                            <Link
                               href={`/apps/commerce/persons/${person.person_internal_id}`}
                               className="btn btn-ghost btn-xs"
                               title="Editar"

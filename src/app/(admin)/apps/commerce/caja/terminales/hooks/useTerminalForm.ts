@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useAppRouter as useRouter } from "@/hooks/useAppRouter";
 import { getOrgConfig } from "@/lib/orgConfig";
-import { createTerminal, getTerminal, updateTerminal } from "@/services/terminal.service";
+import { getTerminal, updateTerminal } from "@/services/terminal.service";
 
 export interface TerminalFormData {
   device_id: string;
   name: string;
 }
 
-export const useTerminalForm = (terminalId?: number) => {
+export const useTerminalForm = (terminalId: number) => {
   const router = useRouter();
 
   const [formData, setFormData] = useState<TerminalFormData>({ device_id: "", name: "" });
@@ -18,7 +18,6 @@ export const useTerminalForm = (terminalId?: number) => {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!terminalId) return;
     const load = async () => {
       try {
         setLoading(true);
@@ -39,10 +38,6 @@ export const useTerminalForm = (terminalId?: number) => {
   };
 
   const validate = (): boolean => {
-    if (!formData.device_id.trim()) {
-      setSaveError("El device_id es requerido");
-      return false;
-    }
     if (!formData.name.trim()) {
       setSaveError("El nombre es requerido");
       return false;
@@ -57,12 +52,9 @@ export const useTerminalForm = (terminalId?: number) => {
       if (!validate()) return;
 
       const { schoolId } = getOrgConfig();
-      const dto = { device_id: formData.device_id.trim(), name: formData.name.trim() };
-      if (terminalId) {
-        await updateTerminal({ schoolId, terminalId, dto });
-      } else {
-        await createTerminal({ schoolId, dto });
-      }
+      // device_id is sent unchanged: it's the device's own identity, not editable here.
+      const dto = { device_id: formData.device_id, name: formData.name.trim() };
+      await updateTerminal({ schoolId, terminalId, dto });
       router.push("/apps/commerce/caja/terminales");
     } catch (err: any) {
       setSaveError(err.response?.data?.detail || err.message || "Error al guardar la terminal");

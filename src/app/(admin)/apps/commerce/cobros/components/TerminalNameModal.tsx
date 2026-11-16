@@ -6,13 +6,13 @@ interface TerminalNameModalProps {
   deviceId: string;
   loading: boolean;
   error: string | null;
+  onCancel: () => void;
   onSubmit: (name: string) => void;
 }
 
-// Blocking (no close button, no backdrop dismiss) -- an unnamed terminal
-// must be named before it can open a cash register, so there's nothing
-// useful to fall back to if this is dismissed.
-export function TerminalNameModal({ deviceId, loading, error, onSubmit }: TerminalNameModalProps) {
+// No backdrop dismiss: the screen can't be used without completing this
+// step, so the only way out is "Cancelar", which leaves the screen.
+export function TerminalNameModal({ deviceId, loading, error, onCancel, onSubmit }: TerminalNameModalProps) {
   const [name, setName] = useState("");
 
   return (
@@ -45,6 +45,9 @@ export function TerminalNameModal({ deviceId, loading, error, onSubmit }: Termin
           {error && <p className="mt-2 text-sm text-error">{error}</p>}
         </div>
         <div className="flex justify-end gap-2 border-t border-base-300 p-6">
+          <button type="button" className="btn btn-ghost" disabled={loading} onClick={onCancel}>
+            Cancelar
+          </button>
           <button
             type="button"
             className="btn btn-primary"
