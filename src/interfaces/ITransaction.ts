@@ -158,7 +158,9 @@ export interface PendingPaymentRead {
   amount: string; // Decimal -> string
   reference: string | null;
   notes: string | null;
-  person_internal_id: string;
+  person_internal_id: string | null; // the client -- null only for an old guest order
+  created_by_person_internal_id: string | null;
+  resolved_by_person_internal_id: string | null;
   purpose: "WALLET_TOPUP" | "ORDER";
   status: WalletTopupStatus;
   created: string | null;

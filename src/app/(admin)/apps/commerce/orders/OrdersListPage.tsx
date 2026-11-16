@@ -110,59 +110,6 @@ export default function OrdersListPage() {
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex flex-wrap justify-end items-center gap-4 mb-4">
-              <div className="flex flex-wrap gap-2">
-                <Link href="/apps/commerce/orders/self-service" className="btn btn-primary btn-sm">
-                  <span className="iconify lucide--monitor size-4"></span>
-                  Autoservicio
-                </Link>
-                <Link href="/apps/commerce/orders/operator" className="btn btn-secondary btn-sm">
-                  <span className="iconify lucide--user-round size-4"></span>
-                  Venta por Operador
-                </Link>
-                <Link href="/apps/commerce/cobros" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--credit-card size-4"></span>
-                  Cobros
-                </Link>
-                <Link href="/apps/commerce/entregas" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--package-check size-4"></span>
-                  Entregas
-                </Link>
-                <Link href="/apps/commerce/prepago" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--wallet size-4"></span>
-                  Prepago
-                </Link>
-                <Link href="/apps/commerce/devoluciones" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--undo-2 size-4"></span>
-                  Devoluciones y Cambios
-                </Link>
-                <Link href="/apps/commerce/caja" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--landmark size-4"></span>
-                  Caja
-                </Link>
-                <Link href="/apps/commerce/recibos" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--receipt-text size-4"></span>
-                  Recibos
-                </Link>
-                <Link href="/apps/commerce/facturas" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--file-text size-4"></span>
-                  Facturas
-                </Link>
-                <Link href="/apps/commerce/reportes" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--bar-chart-3 size-4"></span>
-                  Reportes
-                </Link>
-                <Link href="/apps/commerce/persons" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--users size-4"></span>
-                  Clientes
-                </Link>
-                <Link href="/apps/commerce/configuracion" className="btn btn-outline btn-sm">
-                  <span className="iconify lucide--settings size-4"></span>
-                  Configuración
-                </Link>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 lg:grid-cols-5">
               <div className="form-control">
                 <label className="label py-1">
@@ -216,20 +163,19 @@ export default function OrdersListPage() {
                 />
               </div>
               <div className="form-control justify-end">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={clearFilters}
-                  disabled={!hasFilters}
-                >
-                  <span className="iconify lucide--x size-4"></span>
-                  Limpiar filtros
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm flex-1"
+                    onClick={clearFilters}
+                    disabled={!hasFilters}
+                  >
+                    <span className="iconify lucide--x size-4"></span>
+                    Limpiar filtros
+                  </button>
+                  <PrintButton title="Órdenes" disabled={loading || !!error} />
+                </div>
               </div>
-            </div>
-
-            <div className="flex justify-end mb-4">
-              <PrintButton title="Órdenes" disabled={loading || !!error} />
             </div>
 
             {cancelError && (
