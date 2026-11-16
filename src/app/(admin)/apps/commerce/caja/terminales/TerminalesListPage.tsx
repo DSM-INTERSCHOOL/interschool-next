@@ -35,13 +35,6 @@ export default function TerminalesListPage() {
       <div className="mt-6">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <div className="flex justify-end items-center mb-4">
-              <Link href="/apps/commerce/caja/terminales/create" className="btn btn-primary">
-                <span className="iconify lucide--plus size-5"></span>
-                Nueva Terminal
-              </Link>
-            </div>
-
             {loading ? (
               <div className="flex justify-center py-16">
                 <LoadingSpinner message="Cargando terminales..." />
@@ -55,13 +48,9 @@ export default function TerminalesListPage() {
               <div className="text-center py-16">
                 <span className="iconify lucide--monitor-smartphone size-24 text-base-content/20 mb-4"></span>
                 <h3 className="text-xl font-medium text-base-content mb-2">No hay terminales registradas</h3>
-                <p className="text-base-content/60 mb-6">
-                  Registra un device_id con un nombre corto para identificarlo en la Caja
+                <p className="text-base-content/60">
+                  Las terminales se registran solas la primera vez que se abre Cobros en ese equipo
                 </p>
-                <Link href="/apps/commerce/caja/terminales/create" className="btn btn-primary btn-sm">
-                  <span className="iconify lucide--plus size-4"></span>
-                  Registrar terminal
-                </Link>
               </div>
             ) : (
               <div className="overflow-x-auto">

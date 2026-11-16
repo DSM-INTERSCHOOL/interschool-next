@@ -165,3 +165,101 @@ export interface PendingPaymentRead {
   status: WalletTopupStatus;
   created: string | null;
 }
+
+// Estado de cuenta (GET .../transactions/wallet/{person_internal_id}/statement).
+// Decimals arrive as strings. `amount` is signed: + credits the wallet,
+// - debits it.
+export type WalletMovementType = "RECARGA" | "DEVOLUCION" | "PAGO";
+
+export interface WalletMovement {
+  id: number;
+  created: string;
+  type: WalletMovementType;
+  payment_method: string;
+  payment_channel: string | null;
+  order_id: number | null;
+  reference: string | null;
+  notes: string | null;
+  amount: string;
+  balance_after: string;
+  created_by_person_internal_id: string | null;
+  created_by_name: string | null;
+  cash_register_session_id: number | null;
+}
+
+export interface WalletPendingTopup {
+  id: number;
+  created: string;
+  amount: string;
+  reference: string | null;
+  created_by_person_internal_id: string | null;
+  created_by_name: string | null;
+}
+
+export interface WalletStatement {
+  person_internal_id: string;
+  name: string;
+  current_balance: string;
+  start: string | null;
+  end: string | null;
+  opening_balance: string;
+  total_credits: string;
+  total_debits: string;
+  closing_balance: string;
+  movements: WalletMovement[];
+  pending_topups: WalletPendingTopup[];
+}
+
+// Estado de cuenta general (GET .../transactions/account/{person_internal_id}/statement).
+// `amount` is always positive; `flow` gives the direction. SALDO-flow rows
+// only move the wallet and are kept out of the totals.
+export type AccountMovementType = "PAGO_ORDEN" | "RECARGA" | "DEVOLUCION" | "PAGO_SALDO" | "DEVOLUCION_SALDO";
+export type AccountMovementFlow = "ENTRADA" | "SALIDA" | "SALDO";
+
+export interface AccountMovement {
+  id: number;
+  created: string;
+  type: AccountMovementType;
+  flow: AccountMovementFlow;
+  payment_method: string;
+  payment_channel: string | null;
+  order_id: number | null;
+  reference: string | null;
+  notes: string | null;
+  amount: string;
+  created_by_person_internal_id: string | null;
+  created_by_name: string | null;
+  cash_register_session_id: number | null;
+}
+
+export interface AccountMethodTotal {
+  payment_method: string;
+  entradas: string;
+  salidas: string;
+  neto: string;
+}
+
+export interface AccountPendingPayment {
+  id: number;
+  created: string;
+  purpose: "ORDER" | "WALLET_TOPUP";
+  order_id: number | null;
+  amount: string;
+  reference: string | null;
+}
+
+export interface AccountStatement {
+  person_internal_id: string;
+  name: string;
+  current_balance: string;
+  start: string | null;
+  end: string | null;
+  total_entradas: string;
+  total_salidas: string;
+  neto: string;
+  pagado_con_saldo: string;
+  devuelto_a_saldo: string;
+  by_method: AccountMethodTotal[];
+  movements: AccountMovement[];
+  pending: AccountPendingPayment[];
+}

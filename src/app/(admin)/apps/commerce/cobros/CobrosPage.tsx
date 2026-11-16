@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ORDER_STATUSES, OrderRead, OrderStatus } from "@/interfaces/IOrder";
@@ -59,6 +60,15 @@ export default function CobrosPage() {
   const [corteOpen, setCorteOpen] = useState(false);
   const [receiptModalId, setReceiptModalId] = useState<number | null>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  // Leaving the gate modals: back to wherever the cashier came from, or to
+  // the orders list when the page was opened directly (no history to go
+  // back to).
+  const leaveCobros = () => {
+    if (window.history.length > 1) router.back();
+    else router.push("/apps/commerce/orders");
+  };
 
   useEffect(() => {
     if (cobros.addMethod) amountInputRef.current?.focus();
@@ -103,13 +113,21 @@ export default function CobrosPage() {
         deviceId={caja.deviceId}
         loading={caja.terminalLoading}
         error={caja.terminalError}
+        onCancel={leaveCobros}
         onSubmit={caja.registerTerminal}
       />
     );
   }
 
   if (caja.needsOpen) {
-    return <AbrirCajaModal loading={caja.openLoading} error={caja.openError} onSubmit={caja.abrir} />;
+    return (
+      <AbrirCajaModal
+        loading={caja.openLoading}
+        error={caja.openError}
+        onCancel={leaveCobros}
+        onSubmit={caja.abrir}
+      />
+    );
   }
 
   return (

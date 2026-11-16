@@ -38,17 +38,20 @@ export const useCajaGate = () => {
       setLoading(true);
       setError(null);
       const { schoolId } = getOrgConfig();
-      const current = await getCajaActual({ schoolId });
+      const deviceId = getDeviceId();
+      // Checked regardless of whether a cash register is open: the
+      // terminal can be deleted (caja/terminales) while its session is
+      // still open, and it must be named again before using Cobros.
+      const [current, terminals] = await Promise.all([
+        getCajaActual({ schoolId }),
+        getTerminals({ schoolId }),
+      ]);
+      setNeedsTerminalName(!terminals.some((t) => t.device_id === deviceId));
       if (!current) {
-        const deviceId = getDeviceId();
-        const terminals = await getTerminals({ schoolId });
-        const registered = terminals.some((t) => t.device_id === deviceId);
-        setNeedsTerminalName(!registered);
         setNeedsOpen(true);
         setSummary(null);
         return;
       }
-      setNeedsTerminalName(false);
       setNeedsOpen(false);
       const resumen = await getResumenCajaActual({ schoolId });
       setSummary(resumen);

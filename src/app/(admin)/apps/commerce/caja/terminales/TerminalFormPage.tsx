@@ -5,7 +5,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useTerminalForm } from "./hooks";
 
 interface TerminalFormPageProps {
-  terminalId?: number;
+  terminalId: number;
 }
 
 export default function TerminalFormPage({ terminalId }: TerminalFormPageProps) {
@@ -42,11 +42,16 @@ export default function TerminalFormPage({ terminalId }: TerminalFormPageProps) 
           </label>
           <input
             type="text"
-            className="input input-bordered w-full"
+            className="input input-bordered w-full font-mono"
             value={formData.device_id}
-            onChange={(e) => updateFormField("device_id", e.target.value)}
-            placeholder="Ej. el valor enviado como x-device-id por esa terminal"
+            readOnly
+            disabled
           />
+          <label className="label">
+            <span className="label-text-alt text-base-content/60">
+              Lo genera el equipo al registrarse; no se puede cambiar.
+            </span>
+          </label>
         </div>
 
         <div className="form-control mb-4">
@@ -69,10 +74,8 @@ export default function TerminalFormPage({ terminalId }: TerminalFormPageProps) 
           <button className="btn btn-primary" onClick={handleSave} disabled={saveLoading}>
             {saveLoading ? (
               <span className="loading loading-spinner loading-sm"></span>
-            ) : terminalId ? (
-              "Actualizar"
             ) : (
-              "Guardar"
+              "Actualizar"
             )}
           </button>
         </div>

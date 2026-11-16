@@ -5,13 +5,13 @@ import { useState } from "react";
 interface AbrirCajaModalProps {
   loading: boolean;
   error: string | null;
+  onCancel: () => void;
   onSubmit: (openingAmount: number, notes: string) => void;
 }
 
-// Blocking (no close button, no backdrop dismiss) -- collecting a payment
-// on this terminal requires an open cash register, enforced server-side on
-// every cobro/devolución/recarga, so there's no useful "cancel" here either.
-export function AbrirCajaModal({ loading, error, onSubmit }: AbrirCajaModalProps) {
+// No backdrop dismiss: the screen can't be used without completing this
+// step, so the only way out is "Cancelar", which leaves the screen.
+export function AbrirCajaModal({ loading, error, onCancel, onSubmit }: AbrirCajaModalProps) {
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const numeric = Number(amount || 0);
@@ -56,6 +56,9 @@ export function AbrirCajaModal({ loading, error, onSubmit }: AbrirCajaModalProps
           {error && <p className="text-sm text-error">{error}</p>}
         </div>
         <div className="flex justify-end gap-2 border-t border-base-300 p-6">
+          <button type="button" className="btn btn-ghost" disabled={loading} onClick={onCancel}>
+            Cancelar
+          </button>
           <button
             type="button"
             className="btn btn-primary"

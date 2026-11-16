@@ -1,5 +1,6 @@
 import commerceApi from "./commerceApi";
 import {
+  AccountStatement,
   DevolverPedidosRequest,
   FacturarRequest,
   PendingPaymentRead,
@@ -7,6 +8,7 @@ import {
   RealizarPagoRequest,
   RecargarSaldoRequest,
   TransactionResult,
+  WalletStatement,
   WalletTopupStatus,
 } from "@/interfaces/ITransaction";
 
@@ -39,6 +41,32 @@ export const recargarSaldo = async ({
   dto,
 }: ServiceArgs & { dto: RecargarSaldoRequest }): Promise<TransactionResult> => {
   const response = await commerceApi.post<TransactionResult>(`/schools/${schoolId}/transactions/wallet/topup`, dto);
+  return response.data;
+};
+
+export const getAccountStatement = async ({
+  schoolId,
+  personInternalId,
+  start,
+  end,
+}: ServiceArgs & { personInternalId: string; start?: string; end?: string }): Promise<AccountStatement> => {
+  const response = await commerceApi.get<AccountStatement>(
+    `/schools/${schoolId}/transactions/account/${encodeURIComponent(personInternalId)}/statement`,
+    { params: { start, end } }
+  );
+  return response.data;
+};
+
+export const getWalletStatement = async ({
+  schoolId,
+  personInternalId,
+  start,
+  end,
+}: ServiceArgs & { personInternalId: string; start?: string; end?: string }): Promise<WalletStatement> => {
+  const response = await commerceApi.get<WalletStatement>(
+    `/schools/${schoolId}/transactions/wallet/${encodeURIComponent(personInternalId)}/statement`,
+    { params: { start, end } }
+  );
   return response.data;
 };
 
