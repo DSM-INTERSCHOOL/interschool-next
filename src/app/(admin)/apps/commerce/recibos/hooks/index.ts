@@ -1,0 +1,1 @@
+export { useRecibosHistorial } from "./useRecibosHistorial";

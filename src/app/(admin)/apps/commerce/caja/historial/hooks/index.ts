@@ -1,0 +1,1 @@
+export { useCajaHistorial } from "./useCajaHistorial";

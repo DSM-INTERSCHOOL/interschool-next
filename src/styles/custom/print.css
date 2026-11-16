@@ -1,0 +1,48 @@
+/* Isolates printing to just one marked subtree at a time (`.print-receipt`,
+   `.print-report`, or `.print-report-landscape`) -- without this,
+   window.print() prints the entire page behind it too, since a component's
+   own CSS only repositions itself for print, it never hides everything
+   else on the page.
+
+   Physical page size/orientation (80mm roll vs. Letter vs. Letter
+   landscape) is NOT set here -- Chromium only honors `size` on the single
+   unnamed `@page` rule, not on named pages, so each print trigger sets it
+   dynamically via src/lib/printPage.ts right before calling window.print(). */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-receipt,
+  .print-receipt * {
+    visibility: visible;
+  }
+  .print-receipt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80mm;
+  }
+
+  .print-report,
+  .print-report * {
+    visibility: visible;
+  }
+  .print-report {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .print-report-landscape,
+  .print-report-landscape * {
+    visibility: visible;
+  }
+  .print-report-landscape {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
