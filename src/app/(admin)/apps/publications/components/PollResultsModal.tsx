@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import { getPollResults } from "@/services/poll.service";
 import { PollQuestionResult } from "@/interfaces/IPoll";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { PollQuestionResponsesModal } from "./PollQuestionResponsesModal";
 
 interface PollResultsModalProps {
     pollId: string | null;
     pollTitle?: string | null;
+    /** Original per-person answers can only be shown when the poll isn't anonymous. */
+    anonymous?: boolean;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -242,9 +245,13 @@ const TextResults = ({ result }: { result: PollQuestionResult }) => {
 const QuestionResultCard = ({
     result,
     idx,
+    anonymous,
+    onViewResponses,
 }: {
     result: PollQuestionResult;
     idx: number;
+    anonymous: boolean;
+    onViewResponses: (result: PollQuestionResult) => void;
 }) => {
     const code = result.question_type_code;
     const icon = TYPE_ICONS[code] ?? "lucide--help-circle";
@@ -269,6 +276,16 @@ const QuestionResultCard = ({
                             </span>
                         </div>
                     </div>
+                    {!anonymous && (
+                        <button
+                            className="btn btn-ghost btn-xs gap-1.5 text-base-content/60 shrink-0"
+                            title="Ver respuestas originales"
+                            onClick={() => onViewResponses(result)}
+                        >
+                            <span className="iconify lucide--list-checks size-3.5" />
+                            Ver respuestas
+                        </button>
+                    )}
                 </div>
 
                 {(code === "SINGLE_CHOICE" || code === "MULTIPLE_CHOICE") && (
@@ -286,12 +303,14 @@ const QuestionResultCard = ({
 export const PollResultsModal = ({
     pollId,
     pollTitle,
+    anonymous = false,
     isOpen,
     onClose,
 }: PollResultsModalProps) => {
     const [results, setResults] = useState<PollQuestionResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedQuestion, setSelectedQuestion] = useState<PollQuestionResult | null>(null);
 
     useEffect(() => {
         if (!isOpen || !pollId) return;
@@ -379,7 +398,13 @@ export const PollResultsModal = ({
                     ) : (
                         <div className="space-y-4 pb-4">
                             {results.map((r, idx) => (
-                                <QuestionResultCard key={r.question_id} result={r} idx={idx} />
+                                <QuestionResultCard
+                                    key={r.question_id}
+                                    result={r}
+                                    idx={idx}
+                                    anonymous={anonymous}
+                                    onViewResponses={setSelectedQuestion}
+                                />
                             ))}
                         </div>
                     )}
@@ -390,6 +415,19 @@ export const PollResultsModal = ({
                 </div>
             </div>
             <div className="modal-backdrop" onClick={onClose} />
+
+            <PollQuestionResponsesModal
+                pollId={pollId}
+                questionId={selectedQuestion?.question_id ?? null}
+                questionText={selectedQuestion?.question_text}
+                optionsById={Object.fromEntries(
+                    (selectedQuestion?.options ?? [])
+                        .filter((o) => o.option_id)
+                        .map((o) => [o.option_id as string, o.text ?? "—"])
+                )}
+                isOpen={!!selectedQuestion}
+                onClose={() => setSelectedQuestion(null)}
+            />
         </div>
     );
 };

@@ -6,4 +6,5 @@ export { AttachmentsManager } from './AttachmentsManager';
 export { PublicationFormCard } from './PublicationFormCard';
 export { SubjectSelector } from './SubjectSelector';
 export { PollResultsModal } from './PollResultsModal';
+export { PollQuestionResponsesModal } from './PollQuestionResponsesModal';
 export { EventOptionsModal } from './EventOptionsModal';
