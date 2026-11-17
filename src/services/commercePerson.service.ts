@@ -1,5 +1,6 @@
+import { CommercePersonPage, CommercePersonRead, CommercePersonUpsert } from "@/interfaces/ICommercePerson";
+
 import commerceApi from "./commerceApi";
-import { CommercePersonRead, CommercePersonUpsert } from "@/interfaces/ICommercePerson";
 
 interface ServiceArgs {
   schoolId: string | number | null;
@@ -14,6 +15,27 @@ export const getCommercePersons = async ({
 }: ServiceArgs & { search?: string }): Promise<CommercePersonRead[]> => {
   const response = await commerceApi.get<CommercePersonRead[]>(`/schools/${schoolId}/persons`, {
     params: search ? { search } : undefined,
+  });
+  return response.data;
+};
+
+// ADMIN or CASHIER only (backend-enforced). Paginated listing for the
+// Clientes screen -- `search` is split into words, each matched on name,
+// email or id (so "juan perez" works across columns).
+export const getCommercePersonsPage = async ({
+  schoolId,
+  search,
+  personType,
+  page,
+  pageSize,
+}: ServiceArgs & {
+  search?: string;
+  personType?: string;
+  page: number;
+  pageSize: number;
+}): Promise<CommercePersonPage> => {
+  const response = await commerceApi.get<CommercePersonPage>(`/schools/${schoolId}/persons/paginated`, {
+    params: { search: search || undefined, type: personType || undefined, page, page_size: pageSize },
   });
   return response.data;
 };

@@ -65,3 +65,11 @@ export interface CommercePersonUpsert {
   codigo_postal?: string | null;
   direccion?: string | null;
 }
+
+// One page of the Clientes screen (GET /persons/paginated).
+export interface CommercePersonPage {
+  items: CommercePersonRead[];
+  total: number; // rows matching the filters, across all pages
+  page: number;
+  page_size: number;
+}
