@@ -8,7 +8,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { PageTitle } from "@/components/PageTitle";
 import { CommercePersonRead } from "@/interfaces/ICommercePerson";
 
-import { ROLE_OPTIONS } from "./constants";
+import { PERSON_TYPE_LABELS, ROLE_OPTIONS, personTypeLabel } from "./constants";
 import { usePersons } from "./hooks";
 import { PAGE_SIZE_OPTIONS } from "./hooks/usePersons";
 
@@ -34,6 +34,11 @@ const pageWindow = (page: number, totalPages: number): (number | "gap")[] => {
   return out;
 };
 
+// Older syncs sent USUARIO for USER -- show both the same (the filter
+// treats them the same too).
+const typeLabel = (type: string | null | undefined) =>
+  personTypeLabel(type?.toUpperCase() === "USUARIO" ? "USER" : type);
+
 const fullName = (person: CommercePersonRead) =>
   [person.given_name, person.paternal_name, person.maternal_name].filter(Boolean).join(" ");
 
@@ -43,8 +48,9 @@ export default function PersonsListPage() {
     total,
     search,
     setSearch,
-    role,
-    setRole,
+    clearSearch,
+    personType,
+    setPersonType,
     page,
     setPage,
     pageSize,
@@ -84,22 +90,36 @@ export default function PersonsListPage() {
           <div className="card-body">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre, email o ID"
-                  className="input input-bordered input-sm w-full sm:w-72"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+                <label className="input input-sm flex w-full items-center gap-2 sm:w-72">
+                  <span className="iconify lucide--search text-base-content/50 size-4 shrink-0"></span>
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre, email o ID"
+                    className="grow"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === "Escape" && clearSearch()}
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      className="text-base-content/50 hover:text-base-content flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full"
+                      title="Cancelar búsqueda"
+                      aria-label="Cancelar búsqueda">
+                      <span className="iconify lucide--x size-3.5"></span>
+                    </button>
+                  )}
+                </label>
                 <select
-                  className="select select-bordered select-sm"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  aria-label="Filtrar por rol">
-                  <option value="">Todos los roles</option>
-                  {ROLE_OPTIONS.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
+                  className="select select-sm w-full sm:w-48"
+                  value={personType}
+                  onChange={(e) => setPersonType(e.target.value)}
+                  aria-label="Filtrar por tipo de usuario">
+                  <option value="">Todos los tipos</option>
+                  {Object.entries(PERSON_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
                     </option>
                   ))}
                 </select>
@@ -131,7 +151,7 @@ export default function PersonsListPage() {
                 <span className="iconify lucide--users text-base-content/20 mb-4 size-24"></span>
                 <h3 className="text-base-content mb-2 text-xl font-medium">Sin clientes</h3>
                 <p className="text-base-content/60">
-                  {search || role
+                  {search || personType
                     ? "Ningún cliente coincide con la búsqueda"
                     : "Todavía no se ha registrado ningún cliente"}
                 </p>
@@ -145,6 +165,7 @@ export default function PersonsListPage() {
                       <tr>
                         <th>ID</th>
                         <th>Nombre</th>
+                        <th>Tipo</th>
                         <th>Rol</th>
                         <th>Origen</th>
                         <th>Email</th>
@@ -158,6 +179,7 @@ export default function PersonsListPage() {
                         <tr key={person.person_internal_id}>
                           <td className="font-medium">{person.person_internal_id}</td>
                           <td>{fullName(person) || "—"}</td>
+                          <td className="text-sm">{typeLabel(person.type)}</td>
                           <td>
                             <span className={`badge badge-sm ${ROLE_BADGE[person.role]}`}>
                               {roleLabel(person.role)}

@@ -1,5 +1,6 @@
-import commerceApi from "./commerceApi";
 import { CommercePersonPage, CommercePersonRead, CommercePersonUpsert } from "@/interfaces/ICommercePerson";
+
+import commerceApi from "./commerceApi";
 
 interface ServiceArgs {
   schoolId: string | number | null;
@@ -24,12 +25,17 @@ export const getCommercePersons = async ({
 export const getCommercePersonsPage = async ({
   schoolId,
   search,
-  role,
+  personType,
   page,
   pageSize,
-}: ServiceArgs & { search?: string; role?: string; page: number; pageSize: number }): Promise<CommercePersonPage> => {
+}: ServiceArgs & {
+  search?: string;
+  personType?: string;
+  page: number;
+  pageSize: number;
+}): Promise<CommercePersonPage> => {
   const response = await commerceApi.get<CommercePersonPage>(`/schools/${schoolId}/persons/paginated`, {
-    params: { search: search || undefined, role: role || undefined, page, page_size: pageSize },
+    params: { search: search || undefined, type: personType || undefined, page, page_size: pageSize },
   });
   return response.data;
 };

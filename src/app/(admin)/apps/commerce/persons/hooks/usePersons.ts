@@ -15,7 +15,7 @@ export const usePersons = () => {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [role, setRole] = useState("");
+  const [personType, setPersonType] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(true);
@@ -36,8 +36,15 @@ export const usePersons = () => {
     return () => clearTimeout(t);
   }, [search, debouncedSearch]);
 
-  const changeRole = (value: string) => {
-    setRole(value);
+  const changePersonType = (value: string) => {
+    setPersonType(value);
+    setPage(1);
+  };
+
+  // Immediate, not debounced: the X button should clear the results now.
+  const clearSearch = () => {
+    setSearch("");
+    setDebouncedSearch("");
     setPage(1);
   };
 
@@ -55,7 +62,7 @@ export const usePersons = () => {
       const data = await getCommercePersonsPage({
         schoolId,
         search: debouncedSearch || undefined,
-        role: role || undefined,
+        personType: personType || undefined,
         page,
         pageSize,
       });
@@ -73,7 +80,7 @@ export const usePersons = () => {
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
-  }, [debouncedSearch, role, page, pageSize]);
+  }, [debouncedSearch, personType, page, pageSize]);
 
   useEffect(() => {
     load();
@@ -92,8 +99,9 @@ export const usePersons = () => {
     total,
     search,
     setSearch,
-    role,
-    setRole: changeRole,
+    clearSearch,
+    personType,
+    setPersonType: changePersonType,
     page,
     setPage,
     pageSize,
