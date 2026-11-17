@@ -263,3 +263,22 @@ export interface AccountStatement {
   movements: AccountMovement[];
   pending: AccountPendingPayment[];
 }
+
+// Self-service SPEI top-up: deposit instructions for a PENDING
+// WALLET_TOPUP the buyer requested for their own wallet. The balance is
+// only credited once staff confirms the transfer (Recargas pendientes).
+export interface SolicitarRecargaSpeiRequest {
+  amount: number;
+}
+
+export interface RecargaSpeiInstructions {
+  order_payment_id: number;
+  created: string;
+  amount: string; // Decimal -> string
+  status: string;
+  reference: string | null; // concepto to put on the transfer
+  message: string;
+  clabe: string | null;
+  bank: string | null;
+  owner_name: string | null;
+}

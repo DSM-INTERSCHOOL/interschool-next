@@ -6,7 +6,9 @@ import {
   PendingPaymentRead,
   RealizarCambiosRequest,
   RealizarPagoRequest,
+  RecargaSpeiInstructions,
   RecargarSaldoRequest,
+  SolicitarRecargaSpeiRequest,
   TransactionResult,
   WalletStatement,
   WalletTopupStatus,
@@ -41,6 +43,36 @@ export const recargarSaldo = async ({
   dto,
 }: ServiceArgs & { dto: RecargarSaldoRequest }): Promise<TransactionResult> => {
   const response = await commerceApi.post<TransactionResult>(`/schools/${schoolId}/transactions/wallet/topup`, dto);
+  return response.data;
+};
+
+// Self-service: the logged-in person asks to top up their own wallet via
+// SPEI. Creates a PENDING top-up and returns where to deposit.
+export const solicitarRecargaSpei = async ({
+  schoolId,
+  dto,
+}: ServiceArgs & { dto: SolicitarRecargaSpeiRequest }): Promise<RecargaSpeiInstructions> => {
+  const response = await commerceApi.post<RecargaSpeiInstructions>(
+    `/schools/${schoolId}/transactions/wallet/topup/spei`,
+    dto
+  );
+  return response.data;
+};
+
+// Whether the logged-in person can top up via SPEI: channel enabled and a
+// CLABE to deposit to (the school's CLABE única, or their own CLABE).
+export const getRecargaSpeiDisponible = async ({ schoolId }: ServiceArgs): Promise<boolean> => {
+  const response = await commerceApi.get<{ available: boolean }>(
+    `/schools/${schoolId}/transactions/wallet/topup/spei/disponible`
+  );
+  return response.data.available;
+};
+
+// The logged-in person's own SPEI top-ups still awaiting confirmation.
+export const getMisRecargasSpei = async ({ schoolId }: ServiceArgs): Promise<RecargaSpeiInstructions[]> => {
+  const response = await commerceApi.get<RecargaSpeiInstructions[]>(
+    `/schools/${schoolId}/transactions/wallet/topup/spei`
+  );
   return response.data;
 };
 
