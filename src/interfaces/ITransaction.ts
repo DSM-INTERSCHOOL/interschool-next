@@ -85,6 +85,8 @@ export interface TransactionResult {
   new_balance: string | null; // Decimal -> string
   receipt_id: number | null;
   receipt_folio: number | null;
+  // Set by recargarSaldo -- one deposit ficha per SPEI (pending) tender.
+  spei_instructions?: RecargaSpeiInstructions[] | null;
 }
 
 // ---- devoluciones y cambios ----

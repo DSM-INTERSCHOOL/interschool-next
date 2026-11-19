@@ -48,6 +48,7 @@ export function ReciboView({ receipt, orderNumber }: ReciboViewProps) {
       <Divider />
 
       <p className="truncate">Cliente: {receipt.client_name}</p>
+      {receipt.collected_by && <p className="truncate">Recoge: {receipt.collected_by}</p>}
 
       <Divider />
 

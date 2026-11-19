@@ -5,6 +5,7 @@ import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { CommercePersonRead } from "@/interfaces/ICommercePerson";
 import { TOPUP_TENDER_METHODS } from "@/interfaces/ITransaction";
+import { SpeiInstructionsCard } from "../components/SpeiInstructionsCard";
 import { usePersonSearch, usePrepago } from "./hooks";
 
 const fullName = (person: CommercePersonRead) =>
@@ -46,6 +47,15 @@ export default function PrepagoPage() {
             <span>{prepago.successMessage}</span>
           </div>
         )}
+
+        {prepago.speiInstructions.map((data) => (
+          <SpeiInstructionsCard
+            key={data.order_payment_id}
+            data={data}
+            customerName={prepago.selectedPerson ? fullName(prepago.selectedPerson) : undefined}
+            onClose={prepago.closeSpeiInstructions}
+          />
+        ))}
 
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body gap-5!">
@@ -131,7 +141,8 @@ export default function PrepagoPage() {
                   </div>
                   {prepago.addMethod === "SPEI" && (
                     <p className="mt-2 text-sm text-warning">
-                      Quedará pendiente de confirmar hasta verificar que la transferencia llegó.
+                      Quedará pendiente de confirmar hasta verificar que la transferencia llegó. Al registrar
+                      la recarga se genera la ficha con la CLABE y la referencia para el cliente.
                     </p>
                   )}
                   {prepago.addMethod && (

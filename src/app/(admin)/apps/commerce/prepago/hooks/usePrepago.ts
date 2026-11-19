@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getOrgConfig } from "@/lib/orgConfig";
 import { CommercePersonRead } from "@/interfaces/ICommercePerson";
-import { TenderMethod } from "@/interfaces/ITransaction";
+import { RecargaSpeiInstructions, TenderMethod } from "@/interfaces/ITransaction";
 import { recargarSaldo } from "@/services/transaction.service";
 import { useEnabledPaymentMethods } from "../../hooks/useEnabledPaymentMethods";
 
@@ -34,9 +34,14 @@ export const usePrepago = (onTopup: () => void) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Deposit fichas for the SPEI tenders just registered -- shown so the
+  // cashier can hand the customer the CLABE/concepto to transfer to.
+  const [speiInstructions, setSpeiInstructions] = useState<RecargaSpeiInstructions[]>([]);
+  const closeSpeiInstructions = () => setSpeiInstructions([]);
 
   const selectPerson = (person: CommercePersonRead) => {
     setSelectedPerson(person);
+    setSpeiInstructions([]);
     setTenders([]);
     setAddMethod("");
     setAddAmount("");
@@ -47,6 +52,7 @@ export const usePrepago = (onTopup: () => void) => {
 
   const reset = () => {
     setSelectedPerson(null);
+    setSpeiInstructions([]);
     setTenders([]);
     setAddMethod("");
     setAddAmount("");
@@ -102,6 +108,7 @@ export const usePrepago = (onTopup: () => void) => {
       if (immediateTotal > 0) parts.push(`$${immediateTotal.toFixed(2)} abonados de inmediato`);
       if (pendingTotal > 0) parts.push(`$${pendingTotal.toFixed(2)} pendientes de confirmar (SPEI)`);
       setSuccessMessage(`Recarga registrada: ${parts.join(", ")}`);
+      setSpeiInstructions(result.spei_instructions ?? []);
 
       setSelectedPerson((prev) =>
         prev && result.new_balance !== null ? { ...prev, balance: result.new_balance } : prev
@@ -136,5 +143,7 @@ export const usePrepago = (onTopup: () => void) => {
     confirmError,
     successMessage,
     confirmTopup,
+    speiInstructions,
+    closeSpeiInstructions,
   };
 };

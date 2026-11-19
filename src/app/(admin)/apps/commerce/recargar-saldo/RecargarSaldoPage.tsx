@@ -3,84 +3,12 @@
 import { useState } from "react";
 import { AppLink as Link } from "@/components/AppLink";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { RecargaSpeiInstructions } from "@/interfaces/ITransaction";
+import { SpeiInstructionsCard } from "../components/SpeiInstructionsCard";
 import { formatDateTime, money } from "../persons/estado-cuenta/components/format";
 import { useRecargarSaldo } from "./useRecargarSaldo";
 
 const QUICK_AMOUNTS = [100, 200, 500, 1000];
 const MAX_AMOUNT = 100000;
-
-function CopyField({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard unavailable (insecure context / permissions) -- the value is still visible to copy by hand.
-    }
-  };
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-box bg-base-200 px-4 py-3">
-      <div className="min-w-0">
-        <p className="text-xs text-base-content/60">{label}</p>
-        <p className={`break-all text-lg font-bold ${mono ? "font-mono tracking-wider" : ""}`}>{value}</p>
-      </div>
-      <button type="button" onClick={copy} className="btn btn-ghost btn-sm shrink-0" aria-label={`Copiar ${label}`}>
-        <span className={`iconify size-4 ${copied ? "lucide--check text-success" : "lucide--copy"}`}></span>
-        {copied ? "Copiado" : "Copiar"}
-      </button>
-    </div>
-  );
-}
-
-function InstructionsCard({ data, onClose }: { data: RecargaSpeiInstructions; onClose: () => void }) {
-  return (
-    <div className="card border border-base-300 bg-base-100 shadow-sm">
-      <div className="card-body gap-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="card-title">Instrucción de transferencia SPEI</h2>
-            <p className="text-sm text-base-content/60">Generada el {formatDateTime(data.created)}</p>
-          </div>
-          <span className="badge badge-warning">Pendiente de confirmar</span>
-        </div>
-
-        <div>
-          <p className="text-sm text-base-content/60">Monto a transferir</p>
-          <p className="text-3xl font-bold">{money(data.amount)}</p>
-        </div>
-
-        <p className="text-sm text-base-content/80">{data.message}</p>
-
-        {data.clabe && (
-          <div className="flex flex-col gap-2">
-            <CopyField label="CLABE interbancaria" value={data.clabe} />
-            {data.bank && <CopyField label="Banco" value={data.bank} mono={false} />}
-            {data.owner_name && <CopyField label="Beneficiario" value={data.owner_name} mono={false} />}
-            {data.reference && <CopyField label="Concepto / referencia" value={data.reference} />}
-          </div>
-        )}
-
-        <div className="alert alert-info text-sm">
-          <span className="iconify lucide--info size-5"></span>
-          <div>
-            Transfiere exactamente {money(data.amount)}
-            {data.reference ? <> y escribe <b>{data.reference}</b> en el concepto</> : null}. Tu saldo se
-            acreditará cuando la escuela confirme que recibió el depósito.
-          </div>
-        </div>
-
-        <div className="card-actions justify-end">
-          <button type="button" onClick={onClose} className="btn btn-primary">
-            Listo
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function RecargarSaldoPage() {
   const {
@@ -139,7 +67,7 @@ export default function RecargarSaldoPage() {
       </div>
 
       {instructions ? (
-        <InstructionsCard data={instructions} onClose={() => { closeInstructions(); setAmount(""); }} />
+        <SpeiInstructionsCard data={instructions} onClose={() => { closeInstructions(); setAmount(""); }} />
       ) : !speiEnabled ? (
         <div className="alert alert-warning">
           <span className="iconify lucide--alert-triangle size-5"></span>

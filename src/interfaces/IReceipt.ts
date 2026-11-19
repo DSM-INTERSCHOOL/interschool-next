@@ -21,6 +21,7 @@ export interface ReceiptRead {
   folio: number;
   client_person_internal_id: string | null;
   client_name: string;
+  collected_by: string | null; // snapshot of the order's "quien recoge"
   total: string;
   total_in_words: string;
   items: ReceiptItemSnapshot[];
