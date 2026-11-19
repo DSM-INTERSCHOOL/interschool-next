@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AppLink as Link } from "@/components/AppLink";
 import { PageTitle } from "@/components/PageTitle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { PrintButton, PrintSection } from "@/components/PrintSection";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import { getOrgConfig } from "@/lib/orgConfig";
+import { printPage } from "@/lib/printPage";
 import { ORDER_STATUSES, OrderRead, OrderStatus } from "@/interfaces/IOrder";
 import { ORDER_MODES } from "@/interfaces/ITopCategory";
 import { cancelOrder } from "@/services/order.service";
 import { useOrdersList } from "./hooks";
-import { FacturarModal } from "./components";
+import { FacturarModal, OrdenTicketView } from "./components";
 
 // A cancelled order is a dead end either way; everything else can still
 // be edited or cancelled from here.
@@ -61,6 +63,23 @@ export default function OrdersListPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [facturarTarget, setFacturarTarget] = useState<OrderRead | null>(null);
+  // Order whose 80mm ticket is being printed. While set, the ticket is the
+  // only printable thing on the page (the Letter report below is unmounted,
+  // or both would print together); cleared once the print dialog closes.
+  const [ticketOrder, setTicketOrder] = useState<OrderRead | null>(null);
+
+  useEffect(() => {
+    if (!ticketOrder) return;
+    const done = () => setTicketOrder(null);
+    window.addEventListener("afterprint", done);
+    // Next tick: the ticket is already in the DOM (effects run after
+    // commit), and this lets the report's unmount settle first.
+    const timer = setTimeout(() => printPage("80mm auto", "0", `Orden ${ticketOrder.id_orden}`), 0);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("afterprint", done);
+    };
+  }, [ticketOrder]);
 
   const hasFilters = Boolean(status || createdBy || startDate || endDate);
 
@@ -91,6 +110,12 @@ export default function OrdersListPage() {
       order.order_mode ??
       (order.person_internal_id === order.created_by_person_internal_id ? "SELF_SERVICE" : "OPERATOR");
     return ORDER_MODES.find((m) => m.value === mode)?.label ?? mode;
+  };
+
+  const clientName = (personInternalId: string | null) => {
+    if (!personInternalId) return null;
+    const person = personsById.get(personInternalId);
+    return person ? [person.given_name, person.paternal_name, person.maternal_name].filter(Boolean).join(" ") : null;
   };
 
   const clientDisplay = (personInternalId: string | null) => {
@@ -243,6 +268,15 @@ export default function OrdersListPage() {
                         <td>{order.created_by_person_internal_id ?? "—"}</td>
                         <td>
                           <div className="flex justify-end gap-1">
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs"
+                              title="Imprimir ticket"
+                              disabled={ticketOrder !== null}
+                              onClick={() => setTicketOrder(order)}
+                            >
+                              <span className="iconify lucide--printer size-4"></span>
+                            </button>
                             {isActionable(order.status) ? (
                               <Link
                                 href={`/apps/commerce/orders/${order.id}`}
@@ -286,7 +320,18 @@ export default function OrdersListPage() {
         </div>
       </div>
 
-      {!loading && !error && (
+      {ticketOrder &&
+        createPortal(
+          <div className="print-receipt hidden print:block">
+            <OrdenTicketView
+              order={ticketOrder}
+              clientName={clientName(ticketOrder.person_internal_id) ?? ticketOrder.person_internal_id}
+            />
+          </div>,
+          document.body
+        )}
+
+      {!loading && !error && !ticketOrder && (
         <PrintSection
           title="Órdenes"
           meta={[
